@@ -1,7 +1,7 @@
 M = @make --no-print-directory --silent $@ -C
 INSTDIR = /usr/local/bin
 
-all clean test:
+all clean test posix linux macos win:
 	$M hcasm
 	$M hclink
 	$M hclib
