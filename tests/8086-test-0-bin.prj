@@ -1,3 +1,5 @@
+[config]
+sdk_path = ../bin/
 
 [files:8086]
 8086-test-0.s

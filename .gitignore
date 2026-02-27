@@ -8,3 +8,4 @@
 *.rex
 *.lib
 *.o
+*.DS_Store

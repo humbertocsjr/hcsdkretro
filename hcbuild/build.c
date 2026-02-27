@@ -41,6 +41,7 @@ void make_files(section_t *section)
     char source_name[2048];
     char obj_name[2048];
     char dump_name[2048];
+    char *sdk_path = get_value("config", "", "sdk_path");
 
     if(!section) return;
     keyvalue_t *kv = section->keys;
@@ -61,7 +62,9 @@ void make_files(section_t *section)
         strcat(dump_name, ".dump");
         if(!strcmp(get_ext(source_name), ".s") || !strcmp(get_ext(source_name), ".S"))
         {
-            strcpy(cmd, "hcasm-");
+            strcpy(cmd, sdk_path);
+            if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != '/') strcat(sdk_path, "/");
+            strcat(cmd, "hcasm-");
             strcat(cmd, section->subsection);
             strcat(cmd, " -o ");
             strcat(cmd, obj_name);
@@ -129,6 +132,7 @@ void make_link(section_t *section, char *config)
     char *data_offset = NULL;
     char *bss_offset = NULL;
     char *align = NULL;
+    char *sdk_path = get_value("config", "", "sdk_path");
     if(!section)
     {
         fprintf(stderr, "error: link configuration not found: %s\n", config);
@@ -144,7 +148,7 @@ void make_link(section_t *section, char *config)
     if(strlen(format) == 0) format = "bin";
     if(strlen(out_file) == 0) out_file = "a.out";
     obj_t *obj = _objs;
-    size_t cmd_size = 256 + strlen(out_file) + strlen(_path) + strlen(sym_file);
+    size_t cmd_size = 256 + strlen(out_file) + strlen(_path) + strlen(sym_file) + strlen(sdk_path);
     while(obj)
     {
         cmd_size += 2 + strlen(obj->name);
@@ -153,7 +157,9 @@ void make_link(section_t *section, char *config)
     cmd = malloc(cmd_size);
     if(!strcmp(format, "lib"))
     {
-        strcpy(cmd, "hclib ");
+        strcpy(cmd, sdk_path);
+        if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != '/') strcat(sdk_path, "/");
+        strcat(cmd, "hclib ");
         if(out_file[0] != '/')
         {
             strcat(cmd, _path);
@@ -163,7 +169,9 @@ void make_link(section_t *section, char *config)
     }
     else
     {
-        strcpy(cmd, "hclink-");
+        strcpy(cmd, sdk_path);
+        if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != '/') strcat(sdk_path, "/");
+        strcat(cmd, "hclink-");
         strcat(cmd, format);
         strcat(cmd, " -o ");
         if(out_file[0] != '/')

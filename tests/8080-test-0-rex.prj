@@ -1,5 +1,6 @@
 [config]
 verbose = yes
+sdk_path = ../bin/
 
 [files:8080]
 8080-test-0.s

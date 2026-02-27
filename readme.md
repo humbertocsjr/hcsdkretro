@@ -256,6 +256,7 @@ Configuration example (.prj file):
 [config] ; optional section
 dump = yes ; optional (default: no) - dump object dump from assembly
 verbose = yes ; optional (default: no)
+sdk_path = ./ ; optional (default: empty string) - hcsdk tools path
 
 [files:z80] ; use files:ARCH
 main.s ; file list
