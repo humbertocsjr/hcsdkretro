@@ -1,0 +1,21 @@
+[config]
+dump = yes
+verbose = yes
+
+[files:z80]
+main.s
+
+[libs]
+runtime.lib
+single.obj
+
+[link:release]
+format = bin
+filename = example.com
+text = 0x100
+
+[link:debug]
+format = bin
+filename = example.com
+text = 0x100
+symbols = example.sym

@@ -1,0 +1,12 @@
+[config]
+verbose = yes
+
+[files:8080]
+8080-test-0.s
+
+[libs]
+8080-lib.lib
+
+[link:release]
+format = bin
+filename = 8080-test-0.bin

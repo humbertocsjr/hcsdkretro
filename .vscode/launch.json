@@ -1,0 +1,86 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+    {
+        "name": "hcasm-8080 test-0",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/hcasm-8080",
+        "args": ["-o", "${workspaceFolder}/tests/8080-test-0.obj", "-dump", "${workspaceFolder}/tests/8080-test-0.obj.dump", "${workspaceFolder}/tests/8080-test-0.s"],
+        "stopAtEntry": false,
+        "cwd": "${fileDirname}",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make hcasm",
+        "MIMode": "lldb"
+    },
+    {
+        "name": "hcasm-8086 test-0",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/hcasm-8086",
+        "args": ["-o", "${workspaceFolder}/tests/8086-test-0.obj", "-dump", "${workspaceFolder}/tests/8086-test-0.obj.dump", "${workspaceFolder}/tests/8086-test-0.s"],
+        "stopAtEntry": false,
+        "cwd": "${fileDirname}",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make hcasm",
+        "MIMode": "lldb"
+    },
+    {
+        "name": "hcasm-z80 test-0",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/hcasm-z80",
+        "args": ["-o", "${workspaceFolder}/tests/z80-test-0.obj", "-dump", "${workspaceFolder}/tests/z80-test-0.obj.dump", "${workspaceFolder}/tests/z80-test-0.s"],
+        "stopAtEntry": false,
+        "cwd": "${fileDirname}",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make hcasm",
+        "MIMode": "lldb"
+    },
+    {
+        "name": "hclink-bin test-0",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/hclink-bin",
+        "args": ["-o", "${workspaceFolder}/tests/8086-test-0.bin", "-v",  "${workspaceFolder}/tests/8086-test-0.obj"],
+        "stopAtEntry": false,
+        "cwd": "${fileDirname}",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make hclink",
+        "MIMode": "lldb"
+    },
+    {
+        "name": "hclink-rex test-0",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/hclink-rex",
+        "args": ["-o", "${workspaceFolder}/tests/8086-test-0.rex", "-v",  "${workspaceFolder}/tests/8086-test-0.obj",  "${workspaceFolder}/tests/8080-lib.obj"],
+        "stopAtEntry": false,
+        "cwd": "${fileDirname}",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make hclink",
+        "MIMode": "lldb"
+    },
+    {
+        "name": "hcbuild 8086-test-0",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/hcbuild",
+        "args": ["${workspaceFolder}/tests/8086-test-0-bin.prj", "make", "release"],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}/tests/",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make hcbuild",
+        "MIMode": "lldb"
+    }
+    ]
+}

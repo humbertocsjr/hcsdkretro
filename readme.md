@@ -1,0 +1,328 @@
+# HC Software Development Kit for Retro Computing
+
+Cross-compiler tools for retro computing.
+
+## Todo List
+
+- Complete documentation
+- Implement 6502 Support
+
+## Install
+
+Installing on /usr/local/bin:
+
+```sh
+make all
+sudo make install
+```
+
+## How to use (8086 example)
+
+- Create a example file (example.s):
+    ```asm
+    section text
+    global _start
+    _start:
+        int 0x20
+    ```
+- Assemble to object file
+    ```sh
+    hcasm-8086 -o example.obj example.s
+    ```
+- Link to .com file
+    ```sh
+    hclink-bin -text 0x100 -o example.com example.obj
+    ```
+
+# HC Assembler for Retro Computing
+
+Inspired in NASM Source Code Format.
+
+## Supported Targets
+
+- **8080**:  Intel 8080 or Compatibles
+- **8085**:  Intel 8085 or Compatibles
+- **8086**:  Intel 8086/8088 or Compatibles
+
+
+## Intel 8080 / 8085 Support
+
+- Support BC/DE/[BC]/[DE] or B/D/[B]/[D] on 16 bit operations
+    ```asm
+    ; all four generate the same opcode
+    stax bc ; modern format
+    stax b ; old school format
+    stax [bc] ; nasm-like format
+    stax [b] ; old school nasm-like format
+    ```
+- Support M/[HL]/[M] on pointer operations
+    ```asm
+    ; all tree generate the same opcode
+    mov a, m
+    mov a, [m]
+    mov a, [hl]
+    ```
+
+## Zilog Z80 Support
+
+- Use [] as address markers \
+    ```asm
+    ld a, [0x1234]
+    ld a, [bc]
+    ```
+
+## Intel 8086/8088 Support
+
+- Alow command prefixes and some argument prefixes:
+    ```asm
+    ; command prefixes
+    cs mov ax, [label]
+    rep movsb
+    ; argument prefixes
+    mov word [0x123], 123
+    mov [0x123], word 123
+    call near label
+    call far label
+    je short label
+    je near label
+    je far label
+    ; NOT SUPPORTED PREFIXES:
+    mov ax, [cs:label] ; DO NOT USE
+    ```
+- Allow jCC near and far (8086/8086 full compatible)
+    ```asm
+    je label_with_offset_less_than_128_bytes
+    je near label_with_offset_greater_than_128_bytes
+    je far segment:offset
+    je far label_in_other_segment ; (not supported in all link output formats)
+    ```
+- Allow LOOP/LOOPZ/LOOPE/LOOPNZ/LOOPNE/JCXE/JCXZ/JECXZ/JECXE near and far (8086/8086 full compatible)
+    ```asm
+    loop label_with_offset_less_than_128_bytes
+    loop near label_with_offset_greater_than_128_bytes
+    loop far segment:offset
+    loop far label_in_other_segment ; (not supported in all link output formats)
+    ```
+
+## Source Code Format
+
+```asm
+label: mnemonic arg1, arg2 ; comment
+```
+
+### Labels
+
+```asm
+global _start   ; export _start label
+_start:
+.sublabel:
+main:
+.sublabel:
+    mov ax, [.sublabel]
+    mov ax, [main.sublabel]
+    mov ax, [_start.sublabel]
+```
+
+### Constants
+
+```asm
+const_123: equ 123
+const_456 equ 456
+const_math equ 1+2*3
+struct_test: equ 2 ; size
+    .field1: equ 0 ; offset
+    .field2: equ 1 ; offset
+
+section data
+    obj_test: resb struct_test
+
+section text
+
+    mov ax, const_math ; simple example
+    mov al, [obj_test + struct_test.field1]
+    mov si, obj_test
+    mov bl, [si+struct_test.field1]
+```
+
+### Sections
+
+Common section order:
+
+- text section
+- data section
+- bss section
+
+Input code:
+
+```asm
+
+section data
+    db 0x56
+section text
+    db 0x12
+section bss
+    db 0x9a ; Invalid command for bss, used only as an example.
+section data
+    db 0x78
+section text
+    db 0x34
+
+```
+
+Binary output (Hexadecimal view):
+
+```
+TEXT     | DATA    | BSS
+0x12 0x34 0x56 0x78 0x9a
+```
+
+### Data/Address Reference/Address Access
+
+```asm
+section data
+    var: dw 0x1234
+    structure:
+        .field1: db 0x12
+        .field2: db 0x34
+section text
+    ; data
+    mov ax, 0x1234 ; hexadecimal
+    mov bx, 1234 ; decimal
+    mov cx, 0b10010001 ; binary
+    mov dx, 0o777 ; octal
+    mov si, 0777 ; octal
+    ; address reference
+    mov si, var
+    mov di, structure.field1
+    ; addres access
+    mov al, [structure.field1]
+    mov [structure.field2], bl
+```
+
+# HC Librarian for Retro Computing
+
+Add/Replace objects into library
+
+# HC Linker for Retro Computing
+
+## Output formats
+
+- **bin**: Flat Binary
+- **rex**: Relocatable Executable
+
+## HC Linker for Flat Binary
+
+**Supported arguments:**
+
+- -text [OFFSET] \
+    Define start of text section
+- -data [OFFSET] \
+    Define start of data section
+- -bss [OFFSET] \
+    Define start of bss section
+- -align [OFFSET] \
+    Define align of all sections
+
+```sh
+# Generate CP/M .COM file
+hclink-bin -o test.com -text 0x100 test.obj lib.lib
+# Generate Generic .BIN file
+hclink-bin -o test.bin test.obj lib.lib
+# Generate MSX Simple .ROM file
+hclink-bin -o test.rom -text 0x4000 -bss 0xc000 test.obj lib.lib
+```
+
+## HC Linker for Relocatable Executable
+
+**Supported arguments**
+
+- -align [OFFSET] \
+    Define align of all sections
+
+```sh
+hclink-rex -o test.rex test.obj lib.lib
+```
+
+## HC Builder
+
+Configuration example:
+
+```ini
+[config] ; optional section
+dump = yes ; optional (default: no) - dump object dump from assembly
+verbose = yes ; optional (default: no)
+
+[files:z80] ; use files:ARCH
+main.s ; file list
+
+[libs] ; optional section (allow objects or library)
+runtime.lib
+single.obj
+
+[link:release] ; use link:CONFIGURATION
+format = com ; hclink output format: (use lib to generate library using hclib)
+filename = example.com ; optional (default: a.out)
+text = 0x100 ; optional hclink arguments (eg: text, data, bss, align)
+
+[link:debug]
+format = com
+filename = example.com
+text = 0x100
+symbols = example.sym ; optinal symbols output file name (default: ignore file generation)
+```
+
+### How to make project
+
+```sh
+# make release configuration
+hcbuild project.prj make release # build project in current direcorty
+hcbuild projectdirectory/project.prj make release # build project on another directory
+```
+
+### How to clean project
+
+```sh
+# make release configuration
+hcbuild project.prj clean release
+```
+
+# Relocatable Executable Format
+
+## File Layout (Order)
+
+- Header
+- text section
+- data section
+- bss section
+- relocation table
+
+## Header
+
+| Offset | Size | Description                                   |
+|--------|------|-----------------------------------------------|
+| 000000 | 0002 | 'HC' String                                   |   
+| 000002 | 0002 | text size                                     |
+| 000004 | 0002 | data size                                     |
+| 000006 | 0002 | bss size                                      |
+| 000008 | 0002 | _start offset (use text position as base)     |
+| 000010 | 0002 | reloc size (each item has 2 byte offset)      |
+| 000012 | 0003 | reserved                                      |
+| 000012 | 0001 | cpu id                                        |
+
+CPU IDs:
+
+- 0xF0: Intel 8080
+- 0xF1: Intel 8085
+- 0xF2: Zilog Z80
+- 0xF3: Intel 8086
+- 0xF4: Intel 8052
+
+## How to load
+
+- Read first 16 bytes (header)
+- Alloc (text size + data size + bss size) on continuous space on memory
+- Copy text and data segments to memory
+- Process relocation table
+    - Read relocation item (offset (2 bytes address))
+    - Select word (2 bytes) at offset on application memory
+    - Add offset of start of text section to selected word value

@@ -1,0 +1,11 @@
+[config]
+dump = yes
+
+[files:8086]
+8086-test-0.s
+
+[link:release]
+format = bin
+filename = 8086-test-0.com
+text = 0x100
+symbols = 8086-test-0.com.sym

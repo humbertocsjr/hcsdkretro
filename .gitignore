@@ -1,0 +1,10 @@
+/bin
+*.dSYM
+*.obj
+*.sym
+*.dump
+*.com
+*.bin
+*.rex
+*.lib
+*.o
