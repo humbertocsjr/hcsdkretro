@@ -204,6 +204,10 @@ section text
 
 Add/Replace objects into library
 
+```sh
+hclib test.lib test1.obj test2.obj test3.obj
+```
+
 # HC Linker for Retro Computing
 
 ## Output formats
@@ -246,7 +250,7 @@ hclink-rex -o test.rex test.obj lib.lib
 
 ## HC Builder
 
-Configuration example:
+Configuration example (.prj file):
 
 ```ini
 [config] ; optional section
