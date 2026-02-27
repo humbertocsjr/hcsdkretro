@@ -22,28 +22,30 @@ win: $(WIN_OUT)
 	@true
 
 clean:
-	@rm -f $(POSIX_OUT) $(CLR)
+	@rm -f $(POSIX_OUT) $(WIN_OUT) $(LINUX_OUT) $(MACOS_OUT) $(CLR)
 
 $(POSIX_OUT): $(SRC_REQS) Makefile
 	@echo [CC] $(@F)
 	@mkdir -p $(@D)
-	@cp ../license $(@D)/license
 	@cc -g -o $@ $(SRC)
 
 $(LINUX_OUT):  $(SRC_REQS) Makefile
 	@echo [CC] $(@F)
 	@mkdir -p $(@D)
 	@cp ../license $(@D)/license
+	@cp -R ../samples $(@D)/samples
 	@x86_64-unknown-linux-gnu-gcc -m64 -o $@ $(SRC)
 
 $(MACOS_OUT):  $(SRC_REQS) Makefile
 	@echo [CC] $(@F)
 	@mkdir -p $(@D)
 	@cp ../license $(@D)/license.txt
+	@cp -R ../samples $(@D)/samples
 	@clang -arch x86_64 -arch arm64 -o $@ $(SRC)
 
 $(WIN_OUT):  $(patsubst %.exe.c,%.c,$(SRC_REQS)) Makefile
 	@echo [CC] $(@F)
 	@mkdir -p $(@D)
 	@cp ../license $(@D)/license.txt
+	@cp -R ../samples $(@D)/samples
 	@x86_64-w64-mingw32-gcc -DEXEEXT=1 -o $@ $(patsubst %.exe.c,%.c,$(SRC))
