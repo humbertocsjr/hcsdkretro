@@ -6,7 +6,7 @@ Cross-compiler tools for retro computing.
 
 - **8080**:  Intel 8080 or Compatibles
 - **8085**:  Intel 8085 or Compatibles
-- **8086**:  Intel 8086/8088 or Compatibles
+- **8086**:  Intel 8086/8088 or Compatibles (Single segment executable output)
 - **Z80**: Zilog Z80 or Compatibles
 
 ## Todo List
