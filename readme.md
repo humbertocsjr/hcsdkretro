@@ -2,6 +2,13 @@
 
 Cross-compiler tools for retro computing.
 
+## Supported Targets
+
+- **8080**:  Intel 8080 or Compatibles
+- **8085**:  Intel 8085 or Compatibles
+- **8086**:  Intel 8086/8088 or Compatibles
+- **Z80**: Zilog Z80 or Compatibles
+
 ## Todo List
 
 - Complete documentation
@@ -37,12 +44,6 @@ sudo make install
 # HC Assembler for Retro Computing
 
 Inspired in NASM Source Code Format.
-
-## Supported Targets
-
-- **8080**:  Intel 8080 or Compatibles
-- **8085**:  Intel 8085 or Compatibles
-- **8086**:  Intel 8086/8088 or Compatibles
 
 
 ## Intel 8080 / 8085 Support
