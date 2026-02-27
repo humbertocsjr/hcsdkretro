@@ -1,5 +1,13 @@
 #include "build.h"
 
+#ifdef EXEEXT
+#define PATHSEPARATOR '\\'
+#define PATHSEPARATORSTR "\\"
+#else
+#define PATHSEPARATOR '/'
+#define PATHSEPARATORSTR "/"
+#endif
+
 obj_t *_objs = NULL;
 obj_t *_last_obj = NULL;
 char *_path = "";
@@ -47,10 +55,10 @@ void make_files(section_t *section)
     keyvalue_t *kv = section->keys;
     while(kv)
     {
-        if(kv->key[0] != '/')
+        if(kv->key[0] != PATHSEPARATOR)
         {
             strcpy(source_name, _path);
-            if(*_path && _path[strlen(_path)-1] != '/') strcat(source_name, "/");
+            if(*_path && _path[strlen(_path)-1] != PATHSEPARATOR) strcat(source_name, PATHSEPARATORSTR);
             strncat(source_name, kv->key, 1000);
         }
         else strncpy(source_name, kv->key, 1000);
@@ -63,9 +71,15 @@ void make_files(section_t *section)
         if(!strcmp(get_ext(source_name), ".s") || !strcmp(get_ext(source_name), ".S"))
         {
             strcpy(cmd, sdk_path);
-            if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != '/') strcat(sdk_path, "/");
+            if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+            #ifdef EXEEXT
             strcat(cmd, "hcasm-");
             strcat(cmd, section->subsection);
+            strcat(cmd, ".exe");
+            #else
+            strcat(cmd, "hcasm-");
+            strcat(cmd, section->subsection);
+            #endif
             strcat(cmd, " -o ");
             strcat(cmd, obj_name);
             if(get_value_bool("config", "", "dump"))
@@ -158,26 +172,36 @@ void make_link(section_t *section, char *config)
     if(!strcmp(format, "lib"))
     {
         strcpy(cmd, sdk_path);
-        if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != '/') strcat(sdk_path, "/");
+        if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+        #ifdef EXEEXT
+        strcat(cmd, "hclib.exe ");
+        #else
         strcat(cmd, "hclib ");
-        if(out_file[0] != '/')
+        #endif
+        if(out_file[0] != PATHSEPARATOR)
         {
             strcat(cmd, _path);
-            if(*_path && _path[strlen(_path)-1] != '/') strcat(cmd, "/");
+            if(*_path && _path[strlen(_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
         }
         strcat(cmd, out_file);
     }
     else
     {
         strcpy(cmd, sdk_path);
-        if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != '/') strcat(sdk_path, "/");
+        if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+        #ifdef EXEEXT
         strcat(cmd, "hclink-");
         strcat(cmd, format);
+        strcat(cmd, ".exe");
+        #else
+        strcat(cmd, "hclink-");
+        strcat(cmd, format);
+        #endif
         strcat(cmd, " -o ");
-        if(out_file[0] != '/')
+        if(out_file[0] != PATHSEPARATOR)
         {
             strcat(cmd, _path);
-            if(*_path && _path[strlen(_path)-1] != '/') strcat(cmd, "/");
+            if(*_path && _path[strlen(_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
         }
         strcat(cmd, out_file);
         if(strlen(text_offset))
@@ -242,10 +266,10 @@ void make_libs(section_t *section)
     keyvalue_t *kv = section->keys;
     while(kv)
     {
-        if(kv->key[0] != '/')
+        if(kv->key[0] != PATHSEPARATOR)
         {
             strcpy(obj_name, _path);
-            if(*_path && _path[strlen(_path)-1] != '/') strcat(obj_name, "/");
+            if(*_path && _path[strlen(_path)-1] != PATHSEPARATOR) strcat(obj_name, PATHSEPARATORSTR);
             strncat(obj_name, kv->key, 1000);
         }
         else strncpy(obj_name, kv->key, 1000);
