@@ -32,7 +32,7 @@ char *get_ext(char *filename)
 
 void help()
 {
-    printf("HC Builder for Retro Computing v%d.%d R%d\n", VERISION, SUBVERSION, REVISION);
+    printf("HC Builder for Retro Computing v%d.%d R%d\n", VERSION, SUBVERSION, REVISION);
     printf("HC Software Development Kit for Retro Computing\n");
     printf("Copyright (c) 2025,2026 Humberto Costa dos Santos Junior\n\n");
     printf("Usage: hcbuild [PROJECT FILE] [COMMAND] [CONFIGURATION NAME (default: release)]\n");
@@ -299,6 +299,7 @@ int main(int argc, char **argv)
     _path = dirname(_path);
     if(!strcmp(argv[2], "make"))
     {
+        make_libs(get_section("libs", "start"));
         make_files(get_section("files", "8080"));
         make_files(get_section("files", "8085"));
         make_files(get_section("files", "8086"));

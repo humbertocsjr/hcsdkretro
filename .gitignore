@@ -9,3 +9,6 @@
 *.lib
 *.o
 *.DS_Store
+hcsdk-*.deb
+hcsdk-*.zip
+hcsdk-*.tgz

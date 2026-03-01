@@ -6,7 +6,7 @@ object_t *_objs = NULL;
 
 void help()
 {
-    printf("HC Librarian for Retro Computing v%d.%d R%d\n", VERISION, SUBVERSION, REVISION);
+    printf("HC Librarian for Retro Computing v%d.%d R%d\n", VERSION, SUBVERSION, REVISION);
     printf("HC Software Development Kit for Retro Computing\n");
     printf("Copyright (c) 2025,2026 Humberto Costa dos Santos Junior\n\n");
     printf("Usage: hclib [LIBRARY FILE] [OBJECT FILES ...]\n\n");

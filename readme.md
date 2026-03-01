@@ -41,6 +41,20 @@ sudo make install
     hclink-bin -text 0x100 -o example.com example.obj
     ```
 
+## Development on macOS
+
+```sh
+brew tap messense/macos-cross-toolchains
+brew install dpkg llvm cmake xwin mingw-w64 x86_64-unknown-linux-gnu
+```
+
+**Generating distribution files:**
+
+```sh
+make win macos linux
+```
+
+
 # HC Assembler for Retro Computing
 
 Inspired in NASM Source Code Format.
@@ -264,6 +278,9 @@ main.s ; file list
 [libs] ; optional section (allow objects or library)
 runtime.lib
 single.obj
+
+[libs:start] ; optional section (set start object from external runtime)
+start.obj
 
 [link:release] ; use link:CONFIGURATION
 format = com ; hclink output format: (use lib to generate library using hclib)

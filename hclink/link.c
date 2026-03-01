@@ -8,7 +8,7 @@ bool _verbose = false;
 
 void help()
 {
-    printf("HC Linker for Retro Computing v%d.%d R%d [%s]\n", VERISION, SUBVERSION, REVISION, format_name());
+    printf("HC Linker for Retro Computing v%d.%d R%d [%s]\n", VERSION, SUBVERSION, REVISION, format_name());
     printf("HC Software Development Kit for Retro Computing\n");
     printf("Copyright (c) 2025,2026 Humberto Costa dos Santos Junior\n\n");
     printf("Usage: hclink-%s [ARGS] [OBJECT FILES ...]\n", format_ext());
