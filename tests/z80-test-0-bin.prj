@@ -1,0 +1,11 @@
+[config]
+sdk_path = ../bin/
+
+[files:z80]
+z80-test-0.s
+
+[link:release]
+format = bin
+filename = z80-test-0.bin
+text = 0xc000
+symbols = z80-test-0.bin.sym

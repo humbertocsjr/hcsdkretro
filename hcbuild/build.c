@@ -299,11 +299,13 @@ int main(int argc, char **argv)
     _path = dirname(_path);
     if(!strcmp(argv[2], "make"))
     {
+        make_libs(get_section("lib", "start"));
         make_libs(get_section("libs", "start"));
         make_files(get_section("files", "8080"));
         make_files(get_section("files", "8085"));
         make_files(get_section("files", "8086"));
         make_files(get_section("files", "z80"));
+        make_libs(get_section("lib", ""));
         make_libs(get_section("libs", ""));
         make_link(get_section("link", argv[3]), argv[3]);
     }

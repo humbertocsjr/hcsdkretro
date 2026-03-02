@@ -269,13 +269,13 @@ static void emit_cmp__offset16bit(expr_t *mnemonic, opcode_t *opcode, int argc, 
         if(!cmp) error_expr(argv[0], "flag expected.");
         op |= cmp->value_aux << 3;
         out(REC_DATA, 0, 0, &op, 1);
-        out(generate(argv[1], 0, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+        out(generate(argv[1], -1, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
     else if(argc == 1 && opcode->op2)
     {
         op = opcode->op2;
         out(REC_DATA, 0, 0, &op, 1);
-        out(generate(argv[0], 0, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+        out(generate(argv[0], -1, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
     else error_expr(mnemonic, "invalid argument count.");
 }
@@ -605,6 +605,25 @@ static void emit_bit(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[
     else error_expr(argv[0], "invalid bit/register combination.");
 }
 
+static void emit_im(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
+{
+    uint8_t op;
+    uint8_t ops[3];
+    ops[0] = opcode->op1;
+    ops[1] = opcode->op2;
+    ops[2] = opcode->op3;
+    reg_t *reg;
+    if(argc != 1) error_expr(mnemonic, "invalid argument count.");
+    if(is_value_only(argv[0]) && argv[0]->token != TOK_VALUE && argv[0]->value < 3)
+    {
+        op = opcode->op4;
+        out(REC_DATA, 0, 0, &op, 1);
+        op = ops[argv[0]->value];
+        out(REC_DATA, 0, 0, &op, 1);
+    }
+    else error_expr(argv[0], "invalid constant expression.");
+}
+
 reg_t _regs[] = 
 {
     {"b", 0, 0, REG_8BIT},
@@ -703,5 +722,28 @@ opcode_t _opcode[] =
     {"bit",     0x40, 0x00, 0x00, 0x00, 0x00, 0x00, emit_bit},
     {"res",     0x80, 0x00, 0x00, 0x00, 0x00, 0x00, emit_bit},
     {"set",     0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, emit_bit},
+
+    {"ldi",     0xed, 0xa0, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"ldir",    0xed, 0xb0, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"cpi",     0xed, 0xa1, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"cpir",    0xed, 0xb1, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"ini",     0xed, 0xa2, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"inir",    0xed, 0xb2, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"outi",    0xed, 0xa3, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"otir",    0xed, 0xb3, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"ldd",     0xed, 0xa8, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"lddr",    0xed, 0xb8, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"cpd",     0xed, 0xa9, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"cpdr",    0xed, 0xb9, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"ind",     0xed, 0xaa, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"indr",    0xed, 0xba, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"outd",    0xed, 0xab, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"otdr",    0xed, 0xbb, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"reti",    0xed, 0x4d, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"rrd",     0xed, 0x67, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"rld",     0xed, 0x6f, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"retn",    0xed, 0x45, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"neg",     0xed, 0x44, 0x00, 0x00, 0x00, 0x00, emit_simple_2bytes},
+    {"im",      0x46, 0x56, 0x5e, 0xed, 0x00, 0x00, emit_im},
     {NULL,      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, NULL}
 };

@@ -53,6 +53,9 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
             case REC_EXPR_PUSH_VALUE:
                 stack_push(rec.header.value);
                 break;
+            case REC_EXPR_PUSH_VALUE_UNSIGNED:
+                stack_push(*(uint16_t*)&rec.header.value);
+                break;
             case REC_EXPR_PUSH_OFFSET:
                 stack_push(_curr_section->position + rec.header.value);
                 break;
