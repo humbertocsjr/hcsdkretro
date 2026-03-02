@@ -2,4 +2,4 @@
 #pragma once
 #define VERSION 1
 #define SUBVERSION 0
-#define REVISION 2
+#define REVISION 3

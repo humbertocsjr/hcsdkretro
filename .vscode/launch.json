@@ -57,6 +57,19 @@
         "MIMode": "lldb"
     },
     {
+        "name": "hclink-bin z80-test-0",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/hclink-bin",
+        "args": ["-o", "${workspaceFolder}/tests/z80-test-0.bin", "-v",  "${workspaceFolder}/tests/z80-test-0.obj", "-text", "0xc000"],
+        "stopAtEntry": false,
+        "cwd": "${fileDirname}",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make hclink",
+        "MIMode": "lldb"
+    },
+    {
         "name": "hclink-rex test-0",
         "type": "cppdbg",
         "request": "launch",

@@ -1,4 +1,5 @@
 /bin
+/distrosite
 *.dSYM
 *.obj
 *.sym

@@ -5,7 +5,7 @@ _start:
 lbl1:
 
 
-times 7 nop
+times lbl1 + 0x10 - $ nop
 lbl2:
 nop
 jmp lbl2
