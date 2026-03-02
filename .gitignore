@@ -12,3 +12,5 @@
 hcsdk-*.deb
 hcsdk-*.zip
 hcsdk-*.tgz
+hcsdk-*.pkg
+hcsdk-*.exe
