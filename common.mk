@@ -48,4 +48,4 @@ $(WIN_OUT):  $(patsubst %.exe.c,%.c,$(SRC_REQS)) Makefile
 	@mkdir -p $(@D)
 	@cp ../license $(@D)/license.txt
 	@cp -R ../samples $(@D)/samples
-	@x86_64-w64-mingw32-gcc -DEXEEXT=1 -o $@ $(patsubst %.exe.c,%.c,$(SRC))
+	@x86_64-w64-mingw32-gcc -DWINDOWS_HOST=1 -o $@ $(patsubst %.exe.c,%.c,$(SRC))

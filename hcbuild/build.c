@@ -1,6 +1,6 @@
 #include "build.h"
 
-#ifdef EXEEXT
+#ifdef WINDOWS_HOST
 #define PATHSEPARATOR '\\'
 #define PATHSEPARATORSTR "\\"
 #else
@@ -72,7 +72,7 @@ void make_files(section_t *section)
         {
             strcpy(cmd, sdk_path);
             if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
-            #ifdef EXEEXT
+            #ifdef WINDOWS_HOST
             strcat(cmd, "hcasm-");
             strcat(cmd, section->subsection);
             strcat(cmd, ".exe");
@@ -173,7 +173,7 @@ void make_link(section_t *section, char *config)
     {
         strcpy(cmd, sdk_path);
         if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
-        #ifdef EXEEXT
+        #ifdef WINDOWS_HOST
         strcat(cmd, "hclib.exe ");
         #else
         strcat(cmd, "hclib ");
@@ -189,7 +189,7 @@ void make_link(section_t *section, char *config)
     {
         strcpy(cmd, sdk_path);
         if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
-        #ifdef EXEEXT
+        #ifdef WINDOWS_HOST
         strcat(cmd, "hclink-");
         strcat(cmd, format);
         strcat(cmd, ".exe");

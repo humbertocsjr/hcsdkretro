@@ -9,6 +9,24 @@ Cross-compiler tools for retro computing.
 - **8086**:  Intel 8086/8088 or Compatibles (Single segment executable output)
 - **Z80**: Zilog Z80 or Compatibles
 
+## Supported Hosts - Pre-compiled distribution
+
+- **macOS - Intel/Apple Silicon**:
+    - hcsdk-macos-v??.??.??-setup.pkg: macOS Installer
+    - hcsdk-macos-v??.??.??.tgz: macOS Binaries
+- **Windows - Intel**:
+    - hcsdk-win-v??.??.??.zip: Windows Binaries
+    - hcsdk-win-v??.??.??-setup.exe: Windows Installer
+- **Linux - Intel**
+    - hcsdk-linux-v??.??.??.tgz: Linux Binaries
+    - hcsdk-linux-v??.??.??.deb: Debian/Ubuntu-based Package
+
+## Tested Hosts - Build with make
+
+- **Linux - ARM**
+- **FreeBSD - Intel**
+- **OpenBSD - Intel**
+
 ## Todo List
 
 - Complete documentation
@@ -43,9 +61,11 @@ sudo make install
 
 ## Development on macOS
 
+Installing the minimum requirements for development:
+
 ```sh
 brew tap messense/macos-cross-toolchains
-brew install dpkg llvm cmake xwin mingw-w64 x86_64-unknown-linux-gnu
+brew install dpkg llvm cmake xwin mingw-w64 x86_64-unknown-linux-gnu msitools nsis
 ```
 
 **Generating distribution files:**

@@ -11,6 +11,9 @@ all clean test posix linux macos win:
 	$M tests
 	@make --no-print-directory --silent distro_$@
 
+distro: linux macos win
+	@true
+
 install: all
 	@install -d $(INSTDIR)
 	@install $(filter-out %.dSYM,$(wildcard bin/hcasm-* bin/hclink-* bin/hclib bin/hcbuild)) $(INSTDIR)
@@ -38,14 +41,30 @@ distro_all distro_posix distro_test:
 	@true
 
 distro_win:
+	@mkdir -p bin/win/
+	@cp distrofiles/setenv.bat bin/win/setenv.bat
+	@cp distrofiles/hcsdk.ico bin/win/hcsdk.ico
+	@cp distrofiles/windows.nsi bin/win/windows.nsi
 	@echo [ZIP] hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip
 	@rm hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip 2>/dev/null | true
 	@cd bin/win; zip -r ../../hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip ./  > /dev/null
+	@echo [EXE] hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION)-setup.exe
+	@cd bin/win; makensis windows.nsi > /dev/null
+	@mv hcsdk-win-installer.exe hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION)-setup.exe
+
 
 distro_macos:
 	@echo [TGZ] hcsdk-macos-v$(VERSION)-$(SUBVERSION)-R$(REVISION).tgz
 	@rm hcsdk-macos-v$(VERSION)-$(SUBVERSION)-R$(REVISION).tgz 2>/dev/null | true
 	@cd bin/macos; tar -czvf ../../hcsdk-macos-v$(VERSION)-$(SUBVERSION)-R$(REVISION).tgz ./ >/dev/null 2>&1
+	@echo [PKG] hcsdk-macos-v$(VERSION)-$(SUBVERSION)-R$(REVISION)-setup.pkg
+	@mkdir -p bin/pkg/usr/local/bin
+	@cp bin/macos/hc* bin/pkg/usr/local/bin/
+	@mkdir -p bin/pkg/usr/local/shared/hcsdk/
+	@cp bin/macos/license.txt bin/pkg/usr/local/shared/hcsdk/license
+	@mkdir -p bin/pkg/usr/local/shared/hcsdk/samples
+	@cp -R samples bin/pkg/usr/local/shared/hcsdk/samples
+	@pkgbuild --ownership recommended --quiet  --root bin/pkg --install-location / --identifier br.dev.humbertocsjr.hcsdk --version $(VERSION).$(SUBVERSION).$(REVISION) hcsdk-macos-v$(VERSION)-$(SUBVERSION)-R$(REVISION)-setup.pkg
 
 distro_linux: bin/dpkg/hcsdk/DEBIAN/control
 	@echo [TGZ] hcsdk-linux-v$(VERSION)-$(SUBVERSION)-R$(REVISION).tgz
@@ -54,15 +73,12 @@ distro_linux: bin/dpkg/hcsdk/DEBIAN/control
 	@echo [DEB] hcsdk-linux-v$(VERSION)-$(SUBVERSION)-R$(REVISION).deb
 	@mkdir -p bin/dpkg/hcsdk/usr/local/bin
 	@cp bin/linux/hc* bin/dpkg/hcsdk/usr/local/bin/
-	@mkdir -p bin/dpkg/hcsdk/usr/shared/hcsdk/
-	@cp bin/linux/license bin/dpkg/hcsdk/usr/shared/hcsdk/
-	@mkdir -p bin/dpkg/hcsdk/usr/shared/hcsdk/samples
-	@cp -R samples bin/dpkg/hcsdk/usr/shared/hcsdk/samples
+	@mkdir -p bin/dpkg/hcsdk/usr/local/shared/hcsdk/
+	@cp bin/linux/license bin/dpkg/hcsdk/usr/local/shared/hcsdk/
+	@mkdir -p bin/dpkg/hcsdk/usr/local/shared/hcsdk/samples
+	@cp -R samples bin/dpkg/hcsdk/usr/local/shared/hcsdk/samples
 	@dpkg-deb --root-owner-group --build bin/dpkg/hcsdk hcsdk-linux-v$(VERSION)-$(SUBVERSION)-R$(REVISION).deb > /dev/null
 
-
-
-
 distro_clean:
-	@rm hcsdk-*.tgz hcsdk-*.zip 2> /dev/null | true
-	@rm -R bin/* | true
+	@rm hcsdk-*.tgz hcsdk-*.zip hcsdk-*.deb hcsdk-*.pkg hcsdk-*.exe 2> /dev/null | true
+	@rm -R bin/* 2> /dev/null | true 
