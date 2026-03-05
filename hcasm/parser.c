@@ -284,7 +284,7 @@ void parse_line()
             else error_expr(curr(), "section name expected.");
             scan();
         }
-        else if(curr_is_keyword("resb"))
+        else if(curr_is_keyword("resb") || curr_is_keyword("rb"))
         {
             scan();
             argv[0] = parse_expr();
@@ -292,20 +292,12 @@ void parse_line()
             out(REC_DATA_RESERVE, argv[0]->value, 0, 0, 0);
             free_expr(argv[0]);
         }
-        else if(curr_is_keyword("resw"))
+        else if(curr_is_keyword("resw") || curr_is_keyword("rw"))
         {
             scan();
             argv[0] = parse_expr();
             if(argv[0]->token != TOK_VALUE) error_expr(argv[0], "constant expression expected.");
             out(REC_DATA_RESERVE, argv[0]->value * 2, 0, 0, 0);
-            free_expr(argv[0]);
-        }
-        else if(curr_is_keyword("resq"))
-        {
-            scan();
-            argv[0] = parse_expr();
-            if(argv[0]->token != TOK_VALUE) error_expr(argv[0], "constant expression expected.");
-            out(REC_DATA_RESERVE, argv[0]->value * 4, 0, 0, 0);
             free_expr(argv[0]);
         }
         else if(curr_is_keyword("times"))
