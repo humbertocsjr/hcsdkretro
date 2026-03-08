@@ -1,4 +1,3 @@
-section text
-mov a, b
 global _start
 _start:
+    jmp _start
