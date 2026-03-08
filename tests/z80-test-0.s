@@ -9,4 +9,5 @@ _start:
     ld bc, 256
     ld de, 0xc100
     ldir
+    jr _start
 

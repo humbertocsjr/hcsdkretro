@@ -1,0 +1,10 @@
+[config]
+sdk_path = ../bin/
+
+[files:8085]
+8085-test-0.s
+
+[link:release]
+format = bin
+filename = 8085-test-0.bin
+text = 0x00
