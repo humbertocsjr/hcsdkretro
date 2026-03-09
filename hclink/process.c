@@ -247,9 +247,15 @@ size_t process_objs(step_t step, rectype_t section)
     consts_set_global(_objs, "__text_start__");
     consts_set_global(_objs, "__data_start__");
     consts_set_global(_objs, "__bss_start__");
+    consts_set_offset(_objs, "__text_start__");
+    consts_set_offset(_objs, "__data_start__");
+    consts_set_offset(_objs, "__bss_start__");
     consts_set_global(_objs, "__text_end__");
     consts_set_global(_objs, "__data_end__");
     consts_set_global(_objs, "__bss_end__");
+    consts_set_offset(_objs, "__text_end__");
+    consts_set_offset(_objs, "__data_end__");
+    consts_set_offset(_objs, "__bss_end__");
     consts_set_global(_objs, "__text_size__");
     consts_set_global(_objs, "__data_size__");
     consts_set_global(_objs, "__bss_size__");
@@ -257,6 +263,10 @@ size_t process_objs(step_t step, rectype_t section)
     consts_set_global(_objs, "_etext");
     consts_set_global(_objs, "_edata");
     consts_set_global(_objs, "_ebss");
+    consts_set_offset(_objs, "_end");
+    consts_set_offset(_objs, "_etext");
+    consts_set_offset(_objs, "_edata");
+    consts_set_offset(_objs, "_ebss");
     switch (section)
     {
         case REC_SECTION_TEXT:
