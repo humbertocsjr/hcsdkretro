@@ -60,12 +60,27 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
                 stack_push(_curr_section->position + rec.header.value);
                 break;
             case REC_EXPR_PUSH_CONST:
-                val1 = consts_get(obj, (char *)rec.data);
-                const_is_offset = consts_is_offset(obj, (char*)rec.data);
-                stack_push(val1);
-                if(step == STEP_GENERATE && !consts_exists(obj, (char *)rec.data))
+                if(!strcmp((char*)rec.data, "_ebss"))
                 {
-                    process_error("constant not found: %s", (char *)rec.data);
+                    stack_push(consts_get(obj, "__bss_end__"));
+                }
+                else if(!strcmp((char*)rec.data, "_edata"))
+                {
+                    stack_push(consts_get(obj, "__data_end__"));
+                }
+                else if(!strcmp((char*)rec.data, "_etext"))
+                {
+                    stack_push(consts_get(obj, "__text_end__"));
+                }
+                else
+                {
+                    val1 = consts_get(obj, (char *)rec.data);
+                    const_is_offset = consts_is_offset(obj, (char*)rec.data);
+                    stack_push(val1);
+                    if(step == STEP_GENERATE && !consts_exists(obj, (char *)rec.data))
+                    {
+                        process_error("constant not found: %s", (char *)rec.data);
+                    }
                 }
                 break;
             case REC_EXPR_ADD:
@@ -229,6 +244,19 @@ size_t process_objs(step_t step, rectype_t section)
 {
     object_file_t *obj = _objs;
     section_t *curr_section;
+    consts_set_global(_objs, "__text_start__");
+    consts_set_global(_objs, "__data_start__");
+    consts_set_global(_objs, "__bss_start__");
+    consts_set_global(_objs, "__text_end__");
+    consts_set_global(_objs, "__data_end__");
+    consts_set_global(_objs, "__bss_end__");
+    consts_set_global(_objs, "__text_size__");
+    consts_set_global(_objs, "__data_size__");
+    consts_set_global(_objs, "__bss_size__");
+    consts_set_global(_objs, "_end");
+    consts_set_global(_objs, "_etext");
+    consts_set_global(_objs, "_edata");
+    consts_set_global(_objs, "_ebss");
     switch (section)
     {
         case REC_SECTION_TEXT:
