@@ -210,7 +210,7 @@ static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
             op = 0xfd;
             out(REC_DATA, 0, 0, &op, 1);
         }
-        op = opcode->op2 | reg2->value_aux;
+        op = opcode->op2 | reg2->value_aux << 4;
         out(REC_DATA, 0, 0, &op, 1);
     }
     else if(is_8bit_value && reg1 && reg1->value == 7 && opcode->op3)

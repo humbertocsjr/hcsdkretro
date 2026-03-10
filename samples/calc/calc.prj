@@ -1,5 +1,5 @@
 [files:z80]
-main.s
+calc.s
 
 [link:release]
 format = bin
