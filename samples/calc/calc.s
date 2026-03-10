@@ -1,351 +1,422 @@
-bdos equ 5
-    .print equ 9
-    .readline equ 10
+; Simple calculator for CP/M 2.2
+; Reads two numbers and an operator (+, -, *, /)
+; Displays the result.
+; Numbers are 16-bit signed integers.
+; Uses BDOS calls for I/O.
+; Assembler syntax: [] for indirect addressing.
+
+BDOS    equ     5
+C_READ  equ     10          ; Read console buffer
+C_WRITE equ     9           ; Print string
+C_CONOUT equ    2           ; Console output character
+
+
+Start:
+        ld      [SaveSP], sp        ; Save stack pointer for error recovery
+
+        ; Prompt for first number
+        ld      de, MsgNum1
+        ld      c, C_WRITE
+        call    BDOS
+        call    ReadLine
+        call    ParseNumber
+        ld      [Num1], hl          ; Store first number
+
+        ; Prompt for second number
+        ld      de, MsgNum2
+        ld      c, C_WRITE
+        call    BDOS
+        call    ReadLine
+        call    ParseNumber
+        ld      [Num2], hl          ; Store second number
+
+        ; Prompt for operator
+        ld      de, MsgOp
+        ld      c, C_WRITE
+        call    BDOS
+        call    ReadLine
+        ld      a, [Buffer+2]       ; First character of input
+        ld      [Operator], a
+
+        ; Perform the operation
+        ld      hl, [Num1]
+        ld      de, [Num2]
+        ld      a, [Operator]
+        cp      '+'
+        jr      z, DoAdd
+        cp      '-'
+        jr      z, DoSub
+        cp      '*'
+        jr      z, DoMul
+        cp      '/'
+        jr      z, DoDiv
+        ; Invalid operator
+        ld      de, MsgInvalidOp
+        ld      c, C_WRITE
+        call    BDOS
+        jp      Start
+
+DoAdd:
+        add     hl, de
+        jr      PrintResult
+DoSub:
+        or      a               ; clear carry
+        sbc     hl, de
+        jr      PrintResult
+DoMul:
+        call    Multiply        ; HL = HL * DE
+        jr      PrintResult
+DoDiv:
+        ld      a, d
+        or      e
+        jr      z, DivZero      ; Division by zero
+        call    Divide          ; HL = HL / DE
+        jr      PrintResult
+
+DivZero:
+        ld      de, MsgDivZero
+        ld      c, C_WRITE
+        call    BDOS
+        jp      Start
+
+PrintResult:
+        push    hl              ; Save result
+        ld      de, MsgResult
+        ld      c, C_WRITE
+        call    BDOS
+        pop     hl
+        call    PrintHL         ; Print HL as signed decimal
+        ld      a, 13
+        call    PutChar
+        ld      a, 10
+        call    PutChar
+        jp      Start           ; Loop for next calculation
+
+; ------------------------------------------------------------
+; Read a line from console into Buffer
+; ------------------------------------------------------------
+ReadLine:
+        ld      de, Buffer
+        ld      c, C_READ
+        call    BDOS
+        ; Ensure null terminator at end
+        ld      a, [Buffer+1]   ; Number of characters read
+        ld      hl, Buffer+2
+        ld      e, a
+        ld      d, 0
+        add     hl, de
+        ld      [hl], 0         ; Terminate with null
+        ret
+
+; ------------------------------------------------------------
+; Parse a signed decimal number from Buffer+2
+; Returns HL = value
+; ------------------------------------------------------------
+ParseNumber:
+        ld      hl, 0
+        ld      de, Buffer+2
+        ld      a, [de]         ; First character
+        cp      '-'
+        jr      nz, .positive
+        inc     de              ; Skip minus
+        call    .parseUnsigned
+        ; Negate HL
+        ld      a, l
+        cpl
+        ld      l, a
+        ld      a, h
+        cpl
+        ld      h, a
+        inc     hl
+        ret
+.positive:
+        call    .parseUnsigned
+        ret
+
+.parseUnsigned:
+        ; Parse unsigned number from [DE] until non-digit
+        ld      hl, 0
+.loop:
+        ld      a, [de]
+        cp      '0'
+        jr      c, .done
+        cp      '9'+1
+        jr      nc, .done
+        sub     '0'
+        ld      c, a
+        push    bc
+        ; HL = HL * 10
+        add     hl, hl          ; *2
+        ld      b, h
+        ld      c, l
+        add     hl, hl          ; *4
+        add     hl, hl          ; *8
+        add     hl, bc          ; *10
+        pop     bc
+        ld      b, 0
+        add     hl, bc          ; + digit
+        inc     de
+        jr      .loop
+.done:
+        ret
+
+; ------------------------------------------------------------
+; Multiply signed 16-bit: HL = HL * DE
+; Uses absolute values and adjusts sign.
+; ------------------------------------------------------------
+Multiply:
+        push    hl
+        push    de
+        ; Sign of HL
+        pop     hl
+        ld      a, h
+        or      a
+        jp      p, .hl_pos
+        ; Negate HL
+        ld      a, l
+        cpl
+        ld      l, a
+        ld      a, h
+        cpl
+        ld      h, a
+        inc     hl
+        ld      a, 1
+        jr      .store_hl_sig
+.hl_pos:
+        xor     a
+.store_hl_sig:
+        ld      b, a            ; B = sign of HL (0=pos, 1=neg)
+        ; Sign of DE
+        pop     de
+        ld      a, d
+        or      a
+        jp      p, .de_pos
+        ld      a, e
+        cpl
+        ld      e, a
+        ld      a, d
+        cpl
+        ld      d, a
+        inc     de
+        ld      a, 1
+        jr      .store_de_sig
+.de_pos:
+        xor     a
+.store_de_sig:
+        ld      c, a            ; C = sign of DE
+        push    bc              ; Save signs
+        ; Now HL and DE are absolute values
+        ; Multiply unsigned 16x16, result in HL (low 16 bits)
+        ld      b, h
+        ld      c, l            ; BC = multiplier
+        ld      hl, 0           ; Product
+        ld      a, 16
+.mul_loop:
+        srl     b
+        rr      c
+        jr      nc, .no_add
+        add     hl, de
+.no_add:
+        sla     e
+        rl      d
+        dec     a
+        jr      nz, .mul_loop
+        pop     bc              ; Restore signs
+        ; Apply sign: result negative if B XOR C = 1
+        ld      a, b
+        xor     c
+        or      a
+        jr      z, .done
+        ; Negate HL
+        ld      a, l
+        cpl
+        ld      l, a
+        ld      a, h
+        cpl
+        ld      h, a
+        inc     hl
+.done:
+        ret
+
+; ------------------------------------------------------------
+; Divide signed 16-bit: HL = HL / DE (quotient)
+; Uses absolute values and repeated subtraction.
+; ------------------------------------------------------------
+Divide:
+        ; Check divisor zero (already done in caller)
+        push    hl
+        push    de
+        ; Sign of dividend (HL)
+        pop     hl
+        ld      a, h
+        or      a
+        jp      p, .divid_pos
+        ld      a, l
+        cpl
+        ld      l, a
+        ld      a, h
+        cpl
+        ld      h, a
+        inc     hl
+        ld      a, 1
+        jr      .store_divid_sig
+.divid_pos:
+        xor     a
+.store_divid_sig:
+        ld      b, a            ; B = sign of dividend
+        ; Sign of divisor (DE)
+        pop     de
+        ld      a, d
+        or      a
+        jp      p, .divis_pos
+        ld      a, e
+        cpl
+        ld      e, a
+        ld      a, d
+        cpl
+        ld      d, a
+        inc     de
+        ld      a, 1
+        jr      .store_divis_sig
+.divis_pos:
+        xor     a
+.store_divis_sig:
+        ld      c, a            ; C = sign of divisor
+        push    bc              ; save signs
+        ; Now HL = dividend (unsigned), DE = divisor (unsigned)
+        ; Repeated subtraction
+        ld      bc, 0           ; quotient
+.sub_loop:
+        ; Compare HL with DE
+        ld      a, h
+        cp      d
+        jr      c, .sub_done
+        jr      nz, .can_sub
+        ld      a, l
+        cp      e
+        jr      c, .sub_done
+.can_sub:
+        ; HL >= DE, subtract
+        or      a
+        sbc     hl, de
+        inc     bc
+        jr      .sub_loop
+.sub_done:
+        ; Quotient in BC, remainder in HL (ignored)
+        ; Apply sign
+        pop     af              ; A = sign byte (B in lower, C in upper? Actually we pushed BC, so pop into BC)
+        ; We need to restore the signs properly. We pushed BC, so pop into BC.
+        pop     bc
+        ld      a, b
+        xor     c
+        or      a
+        jr      z, .positive
+        ; Negate quotient
+        ld      a, c
+        cpl
+        ld      c, a
+        ld      a, b
+        cpl
+        ld      b, a
+        inc     bc
+.positive:
+        push    bc
+        pop     hl              ; HL = quotient
+        ret
+
+; ------------------------------------------------------------
+; Print HL as signed decimal number
+; Uses a separate division by 10 routine (not the general Divide)
+; ------------------------------------------------------------
+PrintHL:
+        ld      a, h
+        or      a
+        jp      p, .positive
+        push    hl
+        ld      a, '-'
+        call    PutChar
+        pop     hl
+        ; Negate HL
+        ld      a, l
+        cpl
+        ld      l, a
+        ld      a, h
+        cpl
+        ld      h, a
+        inc     hl
+.positive:
+        ; Convert to decimal digits on stack
+        ld      bc, 0           ; C = digit count
+.convert:
+        call    Div10           ; HL = HL/10, A = remainder
+        add     a, '0'
+        push    af
+        inc     c
+        ld      a, h
+        or      l
+        jr      nz, .convert
+.print:
+        pop     af
+        call    PutChar
+        dec     c
+        jr      nz, .print
+        ret
+
+; ------------------------------------------------------------
+; Divide HL by 10, return quotient in HL, remainder in A
+; Uses repeated subtraction (fast enough for 16-bit)
+; ------------------------------------------------------------
+Div10:
+        ld      de, 10
+        ld      bc, 0
+.loop:
+        ld      a, h
+        cp      d
+        jr      c, .try_lower
+        jr      nz, .sub
+        ld      a, l
+        cp      e
+        jr      c, .try_lower
+.sub:
+        or      a
+        sbc     hl, de
+        inc     bc
+        jr      .loop
+.try_lower:
+        ; Here HL < 10
+        push    hl              ; remainder
+        push    bc
+        pop     hl              ; quotient
+        pop     af              ; remainder in A (low byte of HL)
+        ret
+
+; ------------------------------------------------------------
+; Output a character in A
+; ------------------------------------------------------------
+PutChar:
+        push    hl
+        push    de
+        ld      e, a
+        ld      c, C_CONOUT
+        call    BDOS
+        pop     de
+        pop     hl
+        ret
 
 section data
 
-    msg_prompt: db "= $"
-    msg_crlf: db 13,10,"$"
-    msg_error: db "Syntax error",13,10,"$"
-
-    cmd_exit: db "exit",0
-
-    pointer: dw 0
-
-    in_buffer: 
-        db 80, 0
-        ds 80
-
-    num_buffer:
-        ds 8
-    out_buffer:
-        ds 10
-
-section text
-
-    global _start
-    _start:
-        ld de, msg_prompt
-        call print_string
-
-        ld de, in_buffer
-        ld c, bdos.readline
-        call bdos
-
-        ld hl, in_buffer+2
-        ld [pointer], hl
-        call skip_spaces
-
-        ld de, cmd_exit
-        call cmp_string
-        jr z, .exit
-
-        call parse_expr
-        jp c, syntax_error
-
-        call skip_spaces
-        call peek
-        cp 0xd
-        jp nz, syntax_error
-
-        push hl
-
-        ld de, msg_crlf
-        call print_string
-
-        pop hl
-
-        call print_number
-
-        ld de, msg_crlf
-        call print_string
-
-        jp _start
-        .exit:
-            ret
-    
-    ; PARSER
-
-    parse_expr:
-        call parse_term
-        jr c, parse_error
-        .loop:
-            call skip_spaces
-            call peek
-            cp '+'
-            jr z, .parse_add
-            cp '-'
-            jr z, .parse_sub
-            ret
-        .parse_add:
-            call next
-            push hl
-            call parse_term
-            jr c, parse_error_pop
-            pop de
-            add hl, de
-            jr .loop
-        .parse_sub:
-            call next
-            push hl
-            call parse_term
-            jr c, parse_error_pop
-            pop de
-            or a
-            sbc hl, de
-            ex de, hl
-            ld h, d
-            ld l, e
-            jr .loop
-    
-
-    parse_error_pop:
-        pop de
-    parse_error:
-        scf
-        ret
-
-    parse_term:
-        call parse_unary
-        jr c, parse_error
-        .loop:
-            call skip_spaces
-            call peek
-
-            cp '*'
-            jr z, .parse_mul
-            cp '/'
-            jr z, .parse_div
-
-            ret
-        .parse_mul:
-            call next
-            push hl
-            call parse_unary
-            jr c, parse_error_pop
-            pop de
-            call mul16
-            jr .loop
-        .parse_div:
-            call next
-            push hl
-            call parse_unary
-            jr c, parse_error_pop
-            pop de
-            call div16
-            jr .loop
-
-    parse_unary:
-        call skip_spaces
-        call peek
-
-        cp '+'
-        jr z, .parse_pos
-        cp '-'
-        jr z, .parse_neg
-
-        jp parse_primary
-
-        .parse_pos:
-            call next
-            jp parse_primary
-        .parse_neg:
-            call next
-            call parse_primary
-            ret c
-            ld de, 0
-            or a
-            sbc hl, de
-            ret
-
-    parse_primary:
-        call skip_spaces
-        call peek
-
-        cp '('
-        jr z, .parse_paren
-
-        call parse_num
-        .parse_paren:
-            call next
-            call parse_expr
-            ret c
-            
-            call skip_spaces
-            call peek
-
-            cp ')'
-            jr nz, parse_error
-
-            call next
-            ret
-
-    parse_num:
-        call skip_spaces
-
-        ld hl, 0
-        ld b, 0
-
-        .loop:
-            call peek
-            cp '0'
-            jr c, .end
-            cp '9' + 1
-            jr nc, .end
-
-            inc b
-
-            call next
-            sub '0'
-
-            push af
-            push hl
-
-            ld de, 10
-            call mul16
-
-            pop de
-            pop af
-
-            ld e, a
-            ld d, 0
-            add hl, de
-
-            jr .loop
-        .end:
-            ld a, b
-            or a
-            jp z, parse_error
-            or a
-            ret
-    
-    peek:
-        ld hl, [pointer]
-        ld a, [hl]
-        ret
-    
-    next:
-        ld hl, [pointer]
-        inc hl
-        ld [pointer], hl
-        ret
-    
-    skip_spaces:
-        ld hl, [pointer]
-        .loop:
-            ld a, [hl]
-            cp ' '
-            jr nz, .end
-            inc hl
-            jr .loop
-        .end:
-        ld [pointer], hl
-        ret
-    
-    ; MATH
-
-    mul16:
-        ld bc, 0
-        .loop:
-            ld a, e
-            or d
-            jr z, .end
-            srl d
-            rr e
-            jr nc, .loop
-            add hl, bc
-            jr .loop
-        .end:
-        ret
-    
-    div16:
-        ld bc, 0
-        ld a, 16
-        .loop:
-            add hl, hl
-            rl c
-            rl b
-            sbc hl, de
-            jr c, .skip
-            inc bc
-            jr .next
-            .skip:
-                add hl, de
-            .next:
-            dec a
-            jr nz, .loop
-        ld h, b
-        ld l, c
-        ret
-
-    ; PRINT
-
-    print_number:
-        ld de, num_buffer + 6
-        ld b, 0
-
-        .loop:
-            push bc
-            ld bc, 10
-            call div16
-            pop bc
-
-            add a, '0'
-            dec de
-            ld [de], a
-            inc b
-
-            ld a, h
-            or l
-            jr nz, .loop
-
-        ld h, d
-        ld l, e
-        ld de, out_buffer
-        
-        .copy:
-            ld a, [hl]
-            ld [de], a
-            inc hl
-            inc de
-            djnz .copy
-
-        ld a, '$'
-        ld [de], a
-
-        ld de, out_buffer
-        call print_string
-        ret
-    
-    print_string:
-        ld c, bdos.print
-        jp bdos
-    
-    cmp_string:
-        push hl
-        .loop:
-            ld a, [de]
-            or a
-            jr z, .equal
-            cp [hl]
-            jr nz, .not_equal
-            inc hl
-            inc de
-            jr .loop
-        .equal:
-            ld a, [hl]
-            or a
-            jr z, .ok
-        .not_equal:
-            pop hl
-            or 1
-            ret
-        .ok:
-            pop hl
-            xor a
-            ret
-
-    syntax_error:
-        ld de, msg_error
-        call print_string
-        jp _start
+; ------------------------------------------------------------
+; Data area
+; ------------------------------------------------------------
+MsgNum1:        db      "Enter first number: $"
+MsgNum2:        db      "Enter second number: $"
+MsgOp:          db      "Enter operator (+, -, *, /): $"
+MsgResult:      db      "Result: $"
+MsgInvalidOp:   db      "Invalid operator!$",13,10,"$"
+MsgDivZero:     db      "Division by zero!$",13,10,"$"
+Buffer:         db      80, 0          ; Max length, actual length
+                ds      80              ; Buffer space
+SaveSP:         dw      0
+Num1:           dw      0
+Num2:           dw      0
+Operator:       db      0

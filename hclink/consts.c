@@ -151,6 +151,17 @@ void consts_reset_changed()
     }
 }
 
+void error_consts_has_changed()
+{
+    const_t *c = _consts;
+    while(c)
+    {
+        if(c->changed) break;
+        c = c->next;
+    }
+    error("fail to process files, labels keep changing: %s", c->name);
+}
+
 bool consts_is_changed()
 {
     const_t *c = _consts;
