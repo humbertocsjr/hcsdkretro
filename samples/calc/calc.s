@@ -1,17 +1,17 @@
 ; Simple calculator for CP/M 2.2
-; Reads two numbers and an operator (+, -, *, /)
-; Displays the result.
-; Numbers are 16-bit signed integers.
-; Uses BDOS calls for I/O.
-; Assembler syntax: [] for indirect addressing.
 
 BDOS    equ     5
 C_READ  equ     10          ; Read console buffer
 C_WRITE equ     9           ; Print string
 C_CONOUT equ    2           ; Console output character
 
+section text
 
+global _start
+_start:
 Start:
+        ld      hl, StackTop
+        ld      sp, hl
         ld      [SaveSP], sp        ; Save stack pointer for error recovery
 
         ; Prompt for first number
@@ -165,10 +165,11 @@ ParseNumber:
 ; Uses absolute values and adjusts sign.
 ; ------------------------------------------------------------
 Multiply:
-        push    hl
-        push    de
+        push    hl              ; Save original HL
+        push    de              ; Save original DE
+        pop     de              ; DE = original DE
+        pop     hl              ; HL = original HL
         ; Sign of HL
-        pop     hl
         ld      a, h
         or      a
         jp      p, .hl_pos
@@ -187,7 +188,6 @@ Multiply:
 .store_hl_sig:
         ld      b, a            ; B = sign of HL (0=pos, 1=neg)
         ; Sign of DE
-        pop     de
         ld      a, d
         or      a
         jp      p, .de_pos
@@ -240,17 +240,21 @@ Multiply:
 
 ; ------------------------------------------------------------
 ; Divide signed 16-bit: HL = HL / DE (quotient)
-; Uses absolute values and repeated subtraction.
+; Uses absolute values and repeated subtraction with correct comparison.
 ; ------------------------------------------------------------
 Divide:
         ; Check divisor zero (already done in caller)
-        push    hl
-        push    de
+        push    hl              ; Save dividend
+        push    de              ; Save divisor
+        pop     de              ; DE = divisor original
+        pop     hl              ; HL = dividend original
+
+        ; Save signs
         ; Sign of dividend (HL)
-        pop     hl
         ld      a, h
         or      a
         jp      p, .divid_pos
+        ; Negate HL to make positive
         ld      a, l
         cpl
         ld      l, a
@@ -263,9 +267,9 @@ Divide:
 .divid_pos:
         xor     a
 .store_divid_sig:
-        ld      b, a            ; B = sign of dividend
+        ld      b, a            ; B = sign of dividend (0=pos, 1=neg)
+
         ; Sign of divisor (DE)
-        pop     de
         ld      a, d
         or      a
         jp      p, .divis_pos
@@ -282,15 +286,26 @@ Divide:
         xor     a
 .store_divis_sig:
         ld      c, a            ; C = sign of divisor
-        push    bc              ; save signs
+        push    bc              ; save signs (B = dividend sign, C = divisor sign)
+
         ; Now HL = dividend (unsigned), DE = divisor (unsigned)
+        ; Check if dividend < divisor -> quotient = 0
+        ld      a, h
+        cp      d
+        jr      c, .quot_zero
+        jr      nz, .do_division
+        ld      a, l
+        cp      e
+        jr      c, .quot_zero
+
+.do_division:
         ; Repeated subtraction
         ld      bc, 0           ; quotient
 .sub_loop:
-        ; Compare HL with DE
+        ; Compare HL with DE (HL >= DE?)
         ld      a, h
         cp      d
-        jr      c, .sub_done
+        jr      c, .sub_done    ; if HL < DE, done
         jr      nz, .can_sub
         ld      a, l
         cp      e
@@ -301,14 +316,18 @@ Divide:
         sbc     hl, de
         inc     bc
         jr      .sub_loop
+
 .sub_done:
         ; Quotient in BC, remainder in HL (ignored)
-        ; Apply sign
-        pop     af              ; A = sign byte (B in lower, C in upper? Actually we pushed BC, so pop into BC)
-        ; We need to restore the signs properly. We pushed BC, so pop into BC.
-        pop     bc
-        ld      a, b
-        xor     c
+        jr      .apply_sign
+
+.quot_zero:
+        ld      bc, 0           ; quotient = 0
+
+.apply_sign:
+        pop     de              ; restore signs (D = dividend sign, E = divisor sign)
+        ld      a, d
+        xor     e
         or      a
         jr      z, .positive
         ; Negate quotient
@@ -323,7 +342,7 @@ Divide:
         push    bc
         pop     hl              ; HL = quotient
         ret
-
+        
 ; ------------------------------------------------------------
 ; Print HL as signed decimal number
 ; Uses a separate division by 10 routine (not the general Divide)
@@ -364,43 +383,52 @@ PrintHL:
 
 ; ------------------------------------------------------------
 ; Divide HL by 10, return quotient in HL, remainder in A
-; Uses repeated subtraction (fast enough for 16-bit)
+; Preserves BC (used as digit counter in PrintHL)
 ; ------------------------------------------------------------
 Div10:
-        ld      de, 10
-        ld      bc, 0
+        push    bc              ; save BC
+        push    de              ; save DE
+        ld      bc, 10
+        ld      de, 0           ; DE will hold quotient
 .loop:
+        ; Compare HL with 10
         ld      a, h
-        cp      d
-        jr      c, .try_lower
+        cp      b
+        jr      c, .done        ; if HL < 10, done
         jr      nz, .sub
         ld      a, l
-        cp      e
-        jr      c, .try_lower
+        cp      c
+        jr      c, .done
 .sub:
+        ; HL >= 10, subtract 10
         or      a
-        sbc     hl, de
-        inc     bc
+        sbc     hl, bc
+        inc     de
         jr      .loop
-.try_lower:
-        ; Here HL < 10
-        push    hl              ; remainder
-        push    bc
-        pop     hl              ; quotient
-        pop     af              ; remainder in A (low byte of HL)
+.done:
+        ; HL is remainder (0-9), DE is quotient
+        ld      a, l            ; remainder in A
+        push    de
+        pop     hl              ; HL = quotient
+        pop     de              ; restore DE
+        pop     bc              ; restore BC
         ret
 
 ; ------------------------------------------------------------
 ; Output a character in A
 ; ------------------------------------------------------------
 PutChar:
+        push    af
         push    hl
         push    de
+        push    bc
         ld      e, a
         ld      c, C_CONOUT
         call    BDOS
+        pop     bc
         pop     de
         pop     hl
+        pop     af
         ret
 
 section data
@@ -408,10 +436,10 @@ section data
 ; ------------------------------------------------------------
 ; Data area
 ; ------------------------------------------------------------
-MsgNum1:        db      "Enter first number: $"
-MsgNum2:        db      "Enter second number: $"
-MsgOp:          db      "Enter operator (+, -, *, /): $"
-MsgResult:      db      "Result: $"
+MsgNum1:        db      13,10,"Enter first number: $"
+MsgNum2:        db      13,10,"Enter second number: $"
+MsgOp:          db      13,10,"Enter operator (+, -, *, /): $"
+MsgResult:      db      13,10,"Result: $"
 MsgInvalidOp:   db      "Invalid operator!$",13,10,"$"
 MsgDivZero:     db      "Division by zero!$",13,10,"$"
 Buffer:         db      80, 0          ; Max length, actual length
@@ -420,3 +448,5 @@ SaveSP:         dw      0
 Num1:           dw      0
 Num2:           dw      0
 Operator:       db      0
+                times   4096 db 0
+StackTop:
