@@ -351,7 +351,7 @@ void process(step_t step)
         tries++;
         if(tries > 1000)
         {
-            error("fail to process files, labels keep changing.");
+            error_consts_has_changed();
         }
     } while(step == STEP_PROCESS_FILES && consts_is_changed());
 }

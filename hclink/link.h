@@ -172,6 +172,8 @@ void consts_print(char *sym_name);
 void consts_set_offset(object_file_t *obj, char *name);
 // Get constant is offset/label
 bool consts_is_offset(object_file_t *obj, char *name);
+// Emit consts keep changing error
+void error_consts_has_changed();
 
 // --== stack.c ==--
 
