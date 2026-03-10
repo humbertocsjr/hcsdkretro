@@ -6,15 +6,13 @@
 
 Name "HC SDK for Retro Computing v___VERSION___"
 OutFile "../../hcsdk-win-installer.exe"
-InstallDir "$PROGRAMFILES64\HC SDK for Retro Computing"
+InstallDir "$PROGRAMFILES\HC SDK for Retro Computing"
 InstallDirRegKey HKLM "Software\HC SDK for Retro Computing" "Install_Dir"
 RequestExecutionLevel admin
-;CPU amd64
-;Unicode true
 
 ;--------------------------------
 ; Interface (Inglês)
-!include "x64.nsh"
+
 !include "MUI2.nsh"
 
 ; Ícones
@@ -39,7 +37,6 @@ RequestExecutionLevel admin
 ; Seção principal
 
 Section "Install"
-  SetRegView 64
 
   SetOutPath $INSTDIR
   
@@ -83,7 +80,6 @@ SectionEnd
 ; Seção de desinstalação
 
 Section "Uninstall"
-  SetRegView 64
 
   ; Remover atalhos do menu Iniciar
   RMDir /r "$SMPROGRAMS\HC SDK for Retro Computing"

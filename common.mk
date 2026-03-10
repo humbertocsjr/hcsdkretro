@@ -7,9 +7,14 @@ MACOS_PATH = ../bin/macos/
 MACOS_OUT = $(patsubst %,$(MACOS_PATH)%,$(OUT_BASE))
 WIN_PATH = ../bin/win/
 WIN_OUT = $(patsubst %,$(WIN_PATH)%.exe,$(OUT_BASE))
+WIN32_PATH = ../bin/win32/
+WIN32_OUT = $(patsubst %,$(WIN32_PATH)%.exe,$(OUT_BASE))
 
 
 all test posix: $(POSIX_OUT)
+	@true
+
+samples_zip:
 	@true
 
 linux: $(LINUX_OUT)
@@ -19,6 +24,9 @@ macos: $(MACOS_OUT)
 	@true
 
 win: $(WIN_OUT)
+	@true
+
+win32: $(WIN32_OUT)
 	@true
 
 clean:
@@ -49,3 +57,10 @@ $(WIN_OUT):  $(patsubst %.exe.c,%.c,$(SRC_REQS)) Makefile
 	@cp ../license $(@D)/license.txt
 	@cp -R ../samples $(@D)/samples
 	@x86_64-w64-mingw32-gcc -DWINDOWS_HOST=1 -o $@ $(patsubst %.exe.c,%.c,$(SRC))
+
+$(WIN32_OUT):  $(patsubst %.exe.c,%.c,$(SRC_REQS)) Makefile
+	@echo [CC] $(@F)
+	@mkdir -p $(@D)
+	@cp ../license $(@D)/license.txt
+	@cp -R ../samples $(@D)/samples
+	@i686-w64-mingw32-gcc -DWINDOWS_HOST=1 -o $@ $(patsubst %.exe.c,%.c,$(SRC))

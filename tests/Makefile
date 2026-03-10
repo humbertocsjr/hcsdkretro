@@ -1,6 +1,6 @@
 OUT = $(patsubst %-lib.prj,%.lib,$(wildcard *-lib.prj)) $(patsubst %-bin.prj,%.bin,$(wildcard *-bin.prj)) $(patsubst %-com.prj,%.com,$(wildcard *-com.prj)) $(patsubst %-rex.prj,%.rex,$(wildcard *-rex.prj))
 
-all posix linux macos win:
+all posix linux macos win win32 samples_zip:
 	@true
 
 test: $(OUT)
