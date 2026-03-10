@@ -2,7 +2,9 @@
 
 Cross-compiler tools for retro computing.
 
-[Site e Documentação em Português](https://humbertocsjr.dev.br)
+[Site e Documentação em Português](https://humbertocsjr.dev.br/hcsdk/pt)
+
+[Site and Documentation in English](https://humbertocsjr.dev.br/hcsdk/en)
 
 ## Supported Targets
 
