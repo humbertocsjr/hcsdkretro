@@ -1,6 +1,6 @@
 
 section data
-msg: db "TEST",13,10,"$"
+msg: db "HELLO WORLD",13,10,"$"
 
 
 section text
