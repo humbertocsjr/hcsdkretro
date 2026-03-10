@@ -284,7 +284,7 @@ void parse_line()
             else error_expr(curr(), "section name expected.");
             scan();
         }
-        else if(curr_is_keyword("resb") || curr_is_keyword("rb"))
+        else if(curr_is_keyword("resb") || curr_is_keyword("rb") || curr_is_keyword("ds"))
         {
             scan();
             argv[0] = parse_expr();

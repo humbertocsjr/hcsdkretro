@@ -2,7 +2,7 @@ M = @make --no-print-directory --silent $@ -C
 INSTDIR = /usr/local/bin
 include version.mk
 
-all clean test posix linux macos win:
+all clean test posix linux macos win win32 samples_zip:
 	@make --no-print-directory --silent version_$@
 	$M hcasm
 	$M hclink
@@ -11,7 +11,7 @@ all clean test posix linux macos win:
 	$M tests
 	@make --no-print-directory --silent distro_$@
 
-distro: linux macos win
+distro: linux macos win win32 samples_zip
 	@true
 
 install: all
@@ -33,18 +33,25 @@ bin/dpkg/hcsdk/DEBIAN/control: ./version.mk Makefile
 	@echo "Architecture: amd64" >> $@
 	@echo "Description: HC Software Development Kit for Retro Computing" >> $@
 
-version_all version_posix version_test version_win version_macos version_linux version_clean: ./include/version.h
+version_all version_posix version_test version_win version_win32 version_macos version_linux version_samples_zip version_clean: ./include/version.h
 	@true
 
 
 distro_all distro_posix distro_test:
 	@true
 
+distro_samples_zip:
+	@echo [ZIP] hcsdk-samples-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip
+	@cd samples; zip -r ../hcsdk-samples-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip ./  > /dev/null
+	@cp hcsdk-samples-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip distrosite/hcsdk-samples.zip
+
 distro_win:
 	@mkdir -p bin/win/
 	@cp distrofiles/setenv.bat bin/win/setenv.bat
 	@cp distrofiles/hcsdk.ico bin/win/hcsdk.ico
 	@cp distrofiles/windows.nsi bin/win/windows.nsi
+	@sed -i -e "s/___VERSION___/$(VERSION).$(SUBVERSION).$(REVISION)/g" bin/win/windows.nsi
+	@rm bin/win/windows.nsi-e 2>/dev/null | true
 	@echo [ZIP] hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip
 	@rm hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip 2>/dev/null | true
 	@cd bin/win; zip -r ../../hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip ./  > /dev/null
@@ -56,6 +63,23 @@ distro_win:
 	@mkdir -p distrosite
 	@cp hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION)-setup.exe distrosite/hcsdk-win.exe
 
+distro_win32:
+	@mkdir -p bin/win32/
+	@cp distrofiles/setenv.bat bin/win32/setenv.bat
+	@cp distrofiles/hcsdk.ico bin/win32/hcsdk.ico
+	@cp distrofiles/windows32.nsi bin/win32/windows.nsi
+	@sed -i -e "s/___VERSION___/$(VERSION).$(SUBVERSION).$(REVISION)/g" bin/win32/windows.nsi
+	@rm bin/win32/windows.nsi-e 2>/dev/null | true
+	@echo [ZIP] hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip
+	@rm hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip 2>/dev/null | true
+	@cd bin/win32; zip -r ../../hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip ./  > /dev/null
+	@mkdir -p distrosite
+	@cp hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip distrosite/hcsdk-win32.pkg
+	@echo [EXE] hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION)-setup.exe
+	@cd bin/win32; makensis windows.nsi > /dev/null
+	@mv hcsdk-win-installer.exe hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION)-setup.exe
+	@mkdir -p distrosite
+	@cp hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION)-setup.exe distrosite/hcsdk-win32.exe
 
 distro_macos:
 	@echo [TGZ] hcsdk-macos-v$(VERSION)-$(SUBVERSION)-R$(REVISION).tgz

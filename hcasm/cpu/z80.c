@@ -117,9 +117,9 @@ static void emit_simple_2bytes(expr_t *mnemonic, opcode_t *opcode, int argc, exp
 static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     uint8_t op;
-    reg_t *reg1;
-    reg_t *reg2;
-    expr_t *arg;
+    reg_t *reg1 = NULL;
+    reg_t *reg2 = NULL;
+    expr_t *arg = NULL;
     bool is_8bit_op = false;
     bool is_16bit_op = false;
     bool is_8bit_value = false;
@@ -160,6 +160,11 @@ static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
             reg2 = &_regs[6];
             arg = argv[1];
             is_16bit_op = true;
+        }
+        else 
+        {
+            arg = argv[0];
+            is_8bit_value = true;
         }
     }
     else error_expr(mnemonic, "invalid argument count.");
@@ -209,6 +214,13 @@ static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
         out(REC_DATA, 0, 0, &op, 1);
     }
     else if(is_8bit_value && reg1 && reg1->value == 7 && opcode->op3)
+    {
+        op = opcode->op3;
+        out(REC_DATA, 0, 0, &op, 1);
+        generate(arg, 0, false);
+        out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
+    }
+    else if(is_8bit_value && !reg1 && opcode->op3)
     {
         op = opcode->op3;
         out(REC_DATA, 0, 0, &op, 1);
