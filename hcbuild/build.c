@@ -47,14 +47,17 @@ void make_files(section_t *section)
     int st;
     char cmd[8000];
     char source_name[2048];
+    char temp_name[2048];
     char obj_name[2048];
     char dump_name[2048];
     char *sdk_path = get_value("config", "", "sdk_path");
+    bool ok = false;
 
     if(!section) return;
     keyvalue_t *kv = section->keys;
     while(kv)
     {
+        ok = false;
         if(kv->key[0] != PATHSEPARATOR)
         {
             strcpy(source_name, _path);
@@ -68,8 +71,38 @@ void make_files(section_t *section)
         strcpy(dump_name, source_name);
         remove_ext(dump_name);
         strcat(dump_name, ".dump");
-        if(!strcmp(get_ext(source_name), ".s") || !strcmp(get_ext(source_name), ".S"))
+        if(!strcmp(get_ext(source_name), ".tmp"))
         {
+            fprintf(stderr, "error: invalid file extension: %s\n", source_name);
+            exit(1);
+        }
+        if(!strcmp(get_ext(source_name), ".rt") || !strcmp(get_ext(source_name), ".RT"))
+        {
+            ok = true;
+            strcpy(temp_name, source_name);
+            remove_ext(dump_name);
+            strcat(temp_name, ".tmp");
+            strcpy(cmd, sdk_path);
+            if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+            #ifdef WINDOWS_HOST
+            strcat(cmd, "retrolang-");
+            strcat(cmd, section->subsection);
+            strcat(cmd, ".exe");
+            #else
+            strcat(cmd, "retrolang-");
+            strcat(cmd, section->subsection);
+            #endif
+            strcat(cmd, " -o ");
+            strcat(cmd, temp_name);
+            strcat(cmd, " ");
+            strcat(cmd, source_name);
+            st = system(cmd);
+            if(st) exit(st);
+            strcpy(source_name, temp_name);
+        }
+        if(!strcmp(get_ext(source_name), ".s") || !strcmp(get_ext(source_name), ".S") || !strcmp(get_ext(source_name), ".tmp"))
+        {
+            ok = true;
             strcpy(cmd, sdk_path);
             if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
             #ifdef WINDOWS_HOST
@@ -105,7 +138,11 @@ void make_files(section_t *section)
             }
             _last_obj = obj;
         }
-        else
+        if(!strcmp(get_ext(source_name), ".tmp"))
+        {
+            remove(source_name);
+        }
+        if(!ok)
         {
             fprintf(stderr, "error: extension not supported: %s\n", source_name);
             exit(1);
