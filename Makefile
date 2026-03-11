@@ -8,6 +8,7 @@ all clean test posix linux macos win win32 samples_zip:
 	$M hclink
 	$M hclib
 	$M hcbuild
+	$M retrolang
 	$M tests
 	@make --no-print-directory --silent distro_$@
 
