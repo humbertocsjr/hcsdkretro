@@ -149,7 +149,8 @@ static int get_mrm(expr_t *arg)
                     return 0b00000111;
                     break;
                 case 5: // bp
-                    error_expr(arg, "invalid usage of bp register. 8086 only support [bp+XX].");
+                    return 0b00000110;
+                    //error_expr(arg, "invalid usage of bp register. 8086 only support [bp+XX].");
                     break;
                 case 6: // si
                     return 0b00000100;
@@ -912,8 +913,8 @@ static void emit_jump_cc(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *a
         out(REC_DATA, 0, 0, &op, 1);
         op = opcode->op3;
         out(REC_DATA, 0, 0, &op, 1);
-        out(generate(argv[0], 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
-        seg_offset = generate(argv[1], 2, true);
+        out(generate(argv[0], -2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+        seg_offset = generate(argv[1], -2, true);
         out(seg_offset ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
     else if(argc == 1 && mnemonic->force_far) 
@@ -962,7 +963,7 @@ static void emit_jump_cc(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *a
     else if(argc == 1 && !mnemonic->force_far && !mnemonic->force_near) 
     {
         out(REC_DATA, 0, 0, &op, 1);
-        if(generate(argv[0], 1, false))
+        if(generate(argv[0], -1, false))
         {
             out(REC_EXPR_PUSH_OFFSET, 1, 0, 0, 0);
             out(REC_EXPR_SUB, 0, 0, 0, 0);
@@ -1047,7 +1048,7 @@ static void emit_loop(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
     else if(argc == 1 && !mnemonic->force_far && !mnemonic->force_near) 
     {
         out(REC_DATA, 0, 0, &op, 1);
-        if(generate(argv[0], 1, false))
+        if(generate(argv[0], -1, false))
         {
             out(REC_EXPR_PUSH_OFFSET, 1, 0, 0, 0);
             out(REC_EXPR_SUB, 0, 0, 0, 0);
@@ -1286,7 +1287,7 @@ opcode_t _opcode[] =
     {"sub",     0b00101000, 0b10000000, 0b00101000, 0b00010110, 0b00000000, 0b00000000, emit_mrm_simple},
     {"test",    0b10000100, 0b11110110, 0b00000000, 0b10101000, 0b00000000, 0b00000000, emit_mrm_simple},
     {"wait",    0b10011011, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
-    {"xchg",    0b10010000, 0b10000110, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_embbed_reg16bit_or_single_mrm},
+    {"xchg",    0b10010000, 0b10000110, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_mrm_simple},
     {"xlat",    0b11010111, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
     {"xor",     0b00110000, 0b10000000, 0b00110000, 0b00110100, 0b00000000, 0b00000000, emit_mrm_simple},
     {"jo",      0b01110000, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},

@@ -35,6 +35,7 @@ bin/dpkg/hcsdk/DEBIAN/control: ./version.mk Makefile
 	@echo "Version: $(VERSION).$(SUBVERSION).$(REVISION)" >> $@
 	@echo "Maintainer: Humberto Costa <humbertocsjr@github>" >> $@
 	@echo "Architecture: amd64" >> $@
+	@echo "Depends: libc6" >> $@
 	@echo "Description: HC Software Development Kit for Retro Computing" >> $@
 
 version_all version_posix version_test version_win version_win32 version_macos version_linux version_samples_zip version_clean: ./include/version.h

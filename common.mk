@@ -42,7 +42,7 @@ $(LINUX_OUT):  $(SRC_REQS) Makefile
 	@mkdir -p $(@D)
 	@cp ../license $(@D)/license
 	@cp -R ../samples $(@D)/samples
-	@x86_64-unknown-linux-gnu-gcc -m64 -o $@ $(SRC)
+	@x86_64-unknown-linux-gnu-gcc -m64 -static -o $@ $(SRC)
 
 $(MACOS_OUT):  $(SRC_REQS) Makefile
 	@echo [CC] $(@F)

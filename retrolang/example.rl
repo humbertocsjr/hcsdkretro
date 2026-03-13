@@ -1,6 +1,6 @@
-type size as u16
-type int as s16
-type char as u8
+typedef size as u16
+typedef int as s16
+typedef char as u8
 
 def main(argc as int, argv as @@char)
     var a as int

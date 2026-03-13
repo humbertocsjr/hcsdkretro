@@ -9,4 +9,5 @@ _start:
     mov cx, 256
     mov cx, 0xc100
     movsb
+    mov ax, [bp+1]
 
