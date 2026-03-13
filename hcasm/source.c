@@ -60,13 +60,15 @@ char source_between(char min, char max)
 
 void source_open(char *filename)
 {
+    FILE *file = fopen(filename, "r");
+    if(!file) error("can't open file: %s", filename);
     _sources_current++;
     if(_sources_current >= SOURCES_MAX) error("source files list overflow");
     _sources[_sources_current] = malloc(sizeof(source_t) + strlen(filename));
     _source = _sources[_sources_current];
     memset(_source, 0, sizeof(source_t));
     strcpy(_source->filename, filename);
-    _source->file = fopen(filename, "r");
+    _source->file = file;
     _source->line = 1;
     _source->column = 0;
     source_nextc();

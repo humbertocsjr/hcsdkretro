@@ -71,17 +71,17 @@ void make_files(section_t *section)
         strcpy(dump_name, source_name);
         remove_ext(dump_name);
         strcat(dump_name, ".dump");
-        if(!strcmp(get_ext(source_name), ".tmp"))
+        if(!strcmp(get_ext(source_name), ".__s"))
         {
             fprintf(stderr, "error: invalid file extension: %s\n", source_name);
             exit(1);
         }
-        if(!strcmp(get_ext(source_name), ".rt") || !strcmp(get_ext(source_name), ".RT"))
+        if(!strcmp(get_ext(source_name), ".rl") || !strcmp(get_ext(source_name), ".RL"))
         {
             ok = true;
             strcpy(temp_name, source_name);
-            remove_ext(dump_name);
-            strcat(temp_name, ".tmp");
+            remove_ext(temp_name);
+            strcat(temp_name, ".__s");
             strcpy(cmd, sdk_path);
             if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
             #ifdef WINDOWS_HOST
@@ -96,11 +96,12 @@ void make_files(section_t *section)
             strcat(cmd, temp_name);
             strcat(cmd, " ");
             strcat(cmd, source_name);
+            if(get_value_bool("config", "", "verbose")) printf("%s\n", cmd);
             st = system(cmd);
             if(st) exit(st);
             strcpy(source_name, temp_name);
         }
-        if(!strcmp(get_ext(source_name), ".s") || !strcmp(get_ext(source_name), ".S") || !strcmp(get_ext(source_name), ".tmp"))
+        if(!strcmp(get_ext(source_name), ".s") || !strcmp(get_ext(source_name), ".S") || !strcmp(get_ext(source_name), ".__s"))
         {
             ok = true;
             strcpy(cmd, sdk_path);
@@ -138,9 +139,9 @@ void make_files(section_t *section)
             }
             _last_obj = obj;
         }
-        if(!strcmp(get_ext(source_name), ".tmp"))
+        if(!strcmp(get_ext(source_name), ".__s"))
         {
-            remove(source_name);
+            if(!get_value_bool("config", "", "keep")) remove(source_name);
         }
         if(!ok)
         {

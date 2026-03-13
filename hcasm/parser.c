@@ -52,7 +52,16 @@ opcode_t *parse_mnemonic(expr_t *e)
 expr_t *parse_expr0()
 {
     expr_t *e = NULL;
-    if(curr_is(TOK_VALUE) || curr_is(TOK_REGISTER) || curr_is(TOK_SYMBOL) || curr_is(TOK_CURRENT_POS))
+    if(curr_is(TOK_SUB))
+    {
+        e = clone_expr(curr());
+        e->left = clone_expr(curr());
+        e->left->token = TOK_VALUE;
+        e->left->value = 0;
+        scan();
+        e->right = parse_expr0();
+    }
+    else if(curr_is(TOK_VALUE) || curr_is(TOK_REGISTER) || curr_is(TOK_SYMBOL) || curr_is(TOK_CURRENT_POS))
     {
         e = clone_expr(curr());
         scan();
@@ -213,9 +222,11 @@ void parse_line()
                 {
                     case TOK_VALUE:
                         out(REC_DATA, 0, 0, &curr()->value, 1);
+                        scan();
                         break;
                     case TOK_STRING:
                         out(REC_DATA, 0, 0, curr()->text, strlen(curr()->text));
+                        scan();
                         break;
                     default:;
                         expr_t *arg = parse_expr();
@@ -224,7 +235,6 @@ void parse_line()
                         free_expr(arg);
                         break;
                 }
-                scan();
                 if(!curr_is(TOK_COMMA)) break;
                 scan();
             }
@@ -238,9 +248,11 @@ void parse_line()
                 {
                     case TOK_VALUE:
                         out(REC_DATA, 0, 0, &curr()->value, 2);
+                        scan();
                         break;
                     case TOK_STRING:
                         out(REC_DATA, 0, 0, curr()->text, strlen(curr()->text));
+                        scan();
                         break;
                     default:;
                         expr_t *arg = parse_expr();
@@ -248,7 +260,6 @@ void parse_line()
                         free_expr(arg);
                         break;
                 }
-                scan();
                 if(!curr_is(TOK_COMMA)) break;
                 scan();
             }

@@ -1,0 +1,46 @@
+;GLOBAL VAR d
+_d: resb 3
+;GLOBAL VAR c
+_c: resb 2
+;GLOBAL VAR b
+_b: resb 256
+;GLOBAL VAR a
+_a: resb 2
+;FUNCTION: soma
+_soma:
+  .__END__:
+  ret
+;END FUNCTION: soma
+;FUNCTION: main
+_main:
+  push bp
+  mov bp, sp
+  sub bp, 2
+;IF
+  mov ax, 1
+  test ax, ax
+  je near .L0
+;THEN
+;EXPRESSION COMMAND
+  mov al, [bp+-1] ; a
+  mov bl, 3
+  cmp al, bl
+  mov al, 0
+  jl $+4
+  dec al
+  test al, al
+  jne near .L1
+  mov al, 1
+  .L1:
+  mov [bp+-1], al ; a
+;END EXPRESSION COMMAND
+  .L0:
+;END IF
+;EXPRESSION COMMAND
+  mov ax, 1
+;END EXPRESSION COMMAND
+  .__END__:
+  mov sp, bp
+  pop bp
+  ret
+;END FUNCTION: main

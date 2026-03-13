@@ -1,0 +1,12 @@
+[config]
+sdk_path = ../bin/
+verbose = true
+keep = true
+
+[files:8086]
+8086-test-1.rl
+
+[link:release]
+format = bin
+filename = 8086-test-1.com
+text = 0x100

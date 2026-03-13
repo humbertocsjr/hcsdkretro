@@ -1,5 +1,8 @@
 #include "retrolang.h"
 
+char *_out_name = NULL;
+FILE *_out = NULL;
+
 void help()
 {
     printf("RetroLang Compiler for Retro Computing v%d.%d R%d [%s]\n", VERSION, SUBVERSION, REVISION, cpu_name());
@@ -13,7 +16,6 @@ void help()
 
 int main(int argc, char **argv)
 {
-    char *out_name = NULL;
     char *src_name = NULL;
     for(int i = 1; i < argc; i++)
     {
@@ -24,8 +26,8 @@ int main(int argc, char **argv)
         else if(!strcmp(argv[i], "-o"))
         {
             i++;
-            if(out_name) error("error: output name already defined\n");
-            if(i < argc) out_name = argv[i];
+            if(_out_name) error("error: output name already defined\n");
+            if(i < argc) _out_name = argv[i];
         }
         else 
         {
@@ -34,9 +36,18 @@ int main(int argc, char **argv)
         }
     }
     cpu_init();
-    if(!out_name) help();
+    if(!_out_name) help();
     if(!src_name) help();
-    
+    _out = fopen(_out_name, "w");
+    if(!_out) error("can't create file: %s", _out_name);
+
+    parser_process_file(src_name);
+
+    codegen();
+
+    fclose(_out);
+    _out = NULL;
+
     return 0;
 }
 

@@ -17,6 +17,11 @@
             "label": "make hcbuild",
             "type": "shell",
             "command": "make -C ${workspaceFolder}/hcbuild all"
+        },
+        {
+            "label": "make retrolang",
+            "type": "shell",
+            "command": "make -C ${workspaceFolder}/retrolang all"
         }
     ]
 }
