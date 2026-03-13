@@ -8,6 +8,7 @@ all clean test posix linux macos win win32 samples_zip:
 	$M hclink
 	$M hclib
 	$M hcbuild
+	$M retrolang
 	$M tests
 	@make --no-print-directory --silent distro_$@
 
@@ -34,6 +35,7 @@ bin/dpkg/hcsdk/DEBIAN/control: ./version.mk Makefile
 	@echo "Version: $(VERSION).$(SUBVERSION).$(REVISION)" >> $@
 	@echo "Maintainer: Humberto Costa <humbertocsjr@github>" >> $@
 	@echo "Architecture: amd64" >> $@
+	@echo "Depends: libc6" >> $@
 	@echo "Description: HC Software Development Kit for Retro Computing" >> $@
 
 version_all version_posix version_test version_win version_win32 version_macos version_linux version_samples_zip version_clean: ./include/version.h

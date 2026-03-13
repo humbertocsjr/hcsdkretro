@@ -18,9 +18,12 @@ Cross-compiler tools for retro computing.
 - **macOS - Intel/Apple Silicon**:
     - hcsdk-macos-v??.??.??-setup.pkg: macOS Installer
     - hcsdk-macos-v??.??.??.tgz: macOS Binaries
-- **Windows - Intel**:
+- **Windows - Intel 64 bits**:
     - hcsdk-win-v??.??.??.zip: Windows Binaries
     - hcsdk-win-v??.??.??-setup.exe: Windows Installer
+- **Windows - Intel 32 bits**:
+    - hcsdk-win32-v??.??.??.zip: Windows Binaries
+    - hcsdk-win32-v??.??.??-setup.exe: Windows Installer
 - **Linux - Intel**
     - hcsdk-linux-v??.??.??.tgz: Linux Binaries
     - hcsdk-linux-v??.??.??.deb: Debian/Ubuntu-based Package
@@ -75,8 +78,12 @@ brew install dpkg llvm cmake xwin mingw-w64 x86_64-unknown-linux-gnu msitools ns
 **Generating distribution files:**
 
 ```sh
-make win macos linux
+make distro
 ```
+
+# RetroLang for Retro Computing
+
+Low Level Programming Language inspired in Ruby, BASIC, T3X and Pascal.
 
 
 # HC Assembler for Retro Computing
