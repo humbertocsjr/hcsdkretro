@@ -224,7 +224,7 @@ void codegen_expr(func_t *func, command_t *cmd, expr_t *e, datatype_t *dt, bool 
             {
                 ref_func = func_find(e->token);
                 if(!ref_func) error_expr(e, "function/variable/constant not found: %s", e->token);
-
+error_expr(e, "not implemented function pointer");
             }
             break;
         default: error("unsupported expression type: %i[%s]", e->tok, e->token);
