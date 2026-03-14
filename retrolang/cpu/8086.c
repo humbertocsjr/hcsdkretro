@@ -413,7 +413,7 @@ void cpu_label(int label)
 
 char *cpu_comment_start()
 {
-    return ";";
+    return "; ";
 }
 
 char *cpu_comment_end()

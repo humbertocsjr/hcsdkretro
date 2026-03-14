@@ -1,27 +1,27 @@
-;GLOBAL VAR d
+; GLOBAL VAR d
 _d: resb 3
-;GLOBAL VAR c
+; GLOBAL VAR c
 _c: resb 2
-;GLOBAL VAR b
+; GLOBAL VAR b
 _b: resb 256
-;GLOBAL VAR a
+; GLOBAL VAR a
 _a: resb 2
-;FUNCTION: soma
+; FUNCTION: soma
 _soma:
   .__END__:
   ret
-;END FUNCTION: soma
-;FUNCTION: main
+; END FUNCTION: soma
+; FUNCTION: main
 _main:
   push bp
   mov bp, sp
   sub bp, 2
-;IF
+; IF
   mov ax, 1
   test ax, ax
   je near .L0
-;THEN
-;EXPRESSION COMMAND
+; THEN
+; EXPRESSION COMMAND
   mov al, [bp+-1] ; a
   mov bl, 3
   cmp al, bl
@@ -33,32 +33,32 @@ _main:
   mov al, 1
   .L1:
   mov [bp+-1], al ; a
-;END EXPRESSION COMMAND
+; END EXPRESSION COMMAND
   .L0:
-;END IF
-;IF
+; END IF
+; IF
   mov ax, 1
   test ax, ax
   je near .L2
-;THEN
-;EXPRESSION COMMAND
+; THEN
+; EXPRESSION COMMAND
   mov al, 1
   mov [bp+-1], al ; a
-;END EXPRESSION COMMAND
-;ELSE
+; END EXPRESSION COMMAND
+; ELSE
   jmp .L3
   .L2:
-;EXPRESSION COMMAND
+; EXPRESSION COMMAND
   mov al, 2
   mov [bp+-1], al ; a
-;END EXPRESSION COMMAND
+; END EXPRESSION COMMAND
   .L3:
-;END IF
-;EXPRESSION COMMAND
+; END IF
+; EXPRESSION COMMAND
   mov al, 0
   mov [bp+-1], al ; a
-;END EXPRESSION COMMAND
-;UNTIL
+; END EXPRESSION COMMAND
+; UNTIL
   .L4:
   mov al, [bp+-1] ; a
   cbw
@@ -69,21 +69,21 @@ _main:
   dec ax
   test ax, ax
   jne near .L5
-;DO UNTIL
-;EXPRESSION COMMAND
+; DO UNTIL
+; EXPRESSION COMMAND
   mov al, [bp+-1] ; a
   mov bl, 1
   add al, bl
   mov [bp+-1], al ; a
-;END EXPRESSION COMMAND
+; END EXPRESSION COMMAND
   jmp .L4
   .L5:
-;END UNTIL
-;EXPRESSION COMMAND
+; END UNTIL
+; EXPRESSION COMMAND
   mov al, 0
   mov [bp+-1], al ; a
-;END EXPRESSION COMMAND
-;WHILE
+; END EXPRESSION COMMAND
+; WHILE
   .L6:
   mov al, [bp+-1] ; a
   cbw
@@ -94,18 +94,18 @@ _main:
   dec ax
   test ax, ax
   je near .L7
-;DO WHILE
-;EXPRESSION COMMAND
+; DO WHILE
+; EXPRESSION COMMAND
   mov al, [bp+-1] ; a
   mov bl, 1
   add al, bl
   mov [bp+-1], al ; a
-;END EXPRESSION COMMAND
+; END EXPRESSION COMMAND
   jmp .L6
   .L7:
-;END WHILE
+; END WHILE
   .__END__:
   mov sp, bp
   pop bp
   ret
-;END FUNCTION: main
+; END FUNCTION: main
