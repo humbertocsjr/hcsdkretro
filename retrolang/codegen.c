@@ -68,6 +68,26 @@ void codegen_write_to_expr(func_t *func, command_t *cmd, expr_t *e, datatype_t *
     }
 }
 
+void codegen_autoconvert(expr_t *e, datatype_t *dst, datatype_t *src)
+{
+    switch(dst->nativetype)
+    {
+        case NATIVETYPE_8BITS:
+            cpu_convet_to_8bit(src->nativetype, src->is_signed, dst->is_signed);
+            break;
+        case NATIVETYPE_16BITS:
+            cpu_convet_to_16bit(src->nativetype, src->is_signed, dst->is_signed);
+            break;
+        case NATIVETYPE_24BITS:
+            cpu_convet_to_24bit(src->nativetype, src->is_signed, dst->is_signed);
+            break;
+        case NATIVETYPE_32BITS:
+            cpu_convet_to_32bit(src->nativetype, src->is_signed, dst->is_signed);
+            break;
+        default:  error_expr(e, "invalid data conversion.");
+    }
+}
+
 void codegen_expr(func_t *func, command_t *cmd, expr_t *e, datatype_t *dt, bool to_aux_reg)
 {
     int levels = 0;
@@ -192,10 +212,12 @@ void codegen_expr(func_t *func, command_t *cmd, expr_t *e, datatype_t *dt, bool 
                 if(ref_var->is_global)
                 {
                     cpu_load_global_var(var_calc_datatype(ref_var)->nativetype, ref_var->name);
+                    codegen_autoconvert(e, dt, var_calc_datatype(ref_var));
                 }
                 else
                 {
                     cpu_load_local_var(var_calc_datatype(ref_var)->nativetype, ref_var->name, ref_var->local_offset);
+                    codegen_autoconvert(e, dt, var_calc_datatype(ref_var));
                 }
             }
             else
@@ -227,11 +249,11 @@ void codegen_if(func_t *func, command_t *cmd)
         codegen_command(func, child);
         child = child->next;
     }
-    if(cmd->next && cmd->next->cmd == CMD_ELSE)
+    if(cmd->alt_contents)
     {
         int lbl_else = lbl_end;
         lbl_end = new_label();
-        child = cmd->next->contents;
+        child = cmd->alt_contents;
         codegen_comment("ELSE");
         cpu_jump(lbl_end);
         cpu_label(lbl_else);
@@ -245,6 +267,46 @@ void codegen_if(func_t *func, command_t *cmd)
     codegen_comment("END IF");
 }
 
+void codegen_while(func_t *func, command_t *cmd)
+{
+    int lbl_start = new_label();
+    int lbl_end = new_label();
+    codegen_comment("WHILE");
+    cpu_label(lbl_start);
+    codegen_expr(func, cmd, cmd->expression, datatype_find("int"), false);
+    cpu_jump_if_false(datatype_find("int")->nativetype, lbl_end);
+    codegen_comment("DO WHILE");
+    command_t *child = cmd->contents;
+    while(child)
+    {
+        codegen_command(func, child);
+        child = child->next;
+    }
+    cpu_jump(lbl_start);
+    cpu_label(lbl_end);
+    codegen_comment("END WHILE");
+}
+
+void codegen_until(func_t *func, command_t *cmd)
+{
+    int lbl_start = new_label();
+    int lbl_end = new_label();
+    codegen_comment("UNTIL");
+    cpu_label(lbl_start);
+    codegen_expr(func, cmd, cmd->expression, datatype_find("int"), false);
+    cpu_jump_if_true(datatype_find("int")->nativetype, lbl_end);
+    codegen_comment("DO UNTIL");
+    command_t *child = cmd->contents;
+    while(child)
+    {
+        codegen_command(func, child);
+        child = child->next;
+    }
+    cpu_jump(lbl_start);
+    cpu_label(lbl_end);
+    codegen_comment("END UNTIL");
+}
+
 void codegen_command(func_t *func, command_t *cmd)
 {
     switch(cmd->cmd)
@@ -254,6 +316,13 @@ void codegen_command(func_t *func, command_t *cmd)
             break;
         case CMD_IF:
             codegen_if(func, cmd);
+            break;
+        case CMD_WHILE:
+            codegen_while(func, cmd);
+            break;
+        case CMD_UNTIL:
+            codegen_until(func, cmd);
+            break;
         case CMD_EXPRESSION:
             codegen_comment("EXPRESSION COMMAND");
             codegen_expr(func, cmd, cmd->expression, datatype_find("int"), false);

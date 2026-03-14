@@ -420,3 +420,51 @@ char *cpu_comment_end()
 {
     return "";
 }
+
+void cpu_convet_to_8bit(nativetype_t from, bool from_signed, bool to_signed)
+{
+    switch(from)
+    {
+        case NATIVETYPE_8BITS:
+            break;
+        case NATIVETYPE_16BITS:
+            break;
+        default: error("invalid cpu_convet_to_8bit");
+    }
+}
+
+void cpu_convet_to_16bit(nativetype_t from, bool from_signed, bool to_signed)
+{
+    switch(from)
+    {
+        case NATIVETYPE_8BITS:
+            if(from_signed == to_signed && to_signed)
+            {
+                out_line("  cbw");
+            }
+            else
+            {
+                out_line("  xor ah, ah");
+            }
+            break;
+        case NATIVETYPE_16BITS:
+            break;
+        default: error("invalid cpu_convet_to_16bit");
+    }
+}
+
+void cpu_convet_to_24bit(nativetype_t from, bool from_signed, bool to_signed)
+{
+    switch(from)
+    {
+        default: error("invalid cpu_convet_to_24bit");
+    }
+}
+
+void cpu_convet_to_32bit(nativetype_t from, bool from_signed, bool to_signed)
+{
+    switch(from)
+    {
+        default: error("invalid cpu_convet_to_32bit");
+    }
+}

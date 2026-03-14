@@ -1,5 +1,7 @@
 #include "retrolang.h"
 
+void parser_block(source_t *src, command_t *cmd, func_t *func, bool exit_on_else, bool to_alt_contents);
+
 command_t *parser_variable_declaration(source_t *src, command_t *cmd, func_t *func)
 {
     char name[TOKEN_SIZE];
@@ -40,6 +42,41 @@ command_t *parser_variable_declaration(source_t *src, command_t *cmd, func_t *fu
     return cmd;
 }
 
+command_t *parser_if(source_t *src, command_t *cmd, func_t *func)
+{
+    match_token(token_is(src, KEY_IF), token_curr(src), "'if' expected.");
+    token_scan(src);
+    cmd->cmd = CMD_IF;
+    cmd->expression = parse_expr(src, cmd, func);
+    parser_block(src, cmd, func, true, false);
+    if(token_is(src, KEY_ELSE))
+    {
+        token_scan(src);
+        parser_block(src, cmd, func, true, true);
+    }
+    return cmd;
+}
+
+command_t *parser_while(source_t *src, command_t *cmd, func_t *func)
+{
+    match_token(token_is(src, KEY_WHILE), token_curr(src), "'while' expected.");
+    token_scan(src);
+    cmd->cmd = CMD_WHILE;
+    cmd->expression = parse_expr(src, cmd, func);
+    parser_block(src, cmd, func, true, false);
+    return cmd;
+}
+
+command_t *parser_until(source_t *src, command_t *cmd, func_t *func)
+{
+    match_token(token_is(src, KEY_UNTIL), token_curr(src), "'until' expected.");
+    token_scan(src);
+    cmd->cmd = CMD_UNTIL;
+    cmd->expression = parse_expr(src, cmd, func);
+    parser_block(src, cmd, func, true, false);
+    return cmd;
+}
+
 command_t *parser_func_command(source_t *src, func_t *func)
 {
     token_t *curr = token_curr(src);
@@ -51,6 +88,15 @@ command_t *parser_func_command(source_t *src, func_t *func)
     {
         case KEY_VAR:
             parser_variable_declaration(src, cmd, func);
+            break;
+        case KEY_IF:
+            parser_if(src, cmd, func);
+            break;
+        case KEY_WHILE:
+            parser_while(src, cmd, func);
+            break;
+        case KEY_UNTIL:
+            parser_until(src, cmd, func);
             break;
         default:
             cmd->expression = parse_expr(src, cmd, func);
@@ -76,9 +122,9 @@ command_t *parser_func_command(source_t *src, func_t *func)
     return cmd;
 }
 
-void parser_block(source_t *src, command_t *cmd, func_t *func, bool exit_on_else)
+void parser_block(source_t *src, command_t *cmd, func_t *func, bool exit_on_else, bool to_alt_contents)
 {
-    command_t *last = cmd ? cmd->contents : func->contents;
+    command_t *last = cmd ? (to_alt_contents ? cmd->alt_contents : cmd->contents) : func->contents;
     while(last && last->next)
     {
         last = last->next;
@@ -98,7 +144,8 @@ void parser_block(source_t *src, command_t *cmd, func_t *func, bool exit_on_else
         else
         {
             last = parser_func_command(src, func);
-            if(cmd) cmd->contents = last;
+            if(cmd && !to_alt_contents) cmd->contents = last;
+            else if(cmd && to_alt_contents) cmd->alt_contents = last;
             else func->contents = last;
         }
     }
@@ -119,7 +166,7 @@ void parser_func_declaration(source_t *src)
     match_token(token_is(src, TOK_PARAMS_CLOSE), token_curr(src), "')' expected.");
     token_scan(src);
     func_t *func = func_add(name);
-    parser_block(src, NULL, func, false);
+    parser_block(src, NULL, func, false, false);
 }
 
 command_t *parser_root_command(source_t *src)

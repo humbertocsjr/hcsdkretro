@@ -183,6 +183,7 @@ typedef struct command_t
     expr_t *expression;
     struct command_t *next;
     struct command_t *contents;
+    struct command_t *alt_contents;
 } command_t;
 
 // --== retrolang.c ==--
@@ -403,3 +404,11 @@ void cpu_label(int label);
 char *cpu_comment_start();
 // Get comment end
 char *cpu_comment_end();
+// Convet to 8bit acc
+void cpu_convet_to_8bit(nativetype_t from, bool from_signed, bool to_signed);
+// Convet to 16bit acc
+void cpu_convet_to_16bit(nativetype_t from, bool from_signed, bool to_signed);
+// Convet to 24bit acc
+void cpu_convet_to_24bit(nativetype_t from, bool from_signed, bool to_signed);
+// Convet to 32bit acc
+void cpu_convet_to_32bit(nativetype_t from, bool from_signed, bool to_signed);

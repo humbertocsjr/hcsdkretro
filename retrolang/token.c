@@ -131,6 +131,7 @@ token_t *token_scan(source_t *src)
         }
         TRYPARSE("def", KEY_DEF);
         TRYPARSE("if", KEY_IF);
+        TRYPARSE("until", KEY_UNTIL);
         TRYPARSE("else", KEY_ELSE);
         TRYPARSE("while", KEY_WHILE);
         TRYPARSE("for", KEY_FOR);
