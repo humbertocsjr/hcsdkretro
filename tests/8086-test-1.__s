@@ -104,6 +104,8 @@ _main:
   jmp .L6
   .L7:
 ; END WHILE
+; INJECTED ASSEMBLY COMMAND
+  ; 8086
   .__END__:
   mov sp, bp
   pop bp

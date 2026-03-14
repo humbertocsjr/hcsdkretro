@@ -140,6 +140,7 @@ token_t *token_scan(source_t *src)
         TRYPARSE("var", KEY_VAR);
         TRYPARSE("as", KEY_AS);
         TRYPARSE("typedef", KEY_TYPEDEF);
+        TRYPARSE("asm", KEY_ASM);
     }
     else if(source_is_equal(src, '"'))
     {

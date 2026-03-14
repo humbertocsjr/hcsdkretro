@@ -77,6 +77,25 @@ command_t *parser_until(source_t *src, command_t *cmd, func_t *func)
     return cmd;
 }
 
+command_t *parser_asm(source_t *src, command_t *cmd)
+{
+    match_token(token_is(src, KEY_ASM), token_curr(src), "'asm' expected.");
+    token_scan(src);
+    if(!strcmp(token_curr(src)->token, cpu_ext()))
+    {
+        cmd->cmd = CMD_ASM;
+        token_scan(src);
+        match_token(token_is(src, TOK_STRING), token_curr(src), "assembly command string expected.");
+        cmd->expression = parse_expr(src, cmd, func_global());
+    }
+    else 
+    {
+        token_scan(src);
+        token_scan(src);
+    }
+    return cmd;
+}
+
 command_t *parser_func_command(source_t *src, func_t *func)
 {
     token_t *curr = token_curr(src);
@@ -97,6 +116,9 @@ command_t *parser_func_command(source_t *src, func_t *func)
             break;
         case KEY_UNTIL:
             parser_until(src, cmd, func);
+            break;
+        case KEY_ASM:
+            parser_asm(src, cmd);
             break;
         default:
             cmd->expression = parse_expr(src, cmd, func);
@@ -183,6 +205,9 @@ command_t *parser_root_command(source_t *src)
             break;
         case KEY_DEF:
             parser_func_declaration(src);
+            break;
+        case KEY_ASM:
+            parser_asm(src, cmd);
             break;
         default:
             error_token(curr, "invalid root command: %s", curr->token);

@@ -119,6 +119,7 @@ typedef enum tok_t
     KEY_VAR,
     KEY_AS,
     KEY_TYPEDEF,
+    KEY_ASM,
     ACT_VARIABLE,
     ACT_FUNCTION,
     ACT_CALL,
@@ -175,6 +176,7 @@ typedef enum cmd_t
     CMD_UNTIL,
     CMD_FOR,
     CMD_FOREACH,
+    CMD_ASM
 } cmd_t;
 
 typedef struct command_t

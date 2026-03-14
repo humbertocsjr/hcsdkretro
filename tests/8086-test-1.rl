@@ -17,6 +17,8 @@ def main()
     while a < 3
         a += 1
     end
+    asm z80 "; Z80"
+    asm 8086 "; 8086"
 end
 
 def soma()

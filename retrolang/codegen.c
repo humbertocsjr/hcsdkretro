@@ -236,6 +236,13 @@ void codegen_expr(func_t *func, command_t *cmd, expr_t *e, datatype_t *dt, bool 
     }
 }
 
+void codegen_asm(func_t *func, command_t *cmd)
+{
+    if(cmd->expression->tok != TOK_STRING) error_expr(cmd->expression, "assembly command string expected.");
+    codegen_comment("INJECTED ASSEMBLY COMMAND");
+    out_line("  %s", cmd->expression->token);
+}
+
 void codegen_if(func_t *func, command_t *cmd)
 {
     int lbl_end = new_label();
@@ -322,6 +329,9 @@ void codegen_command(func_t *func, command_t *cmd)
             break;
         case CMD_UNTIL:
             codegen_until(func, cmd);
+            break;
+        case CMD_ASM:
+            codegen_asm(func, cmd);
             break;
         case CMD_EXPRESSION:
             codegen_comment("EXPRESSION COMMAND");
