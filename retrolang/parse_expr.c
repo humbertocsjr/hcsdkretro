@@ -29,12 +29,12 @@ expr_t *parse_expr0(source_t *src, command_t *cmd, func_t *func)
         if(token_is(src, TOK_INDEX_OPEN))
         {
             e->tok = ACT_INDEXED;
-            e->left = parse_expr(src, cmd, func);
+            e->left = parse_expr0(src, cmd, func);
         }
-        else if(token_is(src, TOK_COMMA))
+        else if(token_is(src, TOK_PARAMS_OPEN))
         {
             e->tok = ACT_CALL;
-            e->right = parse_expr(src, cmd, func);
+            e->right = parse_expr0(src, cmd, func);
         }
     }
     else if(token_is(src, TOK_INDEX_OPEN))
@@ -47,18 +47,18 @@ expr_t *parse_expr0(source_t *src, command_t *cmd, func_t *func)
         if(token_is(src, TOK_INDEX_OPEN))
         {
             e->tok = ACT_INDEXED;
-            e->right = parse_expr(src, cmd, func);
+            e->right = parse_expr0(src, cmd, func);
         }
-        else if(token_is(src, TOK_COMMA))
+        else if(token_is(src, TOK_PARAMS_OPEN))
         {
             e->tok = ACT_INDEXED_CALL;
-            e->right = parse_expr(src, cmd, func);
+            e->right = parse_expr0(src, cmd, func);
         }
     }
     else if(token_is(src, TOK_PARAMS_OPEN))
     {
         token_scan(src);
-        e = parse_expr(src, cmd, func);
+        if(!token_is(src, TOK_PARAMS_CLOSE)) e = parse_expr(src, cmd, func);
         match_token(token_is(src, TOK_PARAMS_CLOSE), token_curr(src), "')' expected.");
         token_scan(src);
     }

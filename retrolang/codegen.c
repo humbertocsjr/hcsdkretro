@@ -204,6 +204,24 @@ void codegen_expr(func_t *func, command_t *cmd, expr_t *e, datatype_t *dt, bool 
             cpu_mod(codegen_avail_expr_type(func, cmd, e->left, dt)->nativetype, codegen_avail_expr_type(func, cmd, e->left, dt)->is_signed);
             codegen_write_to_expr(func, cmd, e->left, codegen_avail_expr_type(func, cmd, e->left, dt));
             break;
+        case ACT_CALL:
+            ref_func = func_find(e->token);
+            if(ref_func) 
+            {
+                cpu_call_function(var_calc_datatype(ref_func->return_model)->nativetype, e->token);
+                codegen_autoconvert(e, dt, var_calc_datatype(ref_func->return_model));
+            }
+            else
+            {
+                ref_var = func_find_var(func, e->token);
+                if(!ref_var) ref_var = var_find_global(e->token);
+                if(!ref_var) error_expr(e, "function/variable not found: %s", e->token);
+                if(ref_var->is_global) cpu_load_global_var(var_calc_datatype(ref_var)->nativetype, ref_var->name);
+                else cpu_load_local_var(var_calc_datatype(ref_var)->nativetype, ref_var->name, ref_var->local_offset);
+                codegen_autoconvert(e, datatype_find("pointer"), var_calc_datatype(ref_var));
+                cpu_call_acc();
+            }
+            break;
         case TOK_SYMBOL:
             ref_var = func_find_var(func, e->token);
             if(!ref_var) ref_var = var_find_global(e->token);

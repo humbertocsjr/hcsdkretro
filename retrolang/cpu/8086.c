@@ -520,3 +520,20 @@ void cpu_set_aux_as_pointer(nativetype_t nt, char *name)
         default: error("invalid cpu_set_acc_as_pointer");
     }
 }
+
+void cpu_call_function(nativetype_t nt, char *name)
+{
+    switch(nt)
+    {
+        case NATIVETYPE_8BITS:
+        case NATIVETYPE_16BITS:
+            out_line("  call _%s", name);
+            break;
+        default: error("invalid cpu_call_function");
+    }
+}
+
+void cpu_call_acc()
+{
+    out_line("  call ax");
+}

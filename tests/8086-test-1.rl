@@ -21,7 +21,8 @@ def main()
     asm z80 "; Z80"
     asm 8086 "; 8086"
     ptr := a + 1 + b + soma ; test
-    
+    ptr := soma
+    a := soma() + ptr()
 end
 
 def soma()

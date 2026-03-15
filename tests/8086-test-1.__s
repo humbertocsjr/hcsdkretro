@@ -13,7 +13,12 @@ _a: resb 2
 ; FUNCTION: soma
 section text
 _soma:
+  push bp
+  mov bp, sp
+  sub bp, 2
   .__END__:
+  mov sp, bp
+  pop bp
   ret
 ; END FUNCTION: soma
 ; FUNCTION: main
@@ -21,7 +26,7 @@ section text
 _main:
   push bp
   mov bp, sp
-  sub bp, 4
+  sub bp, 6
 ; IF
   mov ax, 1
   test ax, ax
@@ -122,6 +127,20 @@ _main:
   mov bx, _soma
   add ax, bx
   mov [bp+-2], ax ; ptr
+; END EXPRESSION COMMAND
+; EXPRESSION COMMAND
+  mov ax, _soma
+  mov [bp+-2], ax ; ptr
+; END EXPRESSION COMMAND
+; EXPRESSION COMMAND
+  call _soma
+  push ax
+  mov ax, [bp+-2] ; ptr
+  call ax
+  xchg al, bl
+  pop ax
+  add al, bl
+  mov [bp+-3], al ; a
 ; END EXPRESSION COMMAND
   .__END__:
   mov sp, bp

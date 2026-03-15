@@ -62,6 +62,7 @@ typedef struct func_t
     struct command_t *contents;
     bool is_external;
     bool is_global_context;
+    var_t *return_model;
     char name[1];
 } func_t;
 
@@ -422,3 +423,7 @@ void cpu_convert_to_32bit(nativetype_t from, bool from_signed, bool to_signed);
 void cpu_set_acc_as_pointer(nativetype_t nt, char *name);
 // set aux value from pointer address
 void cpu_set_aux_as_pointer(nativetype_t nt, char *name);
+// Call known function
+void cpu_call_function(nativetype_t nt, char *name);
+// Call accumulator pointer
+void cpu_call_acc();

@@ -177,6 +177,7 @@ void parser_block(source_t *src, command_t *cmd, func_t *func, bool exit_on_else
 
 void parser_func_declaration(source_t *src)
 {
+    datatype_t *dt = datatype_find("int");
     char name[TOKEN_SIZE];
     match_token(token_is(src, KEY_DEF), token_curr(src), "'def' expected.");
     token_scan(src);
@@ -188,6 +189,7 @@ void parser_func_declaration(source_t *src)
     match_token(token_is(src, TOK_PARAMS_CLOSE), token_curr(src), "')' expected.");
     token_scan(src);
     func_t *func = func_add(name);
+    func->return_model = func_add_var(func, "__RETURN__", dt, false, 0, false, 0);
     parser_block(src, NULL, func, false, false);
 }
 
