@@ -4,6 +4,7 @@ typedef char as u8
 
 def main(argc as int, argv as @@char)
     var a as int
+    ; comment example
     a := 1
     a += 2 if a == 1
 

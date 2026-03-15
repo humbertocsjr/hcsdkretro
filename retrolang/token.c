@@ -7,9 +7,16 @@ token_t *token_scan(source_t *src)
     memcpy(&src->curr_token, &src->next_token, sizeof(token_t));
     memset(&src->next_token, 0, sizeof(token_t));
     token_t *token = &src->next_token;
-    while(source_is_space(src))
+    while(source_is_space(src) || source_is_equal(src, ';'))
     {
-        source_next_char(src);
+        if(source_is_equal(src, ';'))
+        {
+            while(!source_is_equal(src, '\n') && !source_is_equal(src, 0))
+            {
+                source_next_char(src);
+            }
+        }
+        else source_next_char(src);
     }
     token->tok = TOK_EOF;
     token->line = src->line;

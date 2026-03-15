@@ -27,11 +27,13 @@ void cpu_init()
 
 void cpu_global_variable(char *name, int32_t size)
 {
+    out_line("section data");
     out_line("_%s: resb %i", name, size);
 }
 
 void cpu_function_start(char *name, int32_t vars_size)
 {
+    out_line("section text");
     out_line("_%s:", name);
     if(vars_size)
     {
@@ -141,6 +143,34 @@ void cpu_load_local_var(nativetype_t nt, char *name, int32_t offset)
             break;
         case NATIVETYPE_16BITS:
             out_line("  mov ax, [bp+%i] ; %s", offset, name);
+            break;
+        default: error("invalid cpu_store_local_var");
+    }
+}
+
+void cpu_load_aux_global_var(nativetype_t nt, char *name)
+{
+    switch(nt)
+    {
+        case NATIVETYPE_8BITS:
+            out_line("  mov bl, [_%s]", name);
+            break;
+        case NATIVETYPE_16BITS:
+            out_line("  mov bx, [_%s]", name);
+            break;
+        default: error("invalid store_global_var");
+    }
+}
+
+void cpu_load_aux_local_var(nativetype_t nt, char *name, int32_t offset)
+{
+    switch(nt)
+    {
+        case NATIVETYPE_8BITS:
+            out_line("  mov bl, [bp+%i] ; %s", offset, name);
+            break;
+        case NATIVETYPE_16BITS:
+            out_line("  mov bx, [bp+%i] ; %s", offset, name);
             break;
         default: error("invalid cpu_store_local_var");
     }
@@ -421,7 +451,7 @@ char *cpu_comment_end()
     return "";
 }
 
-void cpu_convet_to_8bit(nativetype_t from, bool from_signed, bool to_signed)
+void cpu_convert_to_8bit(nativetype_t from, bool from_signed, bool to_signed)
 {
     switch(from)
     {
@@ -429,11 +459,11 @@ void cpu_convet_to_8bit(nativetype_t from, bool from_signed, bool to_signed)
             break;
         case NATIVETYPE_16BITS:
             break;
-        default: error("invalid cpu_convet_to_8bit");
+        default: error("invalid cpu_convert_to_8bit");
     }
 }
 
-void cpu_convet_to_16bit(nativetype_t from, bool from_signed, bool to_signed)
+void cpu_convert_to_16bit(nativetype_t from, bool from_signed, bool to_signed)
 {
     switch(from)
     {
@@ -449,22 +479,44 @@ void cpu_convet_to_16bit(nativetype_t from, bool from_signed, bool to_signed)
             break;
         case NATIVETYPE_16BITS:
             break;
-        default: error("invalid cpu_convet_to_16bit");
+        default: error("invalid cpu_convert_to_16bit");
     }
 }
 
-void cpu_convet_to_24bit(nativetype_t from, bool from_signed, bool to_signed)
+void cpu_convert_to_24bit(nativetype_t from, bool from_signed, bool to_signed)
 {
     switch(from)
     {
-        default: error("invalid cpu_convet_to_24bit");
+        default: error("invalid cpu_convert_to_24bit");
     }
 }
 
-void cpu_convet_to_32bit(nativetype_t from, bool from_signed, bool to_signed)
+void cpu_convert_to_32bit(nativetype_t from, bool from_signed, bool to_signed)
 {
     switch(from)
     {
-        default: error("invalid cpu_convet_to_32bit");
+        default: error("invalid cpu_convert_to_32bit");
+    }
+}
+
+void cpu_set_acc_as_pointer(nativetype_t nt, char *name)
+{
+    switch(nt)
+    {
+        case NATIVETYPE_16BITS:
+            out_line("  mov ax, _%s", name);
+            break;
+        default: error("invalid cpu_set_acc_as_pointer");
+    }
+}
+
+void cpu_set_aux_as_pointer(nativetype_t nt, char *name)
+{
+    switch(nt)
+    {
+        case NATIVETYPE_16BITS:
+            out_line("  mov bx, _%s", name);
+            break;
+        default: error("invalid cpu_set_acc_as_pointer");
     }
 }

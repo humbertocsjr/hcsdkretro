@@ -362,10 +362,14 @@ void cpu_set_aux(nativetype_t nt, int32_t value);
 void cpu_store_global_var(nativetype_t nt, char *name);
 // Store value to integer local variable
 void cpu_store_local_var(nativetype_t nt, char *name, int32_t offset);
-// Load value to integer global variable
+// Load acc register from integer global variable
 void cpu_load_global_var(nativetype_t nt, char *name);
-// Load value to integer local variable
+// Load acc register from integer local variable
 void cpu_load_local_var(nativetype_t nt, char *name, int32_t offset);
+// Load aux register from integer global variable
+void cpu_load_aux_global_var(nativetype_t nt, char *name);
+// Load aux register from integer local variable
+void cpu_load_aux_local_var(nativetype_t nt, char *name, int32_t offset);
 // Add values
 void cpu_add(nativetype_t nt);
 // Push accumulator
@@ -407,10 +411,14 @@ char *cpu_comment_start();
 // Get comment end
 char *cpu_comment_end();
 // Convet to 8bit acc
-void cpu_convet_to_8bit(nativetype_t from, bool from_signed, bool to_signed);
+void cpu_convert_to_8bit(nativetype_t from, bool from_signed, bool to_signed);
 // Convet to 16bit acc
-void cpu_convet_to_16bit(nativetype_t from, bool from_signed, bool to_signed);
+void cpu_convert_to_16bit(nativetype_t from, bool from_signed, bool to_signed);
 // Convet to 24bit acc
-void cpu_convet_to_24bit(nativetype_t from, bool from_signed, bool to_signed);
+void cpu_convert_to_24bit(nativetype_t from, bool from_signed, bool to_signed);
 // Convet to 32bit acc
-void cpu_convet_to_32bit(nativetype_t from, bool from_signed, bool to_signed);
+void cpu_convert_to_32bit(nativetype_t from, bool from_signed, bool to_signed);
+// Set acc value from pointer address
+void cpu_set_acc_as_pointer(nativetype_t nt, char *name);
+// set aux value from pointer address
+void cpu_set_aux_as_pointer(nativetype_t nt, char *name);

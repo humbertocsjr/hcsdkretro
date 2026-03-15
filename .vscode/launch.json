@@ -83,11 +83,11 @@
         "MIMode": "lldb"
     },
     {
-        "name": "hcbuild 8086-test-0",
+        "name": "hcbuild 8086-test-1",
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/bin/hcbuild",
-        "args": ["${workspaceFolder}/tests/8086-test-0-bin.prj", "make", "release"],
+        "args": ["${workspaceFolder}/tests/8086-test-1-com.prj", "make", "release"],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}/tests/",
         "environment": [],

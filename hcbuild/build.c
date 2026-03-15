@@ -98,7 +98,7 @@ void make_files(section_t *section)
             strcat(cmd, source_name);
             if(get_value_bool("config", "", "verbose")) printf("%s\n", cmd);
             st = system(cmd);
-            if(st) exit(st);
+            if(st) exit(-1);
             strcpy(source_name, temp_name);
         }
         if(!strcmp(get_ext(source_name), ".s") || !strcmp(get_ext(source_name), ".S") || !strcmp(get_ext(source_name), ".__s"))
@@ -125,7 +125,7 @@ void make_files(section_t *section)
             strcat(cmd, source_name);
             if(get_value_bool("config", "", "verbose")) printf("%s\n", cmd);
             st = system(cmd);
-            if(st) exit(st);
+            if(st) exit(-1);
             obj_t *obj = malloc(sizeof(obj_t) + strlen(obj_name));
             strcpy(obj->name, obj_name);
             obj->next = NULL;
@@ -277,7 +277,7 @@ void make_link(section_t *section, char *config)
     }
     if(get_value_bool("config", "", "verbose")) printf("%s\n", cmd);
     st = system(cmd);
-    if(st) exit(st);
+    if(st) exit(-1);
 }
 
 void clean_link(section_t *section, char *config)

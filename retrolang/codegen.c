@@ -73,16 +73,16 @@ void codegen_autoconvert(expr_t *e, datatype_t *dst, datatype_t *src)
     switch(dst->nativetype)
     {
         case NATIVETYPE_8BITS:
-            cpu_convet_to_8bit(src->nativetype, src->is_signed, dst->is_signed);
+            cpu_convert_to_8bit(src->nativetype, src->is_signed, dst->is_signed);
             break;
         case NATIVETYPE_16BITS:
-            cpu_convet_to_16bit(src->nativetype, src->is_signed, dst->is_signed);
+            cpu_convert_to_16bit(src->nativetype, src->is_signed, dst->is_signed);
             break;
         case NATIVETYPE_24BITS:
-            cpu_convet_to_24bit(src->nativetype, src->is_signed, dst->is_signed);
+            cpu_convert_to_24bit(src->nativetype, src->is_signed, dst->is_signed);
             break;
         case NATIVETYPE_32BITS:
-            cpu_convet_to_32bit(src->nativetype, src->is_signed, dst->is_signed);
+            cpu_convert_to_32bit(src->nativetype, src->is_signed, dst->is_signed);
             break;
         default:  error_expr(e, "invalid data conversion.");
     }
@@ -94,7 +94,7 @@ void codegen_expr(func_t *func, command_t *cmd, expr_t *e, datatype_t *dt, bool 
     var_t *ref_var;
     func_t *ref_func;
     int lbl1, lbl2;
-    bool push_acc = to_aux_reg && (e->tok != TOK_INTEGER);
+    bool push_acc = to_aux_reg && (e->tok != TOK_INTEGER && e->tok != TOK_SYMBOL);
     if(!e) return;
     if(push_acc)
     {
@@ -211,12 +211,14 @@ void codegen_expr(func_t *func, command_t *cmd, expr_t *e, datatype_t *dt, bool 
             {
                 if(ref_var->is_global)
                 {
-                    cpu_load_global_var(var_calc_datatype(ref_var)->nativetype, ref_var->name);
+                    if(to_aux_reg) cpu_load_aux_global_var(var_calc_datatype(ref_var)->nativetype, ref_var->name);
+                    else cpu_load_global_var(var_calc_datatype(ref_var)->nativetype, ref_var->name);
                     codegen_autoconvert(e, dt, var_calc_datatype(ref_var));
                 }
                 else
                 {
-                    cpu_load_local_var(var_calc_datatype(ref_var)->nativetype, ref_var->name, ref_var->local_offset);
+                    if(to_aux_reg) cpu_load_local_var(var_calc_datatype(ref_var)->nativetype, ref_var->name, ref_var->local_offset);
+                    else cpu_load_local_var(var_calc_datatype(ref_var)->nativetype, ref_var->name, ref_var->local_offset);
                     codegen_autoconvert(e, dt, var_calc_datatype(ref_var));
                 }
             }
@@ -224,7 +226,8 @@ void codegen_expr(func_t *func, command_t *cmd, expr_t *e, datatype_t *dt, bool 
             {
                 ref_func = func_find(e->token);
                 if(!ref_func) error_expr(e, "function/variable/constant not found: %s", e->token);
-error_expr(e, "not implemented function pointer");
+                if(to_aux_reg) cpu_set_aux_as_pointer(dt->nativetype, e->token);
+                else cpu_set_acc_as_pointer(dt->nativetype, e->token);
             }
             break;
         default: error("unsupported expression type: %i[%s]", e->tok, e->token);
