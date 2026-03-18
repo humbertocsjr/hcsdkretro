@@ -87,6 +87,8 @@ make distro
 
 Low Level Programming Language inspired in Ruby, BASIC, T3X and Pascal.
 
+**Don't use. Pre-alpha Compiler**
+
 
 # HC Assembler for Retro Computing
 
