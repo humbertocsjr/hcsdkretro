@@ -6,6 +6,8 @@ Cross-compiler tools for retro computing.
 
 [Site and Documentation in English](https://humbertocsjr.dev.br/hcsdk/en)
 
+[RetroLang Documentation](retrolang.md)
+
 ## Supported Targets
 
 - **8080**:  Intel 8080 or Compatibles

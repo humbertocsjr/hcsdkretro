@@ -2,7 +2,7 @@
 
 static datatype_t *_list = NULL;
 
-void datatype_calcsize(datatype_t *datatype)
+void datatype_calcsize(expr_t *e, datatype_t *datatype)
 {
     if(!datatype) return;
     switch (datatype->nativetype)
@@ -24,12 +24,13 @@ void datatype_calcsize(datatype_t *datatype)
             datatype->size = 0;
             while(field)
             {
-                datatype->size += var_calc_total_size(field);
+                datatype->size += var_calc_total_size(e, field);
                 field = field->next;
             }
             return;
         default:
-            error("Invalid nativetype of datatype %s.", datatype->name);
+            if(e) error_expr(e,"Invalid nativetype of datatype %s.", datatype->name);
+            else error("Invalid nativetype of datatype %s.", datatype->name);
             break;
     }
 }

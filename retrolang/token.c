@@ -148,6 +148,10 @@ token_t *token_scan(source_t *src)
         TRYPARSE("as", KEY_AS);
         TRYPARSE("typedef", KEY_TYPEDEF);
         TRYPARSE("asm", KEY_ASM);
+        TRYPARSE("return", KEY_RETURN);
+        TRYPARSE("decl", KEY_DECL);
+        TRYPARSE("addressof", KEY_ADDRESSOF);
+        TRYPARSE("sizeof", KEY_SIZEOF);
     }
     else if(source_is_equal(src, '"'))
     {

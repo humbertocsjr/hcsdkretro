@@ -1,0 +1,9 @@
+[files:z80]
+z80/start.s
+../common/z80/mul.s
+../common/z80/div.s
+../common/z80/cmp.s
+
+[link:release]
+format = lib
+filename = ../cpm-z80.lib

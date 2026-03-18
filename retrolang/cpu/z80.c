@@ -3,12 +3,12 @@
 
 char *cpu_ext()
 {
-    return "8086";
+    return "z80";
 }
 
 char *cpu_name()
 {
-    return "8086/8088";
+    return "Z80";
 }
 
 void cpu_init()
@@ -39,9 +39,9 @@ void cpu_function_start(char *name, int32_t vars_size)
     out_line("_%s:", name);
     if(vars_size)
     {
-        out_line("  push bp");
-        out_line("  mov bp, sp");
-        out_line("  sub bp, %i", (vars_size + 1) & (~1)); // round up to next word
+        out_line("  push ix");
+        out_line("  ld ix, -%i", (vars_size + 1) & (~1)); // round up to next word
+        out_line("  add ix, sp");
     }
 }
 
@@ -50,8 +50,8 @@ void cpu_function_end(char *name, int32_t vars_size)
     out_line("  .__END__:");
     if(vars_size)
     {
-        out_line("  mov sp, bp");
-        out_line("  pop bp");
+        out_line("  ld sp, ix");
+        out_line("  pop ix");
     }
     out_line("  ret");
 }
@@ -71,10 +71,10 @@ void cpu_set_acc(nativetype_t nt, int32_t value)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  mov al, %i", value);
+            out_line("  ld a, %i", value);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  mov ax, %i", value);
+            out_line("  ld hl, %i", value);
             break;
         default: error("invalid set_acc");
     }
@@ -85,10 +85,10 @@ void cpu_set_aux(nativetype_t nt, int32_t value)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  mov bl, %i", value);
+            out_line("  ld e, %i", value);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  mov bx, %i", value);
+            out_line("  ld de, %i", value);
             break;
         default: error("invalid set_acc");
     }
@@ -99,10 +99,10 @@ void cpu_store_global_var(nativetype_t nt, char *name)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  mov [_%s], al", name);
+            out_line("  ld [_%s], a", name);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  mov [_%s], ax", name);
+            out_line("  ld [_%s], hl", name);
             break;
         default: error("invalid store_global_var");
     }
@@ -113,10 +113,11 @@ void cpu_store_local_var(nativetype_t nt, char *name, int32_t offset)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  mov [bp+%i], al ; %s", offset, name);
+            out_line("  ld [ix+%i], a ; %s", offset, name);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  mov [bp+%i], ax ; %s", offset, name);
+            out_line("  ld [ix+%i], l ; %s", offset, name);
+            out_line("  ld [ix+%i], h ; %s", offset+1, name);
             break;
         default: error("invalid cpu_store_local_var");
     }
@@ -127,10 +128,10 @@ void cpu_load_global_var(nativetype_t nt, char *name)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  mov al, [_%s]", name);
+            out_line("  ld a, [_%s]", name);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  mov ax, [_%s]", name);
+            out_line("  ld hl, [_%s]", name);
             break;
         default: error("invalid store_global_var");
     }
@@ -141,10 +142,11 @@ void cpu_load_local_var(nativetype_t nt, char *name, int32_t offset)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  mov al, [bp+%i] ; %s", offset, name);
+            out_line("  ld a, [ix+%i] ; %s", offset, name);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  mov ax, [bp+%i] ; %s", offset, name);
+            out_line("  ld l, [ix+%i] ; %s", offset, name);
+            out_line("  ld h, [ix+%i] ; %s", offset+1, name);
             break;
         default: error("invalid cpu_store_local_var");
     }
@@ -155,10 +157,10 @@ void cpu_load_aux_global_var(nativetype_t nt, char *name)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  mov bl, [_%s]", name);
+            out_line("  ld e, [_%s]", name);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  mov bx, [_%s]", name);
+            out_line("  ld de, [_%s]", name);
             break;
         default: error("invalid store_global_var");
     }
@@ -169,10 +171,11 @@ void cpu_load_aux_local_var(nativetype_t nt, char *name, int32_t offset)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  mov bl, [bp+%i] ; %s", offset, name);
+            out_line("  mov e, [ix+%i] ; %s", offset, name);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  mov bx, [bp+%i] ; %s", offset, name);
+            out_line("  mov e, [ix+%i] ; %s", offset, name);
+            out_line("  mov d, [ix+%i] ; %s", offset+1, name);
             break;
         default: error("invalid cpu_store_local_var");
     }
@@ -183,10 +186,10 @@ void cpu_add(nativetype_t nt)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  add al, bl");
+            out_line("  add a, e");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  add ax, bx");
+            out_line("  add hl, de");
             break;
         default: error("invalid cpu_add");
     }
@@ -197,10 +200,11 @@ void cpu_push_acc(nativetype_t nt)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  push ax");
+            out_line("  ld l, a");
+            out_line("  push hl");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  push ax");
+            out_line("  push hl");
             break;
         default: error("invalid cpu_push_acc");
     }
@@ -211,10 +215,11 @@ void cpu_pop_acc(nativetype_t nt)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  pop ax");
+            out_line("  pop hl");
+            out_line("  ld a, l");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  pop ax");
+            out_line("  pop hl");
             break;
         default: error("invalid cpu_pop_acc");
     }
@@ -225,10 +230,10 @@ void cpu_push_aux(nativetype_t nt)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  push bx");
+            out_line("  push de");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  push bx");
+            out_line("  push de");
             break;
         default: error("invalid cpu_push_aux");
     }
@@ -239,10 +244,10 @@ void cpu_pop_aux(nativetype_t nt)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  pop bx");
+            out_line("  pop de");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  pop bx");
+            out_line("  pop de");
             break;
         default: error("invalid cpu_pop_aux");
     }
@@ -253,10 +258,12 @@ void cpu_xchg_acc_aux(nativetype_t nt)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  xchg al, bl");
+            out_line("  ld l, a");
+            out_line("  ex hl, de");
+            out_line("  ld a, l");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  xchg ax, bx");
+            out_line("  ex hl, de");
             break;
         default: error("invalid cpu_xchg_acc_aux");
     }
@@ -267,10 +274,10 @@ void cpu_mul(nativetype_t nt, bool is_signed)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line(is_signed ? "  imul bl" : "  mul bl");
+            out_line(is_signed ? "  call muls8" : "  call mulu8");
             break;
         case NATIVETYPE_16BITS:
-            out_line(is_signed ? "  imul bx" : "  mul bx");
+            out_line(is_signed ? "  call muls16" : "  call mulu16");
             break;
         default: error("invalid cpu_mul");
     }
@@ -281,12 +288,10 @@ void cpu_div(nativetype_t nt, bool is_signed)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  xor ah, ah");
-            out_line(is_signed ? "  idiv bl" : "  div bl");
+            out_line(is_signed ? "  call divs8" : "  call divu8");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  xor dx, dx");
-            out_line(is_signed ? "  idiv bx" : "  div bx");
+            out_line(is_signed ? "  call divs16" : "  call divu16");
             break;
         default: error("invalid cpu_div");
     }
@@ -297,14 +302,10 @@ void cpu_mod(nativetype_t nt, bool is_signed)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  xor ah, ah");
-            out_line(is_signed ? "  idiv bl" : "  div bl");
-            out_line("  mov al, ah");
+            out_line(is_signed ? "  call mods8" : "  call modu8");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  xor dx, dx");
-            out_line(is_signed ? "  idiv bx" : "  div bx");
-            out_line("  mov ax, dx");
+            out_line(is_signed ? "  call mods16" : "  call modu16");
             break;
         default: error("invalid cpu_mod");
     }
@@ -315,10 +316,11 @@ void cpu_sub(nativetype_t nt)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  sub al, bl");
+            out_line("  sub a, e");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  sub ax, bx");
+            out_line("  or a");
+            out_line("  sbc hl, de");
             break;
         default: error("invalid cpu_sub");
     }
@@ -329,10 +331,15 @@ void cpu_and(nativetype_t nt)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  and al, bl");
+            out_line("  and e");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  and ax, bx");
+            out_line("  ld a, l");
+            out_line("  and e");
+            out_line("  ld l, a");
+            out_line("  ld a, h");
+            out_line("  and d");
+            out_line("  ld h, a");
             break;
         default: error("invalid cpu_and");
     }
@@ -343,10 +350,15 @@ void cpu_or(nativetype_t nt)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  or al, bl");
+            out_line("  or e");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  or ax, bx");
+            out_line("  ld a, l");
+            out_line("  or e");
+            out_line("  ld l, a");
+            out_line("  ld a, h");
+            out_line("  or d");
+            out_line("  ld h, a");
             break;
         default: error("invalid cpu_or");
     }
@@ -357,10 +369,15 @@ void cpu_xor(nativetype_t nt)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  xor al, bl");
+            out_line("  xor e");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  xor ax, bx");
+            out_line("  ld a, l");
+            out_line("  xor e");
+            out_line("  ld l, a");
+            out_line("  ld a, h");
+            out_line("  xor d");
+            out_line("  ld h, a");
             break;
         default: error("invalid cpu_xor");
     }
@@ -386,16 +403,10 @@ void cpu_compare(nativetype_t nt, tok_t operation, bool is_signed)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  cmp al, bl");
-            out_line("  mov al, 0");
-            out_line("  j%s $+4", _cpu_convert_cmp(operation, is_signed));
-            out_line("  dec al");
+            out_line("  call cmp%s8", _cpu_convert_cmp(operation, is_signed));
             break;
         case NATIVETYPE_16BITS:
-            out_line("  cmp ax, bx");
-            out_line("  mov ax, 0");
-            out_line("  j%s $+3", _cpu_convert_cmp(operation, is_signed));
-            out_line("  dec ax");
+            out_line("  call cmp%s16", _cpu_convert_cmp(operation, is_signed));
             break;
         default: error("invalid cpu_comparsion");
     }
@@ -406,12 +417,12 @@ void cpu_jump_if_true(nativetype_t nt, int label)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  test al, al");
-            out_line("  jne near .L%i", label);
+            out_line("  call cmpe8");
+            out_line("  jp nz, .L%i", label);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  test ax, ax");
-            out_line("  jne near .L%i", label);
+            out_line("  call cmpe16");
+            out_line("  jp nz, .L%i", label);
             break;
         default: error("invalid cpu_comparsion");
     }
@@ -422,12 +433,12 @@ void cpu_jump_if_false(nativetype_t nt, int label)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  test al, al");
-            out_line("  je near .L%i", label);
+            out_line("  call cmpe8");
+            out_line("  jp z, .L%i", label);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  test ax, ax");
-            out_line("  je near .L%i", label);
+            out_line("  call cmpe16");
+            out_line("  jp z, .L%i", label);
             break;
         default: error("invalid cpu_comparsion");
     }
@@ -435,7 +446,7 @@ void cpu_jump_if_false(nativetype_t nt, int label)
 
 void cpu_jump(int label)
 {
-    out_line("  jmp .L%i", label);
+    out_line("  jp .L%i", label);
 }
 
 void cpu_label(int label)
@@ -472,11 +483,13 @@ void cpu_convert_to_16bit(nativetype_t from, bool from_signed, bool to_signed)
         case NATIVETYPE_8BITS:
             if(from_signed == to_signed && to_signed)
             {
-                out_line("  cbw");
+                out_line("  call cbw");
             }
             else
             {
-                out_line("  xor ah, ah");
+                out_line("  ld l, a");
+                out_line("  ld a, 0");
+                out_line("  ld h, a");
             }
             break;
         case NATIVETYPE_16BITS:
@@ -506,7 +519,7 @@ void cpu_set_acc_as_pointer(nativetype_t nt, char *name)
     switch(nt)
     {
         case NATIVETYPE_16BITS:
-            out_line("  mov ax, _%s", name);
+            out_line("  ld hl, _%s", name);
             break;
         default: error("invalid cpu_set_acc_as_pointer");
     }
@@ -517,7 +530,7 @@ void cpu_set_aux_as_pointer(nativetype_t nt, char *name)
     switch(nt)
     {
         case NATIVETYPE_16BITS:
-            out_line("  mov bx, _%s", name);
+            out_line("  ld de, _%s", name);
             break;
         default: error("invalid cpu_set_acc_as_pointer");
     }
@@ -542,8 +555,10 @@ void cpu_call_acc()
 
 void cpu_restore_stack(int32_t size)
 {
-    if(size > 0) out_line("  add sp, %i", size);
-    if(size < 0) out_line("  add sp, %i", -size);
+    if(size > 0) out_line("  ld iy, %i", size);
+    if(size < 0) out_line("  ld iy, %i", -size);
+    if(size) out_line("  add iy, sp");
+    if(size) out_line("  ld sp, iy");
 }
 
 int cpu_get_stack_align()
@@ -553,7 +568,7 @@ int cpu_get_stack_align()
 
 void cpu_return_from_function()
 {
-    out_line("  jmp .__END__");
+    out_line("  jp .__END__");
 }
 
 void cpu_load_pointer(nativetype_t nt)
@@ -561,12 +576,13 @@ void cpu_load_pointer(nativetype_t nt)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  mov si, ax");
-            out_line("  mov al, [si]");
+            out_line("  ld a, [hl]");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  mov si, ax");
-            out_line("  mov ax, [si]");
+            out_line("  push hl");
+            out_line("  pop iy");
+            out_line("  ld l, [iy+0]");
+            out_line("  ld h, [iy+1]");
             break;
         default: error("invalid cpu_load_pointer");
     }
@@ -577,7 +593,8 @@ void cpu_set_acc_pointer_local(nativetype_t nt, char *name, int offset)
     switch(nt)
     {
         case NATIVETYPE_16BITS:
-            out_line("  lea ax, [bp+%i] ; %s", offset, name);
+            out_line("  ld hl, %i ; %s", offset, name);
+            out_line("  add hl, sp");
             break;
         default: error("invalid cpu_load_pointer");
     }
@@ -588,7 +605,10 @@ void cpu_set_aux_pointer_local(nativetype_t nt, char *name, int offset)
     switch(nt)
     {
         case NATIVETYPE_16BITS:
-            out_line("  lea bx, [bp+%i] ; %s", offset, name);
+            out_line("  ex de, hl");
+            out_line("  ld hl, %i ; %s", offset, name);
+            out_line("  add hl, sp");
+            out_line("  ex de, hl");
             break;
         default: error("invalid cpu_load_pointer");
     }
@@ -609,7 +629,7 @@ void cpu_set_acc_as_string(nativetype_t nt, char *string)
             }
             out_line("    db 0");
             out_line("section text");
-            out_line("  mov ax, .L%i", lbl);
+            out_line("  ld hl, .L%i", lbl);
             break;
         default: error("invalid cpu_set_acc_as_string");
     }
@@ -630,7 +650,7 @@ void cpu_set_aux_as_string(nativetype_t nt, char *string)
             }
             out_line("    db 0");
             out_line("section text");
-            out_line("  mov bx, .L%i", lbl);
+            out_line("  ld de, .L%i", lbl);
             break;
         default: error("invalid cpu_set_aux_as_string");
     }
@@ -641,12 +661,13 @@ void cpu_store_aux_to_acc_pointer(nativetype_t nt)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  mov si, ax");
-            out_line("  mov [si], bl");
+            out_line("  ld [hl], e");
             break;
         case NATIVETYPE_16BITS:
-            out_line("  mov si, ax");
-            out_line("  mov [si], bx");
+            out_line("  push hl");
+            out_line("  pop iy");
+            out_line("  ld [iy+0], e");
+            out_line("  ld [iy+1], d");
             break;
         default: error("invalid cpu_store_aux_to_acc_pointer");
     }

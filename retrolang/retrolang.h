@@ -51,6 +51,7 @@ typedef struct var_t
     uint16_t array_size;
     bool is_global;
     int16_t local_offset;
+    struct expr_t *error_reference;
     char name[1];
 } var_t;
 
@@ -62,6 +63,7 @@ typedef struct func_t
     struct command_t *contents;
     bool is_external;
     bool is_global_context;
+    struct expr_t *error_reference;
     var_t *return_model;
     char name[1];
 } func_t;
@@ -121,11 +123,18 @@ typedef enum tok_t
     KEY_AS,
     KEY_TYPEDEF,
     KEY_ASM,
+    KEY_RETURN,
+    KEY_DECL,
+    KEY_ADDRESSOF,
+    KEY_SIZEOF,
     ACT_VARIABLE,
     ACT_FUNCTION,
     ACT_CALL,
     ACT_INDEXED,
-    ACT_INDEXED_CALL
+    ACT_INDEXED_CALL,
+    ACT_POINTER_EXPR,
+    ACT_POINTER_CALL,
+    ACT_POINTER_SYMBOL
 } tok_t;
 
 #define TOKEN_SIZE 256
@@ -177,13 +186,15 @@ typedef enum cmd_t
     CMD_UNTIL,
     CMD_FOR,
     CMD_FOREACH,
-    CMD_ASM
+    CMD_ASM,
+    CMD_RETURN
 } cmd_t;
 
 typedef struct command_t
 {
     cmd_t cmd;
     expr_t *expression;
+    expr_t *error_reference;
     struct command_t *next;
     struct command_t *contents;
     struct command_t *alt_contents;
@@ -198,7 +209,7 @@ extern FILE *_out;
 // --== datatype.c ==--
 
 // Calculate datatype size
-void datatype_calcsize(datatype_t *datatype);
+void datatype_calcsize(expr_t *e, datatype_t *datatype);
 // Add Data Type
 datatype_t *datatype_add(char *name, nativetype_t nativetype, bool is_signed);
 // Add Structure
@@ -228,11 +239,11 @@ var_t *var_find_global(char *name);
 // Add global variable
 var_t *var_add_global(char *name, datatype_t *datatype, bool is_array, uint16_t array_size, bool is_pointer, uint8_t pointer_level);
 // Calculate variable size (var size or array item size)
-int32_t var_calc_item_size(var_t *v);
+int32_t var_calc_item_size(expr_t *e, var_t *v);
 // Calculate total variable size (with array)
-int32_t var_calc_total_size(var_t *v);
+int32_t var_calc_total_size(expr_t *e, var_t *v);
 // Calculate real data type
-datatype_t * var_calc_datatype(var_t *v);
+datatype_t * var_calc_datatype(expr_t *e, var_t *v);
 
 // --== func.c ==--
 
@@ -320,6 +331,8 @@ int32_t parse_const_expr(source_t *src, command_t *cmd, func_t *func);
 
 // --== parse_expr.c ==--
 
+// Convert token to expression
+expr_t *convert_expr(token_t *token);
 // Parse expression
 expr_t *parse_expr(source_t *src, command_t *cmd, func_t *func);
 
@@ -334,8 +347,12 @@ void out_inline_vargs(char *fmt, va_list args);
 
 // --== codegen.c ==--
 
+// Generate new label number
+int new_label();
 // Generate output code
 void codegen();
+// Generate comment
+void codegen_comment(char *fmt, ...);
 
 // --== cpu/CPU.c ==--
 
@@ -378,9 +395,9 @@ void cpu_push_acc(nativetype_t nt);
 // Push accumulator
 void cpu_pop_acc(nativetype_t nt);
 // Pop aux
-void cpu_push_acc(nativetype_t nt);
+void cpu_push_aux(nativetype_t nt);
 // Pop aux
-void cpu_pop_acc(nativetype_t nt);
+void cpu_pop_aux(nativetype_t nt);
 // Exchange accumulator with acc
 void cpu_xchg_acc_aux(nativetype_t nt);
 // Multiply values
@@ -427,3 +444,21 @@ void cpu_set_aux_as_pointer(nativetype_t nt, char *name);
 void cpu_call_function(nativetype_t nt, char *name);
 // Call accumulator pointer
 void cpu_call_acc();
+// Restore stack after call
+void cpu_restore_stack(int32_t size);
+// Get stack alignment
+int cpu_get_stack_align();
+// Return from function
+void cpu_return_from_function();
+// Load value from pointer in acc
+void cpu_load_pointer(nativetype_t nt);
+// Set accumulator to local variable pointer
+void cpu_set_acc_pointer_local(nativetype_t nt, char *name, int offset);
+// Set aux to local variable pointer
+void cpu_set_aux_pointer_local(nativetype_t nt, char *name, int offset);
+// Set accumulator as string pointer
+void cpu_set_acc_as_string(nativetype_t nt, char *string);
+// Set aux as string pointer
+void cpu_set_aux_as_string(nativetype_t nt, char *string);
+// Store value to pointer in acc
+void cpu_store_aux_to_acc_pointer(nativetype_t nt);

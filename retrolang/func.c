@@ -84,8 +84,8 @@ var_t *func_add_arg(func_t *func, char *name, datatype_t *datatype, bool is_poin
     obj->is_pointer = is_pointer;
     obj->pointer_level = pointer_level;
     obj->local_offset = 0;
-    obj->next = func->vars;
-    func->vars = obj;
+    obj->next = func->args;
+    func->args = obj;
     strcpy(obj->name, name);
     return obj;
 }

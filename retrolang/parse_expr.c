@@ -16,11 +16,49 @@ expr_t *convert_expr(token_t *token)
 
 expr_t *parse_expr0(source_t *src, command_t *cmd, func_t *func)
 {
+    int pointer;
     expr_t *e = NULL;
     if(token_is(src, TOK_INTEGER) || token_is(src, TOK_STRING))
     {
         e = convert_expr(token_curr(src));
         token_scan(src);
+    }
+    else if(token_is(src, KEY_ADDRESSOF) || token_is(src, KEY_SIZEOF))
+    {
+        e = convert_expr(token_curr(src));
+        token_scan(src);
+        e->right = parse_expr0(src, cmd, func);
+    }
+    else if(token_is(src, TOK_POINTER))
+    {
+        e = convert_expr(token_curr(src));
+        pointer = 1;
+        token_scan(src);
+        while(token_is(src, TOK_POINTER))
+        {
+            pointer ++;
+            token_scan(src);
+        }
+        if(token_is(src, TOK_PARAMS_OPEN))
+        {
+            e->tok = ACT_POINTER_EXPR;
+            e->right = parse_expr0(src, cmd, func);
+            e->value = pointer;
+        }
+        else if(token_is(src, TOK_SYMBOL))
+        {
+            free(e);
+            e = convert_expr(token_curr(src));
+            e->tok = ACT_POINTER_SYMBOL;
+            e->value = pointer;
+            token_scan(src);
+            if(token_is(src, TOK_PARAMS_OPEN))
+            {
+                e->tok = ACT_POINTER_CALL;
+                e->right = parse_expr0(src, cmd, func);
+            }
+        }
+        else error_token(token_curr(src), "expression or variable expected.");
     }
     else if(token_is(src, TOK_SYMBOL))
     {

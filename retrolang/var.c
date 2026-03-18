@@ -29,21 +29,25 @@ var_t *var_add_global(char *name, datatype_t *datatype, bool is_array, uint16_t 
     return obj;
 }
 
-datatype_t * var_calc_datatype(var_t *v)
+datatype_t * var_calc_datatype(expr_t *e, var_t *v)
 {
     datatype_t *dt = v->datatype;
     if(v->is_pointer)
     {
         dt = datatype_find("pointer");
-        if(!dt) error("ponter datatype is missing in this cpu");
+        if(!dt) 
+        {
+            if(e) error_expr(e, "ponter datatype is missing in this cpu");
+            else error("ponter datatype is missing in this cpu");
+        }
     }
-    datatype_calcsize(dt);
+    datatype_calcsize(e, dt);
     return dt;
 }
 
-int32_t var_calc_total_size(var_t *v)
+int32_t var_calc_total_size(expr_t *e, var_t *v)
 {
-    datatype_t *dt = var_calc_datatype(v);
+    datatype_t *dt = var_calc_datatype(e, v);
     if(v->is_array)
     {
         return v->array_size * dt->size;
@@ -51,8 +55,8 @@ int32_t var_calc_total_size(var_t *v)
     return dt->size;
 }
 
-int32_t var_calc_item_size(var_t *v)
+int32_t var_calc_item_size(expr_t *e, var_t *v)
 {
-    datatype_t *dt = var_calc_datatype(v);
+    datatype_t *dt = var_calc_datatype(e, v);
     return dt->size;
 }

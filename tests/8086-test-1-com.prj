@@ -3,6 +3,9 @@ sdk_path = ../bin/
 verbose = true
 keep = true
 
+[libs:start]
+../libs/dos-8086.lib
+
 [files:8086]
 8086-test-1.rl
 

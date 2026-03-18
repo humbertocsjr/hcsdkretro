@@ -1,6 +1,6 @@
 section text
-global _start
-_start:
+global _main
+_main:
     adc hl,hl 
 
 dw lbl1, lbl2, lbl3

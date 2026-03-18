@@ -4,6 +4,9 @@ sdk_path = ../bin/
 [files:z80]
 z80-test-0.s
 
+[libs]
+../libs/cpm-z80.lib
+
 [link:release]
 format = bin
 filename = z80-test-0.bin
