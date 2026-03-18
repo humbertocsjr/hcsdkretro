@@ -1,3 +1,8 @@
+[config]
+sdk_path = ../bin
+verbose = true
+keep  = true
+
 [files:z80]
 z80/start.s
 ../common/z80/mul.s
