@@ -6,7 +6,7 @@ Cross-compiler tools for retro computing.
 
 [Site and Documentation in English](https://humbertocsjr.dev.br/hcsdk/en)
 
-[RetroLang Documentation](retrolang.md)
+[RetroLang (In Pre-Alpha) Documentation](retrolang.md)
 
 ## Supported Targets
 
