@@ -1074,6 +1074,7 @@ void exec_step()
             break;
         case 0xcb:
             _regs_curr.prefix_cb = true;
+            reset_prefixes = false;
             break;
         case 0xcc:
             tmp = ip_get_word();
@@ -1211,6 +1212,7 @@ void exec_step()
             break;
         case 0xdd:
             _regs_curr.prefix_dd = true;
+            reset_prefixes = false;
             break;
         case 0xde:
             _regs_prev.value = _regs_curr.af.a;
@@ -1327,6 +1329,7 @@ void exec_step()
             break;
         case 0xed:
             _regs_curr.prefix_ed = true;
+            reset_prefixes = false;
             break;
         case 0xee:
             _regs_prev.value = _regs_curr.af.a;
@@ -1435,6 +1438,7 @@ void exec_step()
             break;
         case 0xfd:
             _regs_curr.prefix_fd = true;
+            reset_prefixes = false;
             break;
         case 0xfe:
             _regs_prev.value = _regs_curr.af.a;
