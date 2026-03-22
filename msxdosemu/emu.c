@@ -34,7 +34,7 @@ int main(int argc, char **argv)
         {
             if(sym_name) 
             {
-                fprinf(stderr, "error: symbol file already defined.\n");
+                fprintf(stderr, "error: symbol file already defined.\n");
                 return 1;
             }
             i++;
