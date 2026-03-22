@@ -1449,6 +1449,158 @@ void exec_step()
             _regs_curr.value = _regs_curr.ip;
             break;
     }
+    else if(_regs_curr.prefix_ed)
+    {
+        switch(ip_get_byte())
+        {
+            case 0x00:
+                _regs_prev.value = _regs_curr.bc.b;
+                _regs_curr.bc.b = hardware_in(ip_get_byte());
+                _regs_curr.value = _regs_curr.bc.b;
+                nf_set(0);
+                hf_set(0);
+                alu_parity(_regs_curr.value);
+                zf_set(_regs_curr.value == 0);
+                sf_set(_regs_curr.value & 128);
+                break;
+            case 0x01:
+                _regs_prev.value = _regs_curr.bc.b;
+                hardware_out(ip_get_byte(), _regs_curr.bc.b);
+                _regs_curr.value = _regs_curr.bc.b;
+                break;
+            case 0x04:
+                _regs_prev.value = _regs_curr.bc.b;
+                alu_and_byte(_regs_curr.af.a, _regs_curr.bc.b);
+                _regs_curr.value = _regs_curr.bc.b;
+                break;
+            case 0x08:
+                _regs_prev.value = _regs_curr.bc.c;
+                _regs_curr.bc.c = hardware_in(ip_get_byte());
+                _regs_curr.value = _regs_curr.bc.c;
+                nf_set(0);
+                hf_set(0);
+                alu_parity(_regs_curr.value);
+                zf_set(_regs_curr.value == 0);
+                sf_set(_regs_curr.value & 128);
+                break;
+            case 0x09:
+                _regs_prev.value = _regs_curr.bc.c;
+                hardware_out(ip_get_byte(), _regs_curr.bc.c);
+                _regs_curr.value = _regs_curr.bc.c;
+                break;
+            case 0x0c:
+                _regs_prev.value = _regs_curr.bc.c;
+                alu_and_byte(_regs_curr.af.a, _regs_curr.bc.c);
+                _regs_curr.value = _regs_curr.bc.c;
+                break;
+            case 0x10:
+                _regs_prev.value = _regs_curr.de.d;
+                _regs_curr.de.d = hardware_in(ip_get_byte());
+                _regs_curr.value = _regs_curr.de.d;
+                nf_set(0);
+                hf_set(0);
+                alu_parity(_regs_curr.value);
+                zf_set(_regs_curr.value == 0);
+                sf_set(_regs_curr.value & 128);
+                break;
+            case 0x11:
+                _regs_prev.value = _regs_curr.de.d;
+                hardware_out(ip_get_byte(), _regs_curr.de.d);
+                _regs_curr.value = _regs_curr.de.d;
+                break;
+            case 0x14:
+                _regs_prev.value = _regs_curr.de.d;
+                alu_and_byte(_regs_curr.af.a, _regs_curr.de.d);
+                _regs_curr.value = _regs_curr.de.d;
+                break;
+            case 0x18:
+                _regs_prev.value = _regs_curr.de.e;
+                _regs_curr.de.e = hardware_in(ip_get_byte());
+                _regs_curr.value = _regs_curr.de.e;
+                nf_set(0);
+                hf_set(0);
+                alu_parity(_regs_curr.value);
+                zf_set(_regs_curr.value == 0);
+                sf_set(_regs_curr.value & 128);
+                break;
+            case 0x19:
+                _regs_prev.value = _regs_curr.de.e;
+                hardware_out(ip_get_byte(), _regs_curr.de.e);
+                _regs_curr.value = _regs_curr.de.e;
+                break;
+            case 0x1c:
+                _regs_prev.value = _regs_curr.de.e;
+                alu_and_byte(_regs_curr.af.a, _regs_curr.de.e);
+                _regs_curr.value = _regs_curr.de.e;
+                break;
+            case 0x20:
+                _regs_prev.value = _regs_curr.hl.h;
+                _regs_curr.hl.h = hardware_in(ip_get_byte());
+                _regs_curr.value = _regs_curr.hl.h;
+                nf_set(0);
+                hf_set(0);
+                alu_parity(_regs_curr.value);
+                zf_set(_regs_curr.value == 0);
+                sf_set(_regs_curr.value & 128);
+                break;
+            case 0x21:
+                _regs_prev.value = _regs_curr.hl.h;
+                hardware_out(ip_get_byte(), _regs_curr.hl.h);
+                _regs_curr.value = _regs_curr.hl.h;
+                break;
+            case 0x24:
+                _regs_prev.value = _regs_curr.hl.h;
+                alu_and_byte(_regs_curr.af.a, _regs_curr.hl.h);
+                _regs_curr.value = _regs_curr.hl.h;
+                break;
+            case 0x28:
+                _regs_prev.value = _regs_curr.hl.l;
+                _regs_curr.hl.l = hardware_in(ip_get_byte());
+                _regs_curr.value = _regs_curr.hl.l;
+                nf_set(0);
+                hf_set(0);
+                alu_parity(_regs_curr.value);
+                zf_set(_regs_curr.value == 0);
+                sf_set(_regs_curr.value & 128);
+                break;
+            case 0x29:
+                _regs_prev.value = _regs_curr.hl.l;
+                hardware_out(ip_get_byte(), _regs_curr.hl.l);
+                _regs_curr.value = _regs_curr.hl.l;
+                break;
+            case 0x2c:
+                _regs_prev.value = _regs_curr.hl.l;
+                alu_and_byte(_regs_curr.af.a, _regs_curr.hl.l);
+                _regs_curr.value = _regs_curr.hl.l;
+                break;
+            case 0x34:
+                _regs_prev.value = mem_get_byte(_regs_curr.hl.word);
+                alu_and_byte(_regs_curr.af.a, mem_get_byte(_regs_curr.hl.word));
+                _regs_curr.value = mem_get_byte(_regs_curr.hl.word);
+                break;
+            case 0x38:
+                _regs_prev.value = _regs_curr.af.a;
+                _regs_curr.af.a = hardware_in(ip_get_byte());
+                _regs_curr.value = _regs_curr.af.a;
+                nf_set(0);
+                hf_set(0);
+                alu_parity(_regs_curr.value);
+                zf_set(_regs_curr.value == 0);
+                sf_set(_regs_curr.value & 128);
+                break;
+            case 0x39:
+                _regs_prev.value = _regs_curr.af.a;
+                hardware_out(ip_get_byte(), _regs_curr.af.a);
+                _regs_curr.value = _regs_curr.af.a;
+                break;
+            case 0x3c:
+                _regs_prev.value = _regs_curr.af.a;
+                alu_and_byte(_regs_curr.af.a, _regs_curr.af.a);
+                _regs_curr.value = _regs_curr.af.a;
+                break;
+            default: break;
+        }
+    }
     if(reset_prefixes)
     {
         _regs_curr.prefix_cb = false;
