@@ -8,10 +8,8 @@ Cross-compiler tools for retro computing.
 
 [RetroLang (In Pre-Alpha) Documentation](retrolang.md)
 
-## TODO List
+## TODO List (2.0 Roadmap | Early April/26)
 
-- HC Builder
-    - Embbed SDK BIN/Libraries/Include Path on install (Planned)
 - MSX-DOS 1.0 Emulator (In progress)
     - Z80 Emulation (In progress)
         - 8080 Opcodes (Done)
@@ -44,6 +42,9 @@ Cross-compiler tools for retro computing.
         - Common Math/Logic Runtime Library (Done / Testing)
         - CP/M 2.2 Library (In progress)
         - MSX-DOS 1.0 Library (Planned)
+    - 8080 Target and Libraries (Planned for 2.1)
+- HC Builder
+    - Embbed SDK BIN/Libraries/Include Path on install (Planned for 2.1)
 
 ## Supported Targets
 
