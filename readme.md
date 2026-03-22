@@ -10,7 +10,7 @@ Cross-compiler tools for retro computing.
 
 ## TODO List (2.0 Roadmap | Early April/26)
 
-- MSX-DOS 1.0 Emulator (In progress)
+- MSX-DOS 1.0 (CP/M 2.2 Compatible) Emulator (In progress)
     - Z80 Emulation (In progress)
         - 8080 Opcodes (Done)
         - Z80 Exclusive Opcodes (In progress)
@@ -46,6 +46,9 @@ Cross-compiler tools for retro computing.
     - 8080 Target and Libraries (Planned for 2.1)
 - HC Builder
     - Embbed SDK BIN/Libraries/Include Path on install (Planned for 2.1)
+- HC Assembler
+    - 6502 Target Support (Planned for 3.0)
+- Integration on VSCode (Planned for 3.0)
 
 ## Supported Targets
 
@@ -74,11 +77,6 @@ Cross-compiler tools for retro computing.
 - **Linux - ARM**
 - **FreeBSD - Intel**
 - **OpenBSD - Intel**
-
-## Todo List
-
-- Complete documentation
-- Implement 6502 Support
 
 ## Install
 
