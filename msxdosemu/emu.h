@@ -154,3 +154,8 @@ uint8_t alu_daa(uint8_t value);
 // --== exec.c ==--
 
 void exec();
+
+// --== hardware.c ==--
+
+void hardware_out(uint8_t port, uint8_t value);
+uint8_t hardware_in(uint8_t port);

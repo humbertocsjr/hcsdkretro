@@ -1106,6 +1106,348 @@ void exec_step()
             _regs_curr.ip = 8;
             _regs_curr.value = _regs_curr.ip;
             break;
+        case 0xd0:
+            if(!cf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = mem_get_word(_regs_curr.sp);
+                _regs_curr.sp+=2;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xd1:
+            _regs_prev.value = _regs_curr.de.word;
+            _regs_curr.de.word = mem_get_word(_regs_curr.sp);
+            _regs_curr.sp+=2;
+            _regs_curr.value = _regs_curr.de.word;
+            break;
+        case 0xd2:
+            tmp = ip_get_word();
+            if(!cf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xd3:
+            _regs_prev.value = _regs_curr.af.a;
+            hardware_out(ip_get_byte(), _regs_curr.af.a);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xd4:
+            tmp = ip_get_word();
+            if(!cf_get())
+            {
+                _regs_curr.sp-=2;
+                mem_set_word(_regs_curr.sp, _regs_curr.ip);
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xd5:
+            _regs_prev.value = _regs_curr.sp;
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.de.word);
+            _regs_curr.value = _regs_curr.sp;
+            break;
+        case 0xd6:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_sub_byte(_regs_curr.af.a, ip_get_byte());
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xd7:
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.ip);
+            _regs_prev.value = _regs_curr.ip;
+            _regs_curr.ip = 0x10;
+            _regs_curr.value = _regs_curr.ip;
+            break;
+        case 0xd8:
+            if(cf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = mem_get_word(_regs_curr.sp);
+                _regs_curr.sp+=2;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xd9:
+            tmp = _regs_curr.hl.word;
+            _regs_curr.hl.word = _regs_curr.hl_alt;
+            _regs_curr.hl_alt = tmp;
+            tmp = _regs_curr.bc.word;
+            _regs_curr.bc.word = _regs_curr.bc_alt;
+            _regs_curr.bc_alt = tmp;
+            tmp = _regs_curr.de.word;
+            _regs_curr.de.word = _regs_curr.de_alt;
+            _regs_curr.de_alt = tmp;
+            break;
+        case 0xda:
+            tmp = ip_get_word();
+            if(cf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xdb:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = hardware_in(ip_get_byte());
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xdc:
+            tmp = ip_get_word();
+            if(cf_get())
+            {
+                _regs_curr.sp-=2;
+                mem_set_word(_regs_curr.sp, _regs_curr.ip);
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xdd:
+            _regs_curr.prefix_dd = true;
+            break;
+        case 0xde:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_sbc_byte(_regs_curr.af.a, ip_get_byte());
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xdf:
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.ip);
+            _regs_prev.value = _regs_curr.ip;
+            _regs_curr.ip = 0x18;
+            _regs_curr.value = _regs_curr.ip;
+            break;
+        case 0xe0:
+            if(!pvf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = mem_get_word(_regs_curr.sp);
+                _regs_curr.sp+=2;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xe1:
+            _regs_prev.value = _regs_curr.hl.word;
+            _regs_curr.hl.word = mem_get_word(_regs_curr.sp);
+            _regs_curr.sp+=2;
+            _regs_curr.value = _regs_curr.hl.word;
+            break;
+        case 0xe2:
+            tmp = ip_get_word();
+            if(!pvf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xe3:
+            _regs_prev.value = _regs_curr.hl.word;
+            tmp = mem_get_word(_regs_curr.sp);
+            mem_set_word(_regs_curr.sp, _regs_curr.hl.word);
+            _regs_curr.hl.word = tmp;
+            _regs_curr.value = _regs_curr.hl.word;
+            break;
+        case 0xe4:
+            tmp = ip_get_word();
+            if(!pvf_get())
+            {
+                _regs_curr.sp-=2;
+                mem_set_word(_regs_curr.sp, _regs_curr.ip);
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xe5:
+            _regs_prev.value = _regs_curr.sp;
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.hl.word);
+            _regs_curr.value = _regs_curr.sp;
+            break;
+        case 0xe6:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_and_byte(_regs_curr.af.a, ip_get_byte());
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xe7:
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.ip);
+            _regs_prev.value = _regs_curr.ip;
+            _regs_curr.ip = 0x20;
+            _regs_curr.value = _regs_curr.ip;
+            break;
+        case 0xe8:
+            if(pvf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = mem_get_word(_regs_curr.sp);
+                _regs_curr.sp+=2;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xe9:
+            _regs_prev.value = _regs_curr.ip;
+            _regs_curr.ip = mem_get_word(_regs_curr.hl.word);
+            _regs_curr.value = _regs_curr.ip;
+            break;
+        case 0xea:
+            tmp = ip_get_word();
+            if(pvf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xeb:
+            _regs_prev.value = _regs_curr.hl.word;
+            tmp = _regs_curr.hl.word;
+            _regs_curr.hl.word = _regs_curr.de.word;
+            _regs_curr.de.word = tmp;
+            _regs_curr.value = _regs_curr.hl.word;
+            break;
+        case 0xec:
+            tmp = ip_get_word();
+            if(pvf_get())
+            {
+                _regs_curr.sp-=2;
+                mem_set_word(_regs_curr.sp, _regs_curr.ip);
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xed:
+            _regs_curr.prefix_ed = true;
+            break;
+        case 0xee:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_xor_byte(_regs_curr.af.a, ip_get_byte());
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xef:
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.ip);
+            _regs_prev.value = _regs_curr.ip;
+            _regs_curr.ip = 0x28;
+            _regs_curr.value = _regs_curr.ip;
+            break;
+        case 0xf0:
+            if(!sf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = mem_get_word(_regs_curr.sp);
+                _regs_curr.sp+=2;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xf1:
+            _regs_prev.value = _regs_curr.af.word;
+            _regs_curr.af.word = mem_get_word(_regs_curr.sp);
+            _regs_curr.sp+=2;
+            _regs_curr.value = _regs_curr.af.word;
+            break;
+        case 0xf2:
+            tmp = ip_get_word();
+            if(!sf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xf3:
+            _regs_curr.interrupts = false;
+            break;
+        case 0xf4:
+            tmp = ip_get_word();
+            if(!sf_get())
+            {
+                _regs_curr.sp-=2;
+                mem_set_word(_regs_curr.sp, _regs_curr.ip);
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xf5:
+            _regs_prev.value = _regs_curr.sp;
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.af.word);
+            _regs_curr.value = _regs_curr.sp;
+            break;
+        case 0xf6:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_or_byte(_regs_curr.af.a, ip_get_byte());
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xf7:
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.ip);
+            _regs_prev.value = _regs_curr.ip;
+            _regs_curr.ip = 0x30;
+            _regs_curr.value = _regs_curr.ip;
+            break;
+        case 0xf8:
+            if(sf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = mem_get_word(_regs_curr.sp);
+                _regs_curr.sp+=2;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xf9:
+            _regs_prev.value = _regs_curr.sp;
+            _regs_curr.sp = _regs_curr.hl.word;
+            _regs_curr.value = _regs_curr.sp;
+            break;
+        case 0xfa:
+            tmp = ip_get_word();
+            if(sf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xfb:
+            _regs_curr.interrupts = true;
+            break;
+        case 0xfc:
+            tmp = ip_get_word();
+            if(sf_get())
+            {
+                _regs_curr.sp-=2;
+                mem_set_word(_regs_curr.sp, _regs_curr.ip);
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xfd:
+            _regs_curr.prefix_fd = true;
+            break;
+        case 0xfe:
+            _regs_prev.value = _regs_curr.af.a;
+            alu_sub_byte(_regs_curr.af.a, ip_get_byte());
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xff:
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.ip);
+            _regs_prev.value = _regs_curr.ip;
+            _regs_curr.ip = 0x38;
+            _regs_curr.value = _regs_curr.ip;
+            break;
     }
     if(reset_prefixes)
     {
