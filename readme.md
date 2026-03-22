@@ -22,6 +22,7 @@ Cross-compiler tools for retro computing.
             - IY Bit Opcodes (0xfd 0xcb) (Planned)
     - Screen I/O to TTY Mode (Planned)
     - Screen with Debug Mode (In progress)
+    - MegaRAM / Slot Support (Planned for 2.1)
     - CALL 5 ABI (Planned)
         - File ABI (Planned)
         - Console ABI (Planned)
