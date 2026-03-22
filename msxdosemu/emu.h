@@ -145,6 +145,7 @@ uint8_t alu_add_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_adc_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_sub_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_sbc_byte(uint8_t value1, uint8_t value2);
+uint16_t alu_sbc_word(uint16_t value1, uint16_t value2);
 uint8_t alu_and_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_xor_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_or_byte(uint8_t value1, uint8_t value2);

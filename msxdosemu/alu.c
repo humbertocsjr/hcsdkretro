@@ -134,6 +134,22 @@ uint8_t alu_sbc_byte(uint8_t value1, uint8_t value2)
     return value1;
 }
 
+uint16_t alu_sbc_word(uint16_t value1, uint16_t value2)
+{
+    int16_t s1 = (*(int16_t*)&value1);
+    int16_t s2 = (*(int16_t*)&value2);
+    int32_t s = s1 - s2;
+    uint16_t tmp = value1;
+    hf_set(((value1 & 0xf0) - ((value2 + (cf_get() ? 1 : 0)) & 0xf0)) & 0xf);
+    value1 -= value2 + (cf_get() ? 1 : 0);
+    cf_set(tmp < value2);
+    nf_set(1);
+    zf_set(value1 == 0);
+    sf_set(value1 & 0x8000);
+    pvf_set(s > 32767 || s < -32768);
+    return value1;
+}
+
 uint8_t alu_and_byte(uint8_t value1, uint8_t value2)
 {
     cf_set(0);

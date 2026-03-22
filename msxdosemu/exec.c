@@ -1602,6 +1602,32 @@ void exec_step()
                 alu_and_byte(_regs_curr.af.a, _regs_curr.af.a);
                 _regs_curr.value = _regs_curr.af.a;
                 break;
+            case 0x40:
+                _regs_prev.value = _regs_curr.bc.b;
+                _regs_curr.bc.b = hardware_in(_regs_curr.bc.c);
+                _regs_curr.value = _regs_curr.bc.b;
+                break;
+            case 0x41:
+                _regs_prev.value = _regs_curr.bc.b;
+                hardware_out(_regs_curr.bc.c, _regs_curr.bc.b);
+                _regs_curr.value = _regs_curr.bc.b;
+                break;
+            case 0x42:
+                _regs_prev.value = _regs_curr.hl.word;
+                _regs_curr.bc.word = alu_sbc_word(_regs_curr.hl.word, _regs_curr.bc.word);
+                _regs_curr.value = _regs_curr.hl.word;
+                break;
+            case 0x43:
+                tmp = ip_get_word();
+                _regs_prev.value = mem_get_word(tmp);
+                mem_set_word(tmp, _regs_curr.bc.word);
+                _regs_curr.value = mem_get_word(tmp);
+                break;
+            case 0x44:
+                _regs_prev.value = _regs_curr.af.a;
+                _regs_curr.af.a = alu_sbc_byte(0, _regs_curr.af.a);
+                _regs_curr.value = _regs_curr.af.a;
+                break;
             default: break;
         }
     }
