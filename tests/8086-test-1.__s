@@ -1,27 +1,6 @@
-; DECLARED EXTERNAL VARIABLE: var_externa
-; DECLARED EXTERNAL FUNCTION: multiplicacao
+; DECLARED EXTERNAL FUNCTION: str_len
 ; DECLARED EXTERNAL FUNCTION: tty_print_char
 ; DECLARED EXTERNAL FUNCTION: tty_print_str
-; GLOBAL VAR var_externa
-section data
-global _var_externa
-_var_externa: resb 2
-; GLOBAL VAR d
-section data
-global _d
-_d: resb 3
-; GLOBAL VAR c
-section data
-global _c
-_c: resb 2
-; GLOBAL VAR b
-section data
-global _b
-_b: resb 256
-; GLOBAL VAR a
-section data
-global _a
-_a: resb 2
 ; FUNCTION: soma
 section text
 global _soma
@@ -39,169 +18,39 @@ _soma:
 section text
 global _main
 _main:
-  push bp
-  mov bp, sp
-  sub bp, 6
-; IF
-  mov ax, 1
-  test ax, ax
-  je near .L0
-; THEN
-; EXPRESSION COMMAND
-  mov al, [bp+-6] ; a
-  mov bl, 3
-  cmp al, bl
-  mov al, 0
-  jl $+4
-  dec al
-  test al, al
-  jne near .L1
-  mov al, 1
-  .L1:
-  mov [bp+-6], al ; a
-; END EXPRESSION COMMAND
-  .L0:
-; END IF
-; IF
-  mov ax, 1
-  test ax, ax
-  je near .L2
-; THEN
-; EXPRESSION COMMAND
-  mov al, 1
-  mov [bp+-6], al ; a
-; END EXPRESSION COMMAND
-; ELSE
-  jmp .L3
-  .L2:
-; EXPRESSION COMMAND
-  mov al, 2
-  mov [bp+-6], al ; a
-; END EXPRESSION COMMAND
-  .L3:
-; END IF
-; EXPRESSION COMMAND
-  mov al, 0
-  mov [bp+-6], al ; a
-; END EXPRESSION COMMAND
-; UNTIL
-  .L4:
-  mov al, [bp+-6] ; a
-  cbw
-  mov bx, 3
-  cmp ax, bx
-  mov ax, 0
-  je $+3
-  dec ax
-  test ax, ax
-  jne near .L5
-; DO UNTIL
-; EXPRESSION COMMAND
-  mov al, [bp+-6] ; a
-  mov bl, 1
-  add al, bl
-  mov [bp+-6], al ; a
-; END EXPRESSION COMMAND
-  jmp .L4
-  .L5:
-; END UNTIL
-; EXPRESSION COMMAND
-  mov al, 0
-  mov [bp+-6], al ; a
-; END EXPRESSION COMMAND
-; WHILE
-  .L6:
-  mov al, [bp+-6] ; a
-  cbw
-  mov bx, 3
-  cmp ax, bx
-  mov ax, 0
-  jl $+3
-  dec ax
-  test ax, ax
-  je near .L7
-; DO WHILE
-; EXPRESSION COMMAND
-  mov al, [bp+-6] ; a
-  mov bl, 1
-  add al, bl
-  mov [bp+-6], al ; a
-; END EXPRESSION COMMAND
-  jmp .L6
-  .L7:
-; END WHILE
-; INJECTED ASSEMBLY COMMAND
-  ; 8086
-; EXPRESSION COMMAND
-  mov al, [bp+-6] ; a
-  xor ah, ah
-  mov bx, 1
-  add ax, bx
-  mov al, [bp+-5] ; b
-  xor ah, ah
-  add ax, bx
-  mov bx, _soma
-  add ax, bx
-  mov [bp+-4], ax ; ptr
-; END EXPRESSION COMMAND
-; EXPRESSION COMMAND
-  mov ax, _soma
-  mov [bp+-4], ax ; ptr
-; END EXPRESSION COMMAND
-; EXPRESSION COMMAND
-; CALL FUNCTION soma
-  mov ax, 2
-  push ax
-  mov ax, 1
-  push ax
-  call _soma
-; END CALL FUNCTION soma
-  add sp, 4
-  push ax
-; CALL VARIABLE ptr
-  mov ax, [bp+-4] ; ptr
-  call ax
-; END CALL VARIABLE ptr
-  xchg al, bl
-  pop ax
-  add al, bl
-  mov [bp+-6], al ; a
-; END EXPRESSION COMMAND
-; EXPRESSION COMMAND
-  lea ax, [bp+-6] ; a
-  mov [bp+-2], ax ; indi_a
-; END EXPRESSION COMMAND
-; EXPRESSION COMMAND
-  mov ax, [bp+-2] ; indi_a
-  mov si, ax
-  mov al, [si]
-  mov [bp+-5], al ; b
-; END EXPRESSION COMMAND
 ; EXPRESSION COMMAND
 ; CALL FUNCTION tty_print_str
 section data
-  .L8:
+  .L0:
     db 79 ; O
     db 105 ; i
     db 101 ; e
+    db 101 ; e
+    db 101 ; e
+    db 101 ; e
     db 0
 section text
-  mov ax, .L8
+  mov ax, .L0
   push ax
   call _tty_print_str
 ; END CALL FUNCTION tty_print_str
   add sp, 2
 ; END EXPRESSION COMMAND
 ; EXPRESSION COMMAND
-  mov al, [bp+-5] ; b
+; CALL FUNCTION tty_print_char
+; CALL FUNCTION soma
+  mov ax, 9
   push ax
-  mov ax, [bp+-2] ; indi_a
-  pop bx
-  mov si, ax
-  mov [si], bl
+  mov ax, 48
+  push ax
+  call _soma
+; END CALL FUNCTION soma
+  add sp, 4
+  push ax
+  call _tty_print_char
+; END CALL FUNCTION tty_print_char
+  add sp, 2
 ; END EXPRESSION COMMAND
   .__END__:
-  mov sp, bp
-  pop bp
   ret
 ; END FUNCTION: main

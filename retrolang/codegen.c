@@ -341,6 +341,7 @@ void codegen_expr(func_t *func, command_t *cmd, expr_t *e, datatype_t *dt, bool 
                 cpu_load_pointer(datatype_find("pointer")->nativetype);
             }
             cpu_load_pointer(ref_var->datatype->nativetype);
+            codegen_autoconvert(e, dt, ref_var->datatype);
             break;
         case ACT_CALL:
             ref_func = func_find(e->token);

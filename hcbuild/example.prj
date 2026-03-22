@@ -5,6 +5,9 @@ verbose = yes
 [files:z80]
 main.s
 
+[libs:start]
+runtime_start.obj
+
 [libs]
 runtime.lib
 single.obj

@@ -41,7 +41,7 @@ void cpu_function_start(char *name, int32_t vars_size)
     {
         out_line("  push bp");
         out_line("  mov bp, sp");
-        out_line("  sub bp, %i", (vars_size + 1) & (~1)); // round up to next word
+        out_line("  sub sp, %i", (vars_size + 1) & (~1)); // round up to next word
     }
 }
 

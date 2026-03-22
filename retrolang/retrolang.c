@@ -2,6 +2,7 @@
 
 char *_out_name = NULL;
 FILE *_out = NULL;
+include_path_t *_include_path = NULL;
 
 void help()
 {
@@ -11,6 +12,7 @@ void help()
     printf("Usage: retrolang-%s [ARGS] [SOURCE FILE]\n", cpu_ext());
     printf("Arguments:\n");
     printf("-o [FILE]       : Output Assembly file\n");
+    printf("-I [PATH]       : Include path\n");
     exit(1);
 }
 
@@ -26,12 +28,25 @@ int main(int argc, char **argv)
         else if(!strcmp(argv[i], "-o"))
         {
             i++;
-            if(_out_name) error("error: output name already defined\n");
+            if(_out_name) error("output name already defined\n");
             if(i < argc) _out_name = argv[i];
+        }
+        else if(!strcmp(argv[i], "-I"))
+        {
+            i++;
+            if(i < argc) 
+            {
+                include_path_t *inc = malloc(sizeof(include_path_t) + strlen(argv[i]));
+                if(!inc) error("include path memory overflow.");
+                memset(inc, 0, sizeof(include_path_t));
+                inc->next = _include_path;
+                _include_path = inc;
+                strcpy(inc->path, argv[i]);
+            }
         }
         else 
         {
-            if(src_name) error("error: source file name already defined\n");
+            if(src_name) error("source file name already defined\n");
             src_name = argv[i];
         }
     }

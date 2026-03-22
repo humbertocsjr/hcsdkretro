@@ -45,7 +45,7 @@ void help()
 void make_files(section_t *section)
 {
     int st;
-    char cmd[8000];
+    char cmd[24000];
     char source_name[2048];
     char temp_name[2048];
     char obj_name[2048];
@@ -92,6 +92,18 @@ void make_files(section_t *section)
             strcat(cmd, "retrolang-");
             strcat(cmd, section->subsection);
             #endif
+            section_t *rl_include_path = get_section("retrolang", "include_path");
+            if(rl_include_path)
+            {
+                keyvalue_t *kv = rl_include_path->keys;
+                while(kv)
+                {
+                    strcat(cmd, " -I ");
+                    strcat(cmd, kv->key);
+                    if(cmd[strlen(cmd)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+                    kv = kv->next;
+                }
+            }
             strcat(cmd, " -o ");
             strcat(cmd, temp_name);
             strcat(cmd, " ");
@@ -200,7 +212,7 @@ void make_link(section_t *section, char *config)
     if(strlen(format) == 0) format = "bin";
     if(strlen(out_file) == 0) out_file = "a.out";
     obj_t *obj = _objs;
-    size_t cmd_size = 256 + strlen(out_file) + strlen(_path) + strlen(sym_file) + strlen(sdk_path);
+    size_t cmd_size = 5120 + strlen(out_file) + strlen(_path) + strlen(sym_file) + strlen(sdk_path);
     while(obj)
     {
         cmd_size += 2 + strlen(obj->name);

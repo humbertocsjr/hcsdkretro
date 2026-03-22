@@ -127,6 +127,7 @@ typedef enum tok_t
     KEY_DECL,
     KEY_ADDRESSOF,
     KEY_SIZEOF,
+    KEY_INCLUDE,
     ACT_VARIABLE,
     ACT_FUNCTION,
     ACT_CALL,
@@ -200,11 +201,17 @@ typedef struct command_t
     struct command_t *alt_contents;
 } command_t;
 
+typedef struct include_path_t
+{
+    struct include_path_t *next;
+    char path[1];
+} include_path_t;
+
 // --== retrolang.c ==--
 
 extern char *_out_name;
 extern FILE *_out;
-
+extern include_path_t *_include_path;
 
 // --== datatype.c ==--
 

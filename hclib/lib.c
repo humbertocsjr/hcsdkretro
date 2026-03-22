@@ -3,6 +3,7 @@
 FILE *_lib = NULL;
 FILE *_tmp = NULL;
 object_t *_objs = NULL;
+object_t *_last_obj = NULL;
 
 void help()
 {
@@ -81,9 +82,18 @@ int main(int argc, char **argv)
                         if(obj_exists((char*)rec.data)) error("object already exists: %s", (char *)rec.data);
                         object_t *obj = malloc(sizeof(object_t) + rec.header.data_size);
                         memset(obj, 0, sizeof(object_t) + rec.header.data_size);
-                        obj->next = _objs;
                         strcpy(obj->name, (char*)rec.data);
-                        _objs = obj;
+                        if(_last_obj)
+                        {
+                            _last_obj->next = obj;
+                            _last_obj = obj;
+                        }
+                        else
+                        {
+                            obj->next = _objs;
+                            _objs = obj;
+                            _last_obj = obj;
+                        }
                     }
                     break;
                 default:

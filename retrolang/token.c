@@ -152,6 +152,7 @@ token_t *token_scan(source_t *src)
         TRYPARSE("decl", KEY_DECL);
         TRYPARSE("addressof", KEY_ADDRESSOF);
         TRYPARSE("sizeof", KEY_SIZEOF);
+        TRYPARSE("include", KEY_INCLUDE);
     }
     else if(source_is_equal(src, '"'))
     {

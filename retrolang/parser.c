@@ -1,6 +1,7 @@
 #include "retrolang.h"
 
 void parser_block(source_t *src, command_t *cmd, func_t *func, bool exit_on_else, bool to_alt_contents);
+void parser_include_file(char *module);
 
 command_t *parser_variable_declaration(source_t *src, command_t *cmd, func_t *func)
 {
@@ -366,6 +367,12 @@ command_t *parser_root_command(source_t *src)
         case KEY_DECL:
             parser_declaration(src, cmd);
             break;
+        case KEY_INCLUDE:
+            token_scan(src);
+            match_token(token_is(src, TOK_SYMBOL), token_curr(src), "module name expected.");
+            parser_include_file(token_curr(src)->token);
+            token_scan(src);
+            break;
         default:
             error_token(curr, "invalid root command: %s", curr->token);
             break;
@@ -401,4 +408,33 @@ void parser_process_file(char *filename)
         }
     }
     source_close(src);
+}
+
+void parser_include_file(char *module)
+{
+    char filename[8000];
+    strcpy(filename, module);
+    strcat(filename, ".rl");
+    FILE *file = fopen(filename, "r");
+    if(file)
+    {
+        fclose(file);
+        parser_process_file(filename);
+        return;
+    }
+    include_path_t *path = _include_path;
+    while(path)
+    {
+        strcpy(filename, path->path);
+        strcat(filename, module);
+        strcat(filename, ".rl");
+        file = fopen(filename, "r");
+        if(file)
+        {
+            fclose(file);
+            parser_process_file(filename);
+            return;
+        }
+        path = path->next;
+    }
 }
