@@ -22,7 +22,6 @@ Cross-compiler tools for retro computing.
             - Bit Opcodes (0xcb) (Planned)
             - IX Bit Opcodes (0xdd 0xcb) (Planned)
             - IY Bit Opcodes (0xfd 0xcb) (Planned)
-        - Z80 Undocummented Opcodes (Planned)
     - Screen I/O to TTY Mode (Planned)
     - Screen with Debug Mode (In progress)
     - CALL 5 ABI (Planned)
