@@ -147,6 +147,7 @@ uint8_t alu_sub_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_sbc_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_and_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_xor_byte(uint8_t value1, uint8_t value2);
+uint8_t alu_or_byte(uint8_t value1, uint8_t value2);
 void alu_parity(uint8_t value);
 uint8_t alu_daa(uint8_t value);
 

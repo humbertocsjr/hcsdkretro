@@ -151,7 +151,19 @@ uint8_t alu_xor_byte(uint8_t value1, uint8_t value2)
     cf_set(0);
     nf_set(0);
     hf_set(0);
-    value1 &= value2;
+    value1 ^= value2;
+    alu_parity(value1);
+    zf_set(value1 == 0);
+    sf_set(value1 & 128);
+    return value1;
+}
+
+uint8_t alu_or_byte(uint8_t value1, uint8_t value2)
+{
+    cf_set(0);
+    nf_set(0);
+    hf_set(0);
+    value1 |= value2;
     alu_parity(value1);
     zf_set(value1 == 0);
     sf_set(value1 & 128);

@@ -910,6 +910,202 @@ void exec_step()
             _regs_curr.af.a = alu_xor_byte(_regs_curr.af.a, _regs_curr.af.a);
             _regs_curr.value = _regs_curr.af.a;
             break;
+        case 0xb0:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_or_byte(_regs_curr.af.a, _regs_curr.bc.b);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xb1:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_or_byte(_regs_curr.af.a, _regs_curr.bc.c);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xb2:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_or_byte(_regs_curr.af.a, _regs_curr.de.d);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xb3:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_or_byte(_regs_curr.af.a, _regs_curr.de.e);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xb4:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_or_byte(_regs_curr.af.a, _regs_curr.hl.h);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xb5:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_or_byte(_regs_curr.af.a, _regs_curr.hl.l);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xb6:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_or_byte(_regs_curr.af.a, mem_get_byte(_regs_curr.hl.word));
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xb7:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_or_byte(_regs_curr.af.a, _regs_curr.af.a);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xb8:
+            _regs_prev.value = _regs_curr.af.a;
+            alu_sub_byte(_regs_curr.af.a, _regs_curr.bc.b);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xb9:
+            _regs_prev.value = _regs_curr.af.a;
+            alu_sub_byte(_regs_curr.af.a, _regs_curr.bc.c);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xba:
+            _regs_prev.value = _regs_curr.af.a;
+            alu_sub_byte(_regs_curr.af.a, _regs_curr.de.d);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xbb:
+            _regs_prev.value = _regs_curr.af.a;
+            alu_sub_byte(_regs_curr.af.a, _regs_curr.de.e);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xbc:
+            _regs_prev.value = _regs_curr.af.a;
+            alu_sub_byte(_regs_curr.af.a, _regs_curr.hl.h);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xbd:
+            _regs_prev.value = _regs_curr.af.a;
+            alu_sub_byte(_regs_curr.af.a, _regs_curr.hl.l);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xbe:
+            _regs_prev.value = _regs_curr.af.a;
+            alu_sub_byte(_regs_curr.af.a, mem_get_byte(_regs_curr.hl.word));
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xbf:
+            _regs_prev.value = _regs_curr.af.a;
+            alu_sub_byte(_regs_curr.af.a, _regs_curr.af.a);
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xc0:
+            if(!zf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = mem_get_word(_regs_curr.sp);
+                _regs_curr.sp+=2;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xc1:
+            _regs_prev.value = _regs_curr.bc.word;
+            _regs_curr.bc.word = mem_get_word(_regs_curr.sp);
+            _regs_curr.sp+=2;
+            _regs_curr.value = _regs_curr.bc.word;
+            break;
+        case 0xc2:
+            tmp = ip_get_word();
+            if(!zf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xc3:
+            _regs_prev.value = _regs_curr.ip;
+            _regs_curr.ip = ip_get_word();
+            _regs_curr.value = _regs_curr.ip;
+            break;
+        case 0xc4:
+            tmp = ip_get_word();
+            if(!zf_get())
+            {
+                _regs_curr.sp-=2;
+                mem_set_word(_regs_curr.sp, _regs_curr.ip);
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xc5:
+            _regs_prev.value = _regs_curr.sp;
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.bc.word);
+            _regs_curr.value = _regs_curr.sp;
+            break;
+        case 0xc6:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_add_byte(_regs_curr.af.a, ip_get_byte());
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xc7:
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.ip);
+            _regs_prev.value = _regs_curr.ip;
+            _regs_curr.ip = 0;
+            _regs_curr.value = _regs_curr.ip;
+            break;
+        case 0xc8:
+            if(zf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = mem_get_word(_regs_curr.sp);
+                _regs_curr.sp+=2;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xc9:
+            _regs_prev.value = _regs_curr.ip;
+            _regs_curr.ip = mem_get_word(_regs_curr.sp);
+            _regs_curr.sp+=2;
+            _regs_curr.value = _regs_curr.ip;
+            break;
+        case 0xca:
+            tmp = ip_get_word();
+            if(zf_get())
+            {
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xcb:
+            _regs_curr.prefix_cb = true;
+            break;
+        case 0xcc:
+            tmp = ip_get_word();
+            if(zf_get())
+            {
+                _regs_curr.sp-=2;
+                mem_set_word(_regs_curr.sp, _regs_curr.ip);
+                _regs_prev.value = _regs_curr.ip;
+                _regs_curr.ip = tmp;
+                _regs_curr.value = _regs_curr.ip;
+            }
+            break;
+        case 0xcd:
+            tmp = ip_get_word();
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.ip);
+            _regs_prev.value = _regs_curr.ip;
+            _regs_curr.ip = tmp;
+            _regs_curr.value = _regs_curr.ip;
+            break;
+        case 0xce:
+            _regs_prev.value = _regs_curr.af.a;
+            _regs_curr.af.a = alu_adc_byte(_regs_curr.af.a, ip_get_byte());
+            _regs_curr.value = _regs_curr.af.a;
+            break;
+        case 0xcf:
+            _regs_curr.sp-=2;
+            mem_set_word(_regs_curr.sp, _regs_curr.ip);
+            _regs_prev.value = _regs_curr.ip;
+            _regs_curr.ip = 8;
+            _regs_curr.value = _regs_curr.ip;
+            break;
     }
     if(reset_prefixes)
     {
