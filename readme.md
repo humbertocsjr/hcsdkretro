@@ -8,6 +8,35 @@ Cross-compiler tools for retro computing.
 
 [RetroLang (In Pre-Alpha) Documentation](retrolang.md)
 
+## TODO List
+
+- HC Builder
+    - Embbed SDK BIN/Libraries/Include Path on install (Planned)
+- MSX-DOS 1.0 Emulator (In progress)
+    - Z80 Emulation (In progress)
+        - 8080 Opcodes (In progress)
+        - Z80 Exclusive Opcodes (Planned)
+        - Z80 Undocummented Opcodes (Planned)
+    - CALL 5 ABI (Planned)
+        - File ABI (Planned)
+    - MSX-BIOS ABI (Planned)
+        - Screen ABI (Planned)
+    - MSX Hardware Emulation (Planned)
+        - Screen 40x24 Direct Manipulation (Planned)
+- RetroLang Compiler (In progress)
+    - Implement all planned pointers (In progress)
+    - Structure Support (Planned)
+    - Array Support (Planned)
+    - 8086 Target and Libraries
+        - 8086 Target (Done)
+        - DOS Library (Planned)
+        - BIOS-only Library (Planned) 
+    - Z80 Target and Libraries
+        - Z80 Target (In progress / Non functional)
+        - Common Math/Logic Runtime Library (Done / Testing)
+        - CP/M 2.2 Library (In progress)
+        - MSX-DOS 1.0 Library (Planned)
+
 ## Supported Targets
 
 - **8080**:  Intel 8080 or Compatibles
