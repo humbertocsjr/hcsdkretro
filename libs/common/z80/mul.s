@@ -1,5 +1,6 @@
 section text
 
+    global muls8
     muls8:
         ld b, a
         xor e
@@ -22,6 +23,7 @@ section text
         .done:
         ret
 
+    global muls16
     muls16:
         ld a, h
         xor d
@@ -56,6 +58,7 @@ section text
         .done:
         ret
         
+    global mulu8
     mulu8:
         ld d, 0        ; acumulador alto (ignorado)
         ld b, 8
@@ -68,6 +71,7 @@ section text
             djnz .loop
         ret
     
+    global mulu16
     mulu16:
         ld bc, 0
         ld a, 16

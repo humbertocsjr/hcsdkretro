@@ -32,23 +32,29 @@ void cpu_global_variable(char *name, int32_t size)
     out_line("_%s: resb %i", name, size);
 }
 
-void cpu_function_start(char *name, int32_t vars_size)
+void cpu_function_start(char *name, int32_t vars_size, int32_t args_size)
 {
     out_line("section text");
     out_line("global _%s", name);
     out_line("_%s:", name);
-    if(vars_size)
+    if(vars_size || args_size)
     {
         out_line("  push ix");
-        out_line("  ld ix, -%i", (vars_size + 1) & (~1)); // round up to next word
+        out_line("  ld ix, 0");
         out_line("  add ix, sp");
+    }
+    if(vars_size)
+    {
+        out_line("  ld hl, -%i", (vars_size + 1) & (~1)); // round up to next word
+        out_line("  add hl, sp");
+        out_line("  ld sp, hl");
     }
 }
 
-void cpu_function_end(char *name, int32_t vars_size)
+void cpu_function_end(char *name, int32_t vars_size, int32_t args_size)
 {
     out_line("  .__END__:");
-    if(vars_size)
+    if(vars_size || args_size)
     {
         out_line("  ld sp, ix");
         out_line("  pop ix");
@@ -417,11 +423,11 @@ void cpu_jump_if_true(nativetype_t nt, int label)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  call cmpe8");
+            out_line("  bit 1, a");
             out_line("  jp nz, .L%i", label);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  call cmpe16");
+            out_line("  bit 1, l");
             out_line("  jp nz, .L%i", label);
             break;
         default: error("invalid cpu_comparsion");
@@ -433,11 +439,11 @@ void cpu_jump_if_false(nativetype_t nt, int label)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  call cmpe8");
+            out_line("  bit 1, a");
             out_line("  jp z, .L%i", label);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  call cmpe16");
+            out_line("  bit 1, l");
             out_line("  jp z, .L%i", label);
             break;
         default: error("invalid cpu_comparsion");

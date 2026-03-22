@@ -141,6 +141,16 @@ static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
         }
         else if((reg1 = tryget_reg(argv[0], REG_MAIN_PTR)) != NULL)
         {
+            if((reg1->group & (REG_IX_PTR)))
+            {
+                op = 0xdd;
+                out(REC_DATA, 0, 0, &op, 1);
+            }
+            if((reg1->group & (REG_IY_PTR)))
+            {
+                op = 0xfd;
+                out(REC_DATA, 0, 0, &op, 1);
+            }
             reg2 = tryget_reg(argv[1], REG_16BIT_SP);
             arg = argv[1];
             is_16bit_op = true;
@@ -496,6 +506,16 @@ static void emit_ld(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[]
     }
     else if(is_16bitsp_register(argv[0]) && is_value_only(argv[1]) && (reg1 = tryget_reg(argv[0], REG_16BIT_SP)))
     {
+        if((reg1->group & (REG_IX_PTR)))
+        {
+            op = 0xdd;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
+        if((reg1->group & (REG_IY_PTR)))
+        {
+            op = 0xfd;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
         op = 0x01 | reg1->value_aux << 4;
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[1], 0, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);

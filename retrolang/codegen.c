@@ -523,9 +523,11 @@ void codegen_function(func_t *func)
     var_t *v = func->args;
     if(func->is_external) return;
     int32_t offset = cpu_function_args_offset();
+    int32_t args_size = 0;
     while(v)
     {
         v->local_offset = offset;
+        args_size += var_calc_total_size(v->error_reference, v);
         offset += var_calc_total_size(v->error_reference, v);
         v = v->next;
     }
@@ -540,7 +542,7 @@ void codegen_function(func_t *func)
         v = v->next;
     }
     codegen_comment("FUNCTION: %s", func->name);
-    cpu_function_start(func->name, var_size);
+    cpu_function_start(func->name, var_size, args_size);
 
     command_t *cmd = func->contents;
     while(cmd)
@@ -549,7 +551,7 @@ void codegen_function(func_t *func)
         cmd = cmd->next;
     }
 
-    cpu_function_end(func->name, var_size);
+    cpu_function_end(func->name, var_size, args_size);
     codegen_comment("END FUNCTION: %s", func->name);
 }
 

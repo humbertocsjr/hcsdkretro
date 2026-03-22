@@ -1,0 +1,22 @@
+[config]
+verbose = true
+keep = true
+
+[retrolang:include_path]
+/usr/local/include/
+
+[libs:start]
+/usr/local/share/hcsdk/libs/start-dos-8086.obj
+
+[libs]
+/usr/local/share/hcsdk/libs/dos-8086.lib
+
+[files:8086]
+main.rl
+
+[link:release]
+format = bin
+filename = hello86.com
+text = 0x100
+symbols = hello86.sym
+verbose = true

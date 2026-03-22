@@ -1,6 +1,6 @@
 section text
 
-
+    global divs8
     divs8:
         ld b, a
         xor e
@@ -26,7 +26,7 @@ section text
         .done:
         ret
 
-        
+    global divu8
     divu8:
     ld b, 0        ; quociente
     ld c, a        ; resto parcial
@@ -45,13 +45,13 @@ section text
     ld e, c
     ret
     
-
+    global mods8
     mods8:
         call divs8
         ld a, e
         ret
 
-        
+    global movu8
     modu8:
         call divu8
         ld a, e

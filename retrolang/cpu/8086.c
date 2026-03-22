@@ -32,23 +32,26 @@ void cpu_global_variable(char *name, int32_t size)
     out_line("_%s: resb %i", name, size);
 }
 
-void cpu_function_start(char *name, int32_t vars_size)
+void cpu_function_start(char *name, int32_t vars_size, int32_t args_size)
 {
     out_line("section text");
     out_line("global _%s", name);
     out_line("_%s:", name);
-    if(vars_size)
+    if(vars_size || args_size)
     {
         out_line("  push bp");
         out_line("  mov bp, sp");
+    }
+    if(vars_size)
+    {
         out_line("  sub sp, %i", (vars_size + 1) & (~1)); // round up to next word
     }
 }
 
-void cpu_function_end(char *name, int32_t vars_size)
+void cpu_function_end(char *name, int32_t vars_size, int32_t args_size)
 {
     out_line("  .__END__:");
-    if(vars_size)
+    if(vars_size || args_size)
     {
         out_line("  mov sp, bp");
         out_line("  pop bp");

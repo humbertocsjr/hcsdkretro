@@ -372,9 +372,9 @@ char *cpu_name();
 // Generate global variable allocation
 void cpu_global_variable(char *name, int32_t size);
 // Generate function start
-void cpu_function_start(char *name, int32_t vars_size);
+void cpu_function_start(char *name, int32_t vars_size, int32_t args_size);
 // Generate function end
-void cpu_function_end(char *name, int32_t vars_size);
+void cpu_function_end(char *name, int32_t vars_size, int32_t args_size);
 // Get arguments offset
 int32_t cpu_function_args_offset();
 // Get variable offset

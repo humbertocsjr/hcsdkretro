@@ -1,5 +1,6 @@
 section text
 
+    global divs16
     divs16:
         ld a, h
         xor d
@@ -35,7 +36,7 @@ section text
         .done:
         ret
 
-
+    global divu16
     divu16:
         ld bc, 0        ; quociente
         ld a, 16
@@ -58,11 +59,13 @@ section text
         ld l, c         ; quociente
         ret
 
+    global mods16
     mods16:
         call divs16
         ex de, hl
         ret
 
+    global modu16
     modu16:
         call divu16
         ex de, hl

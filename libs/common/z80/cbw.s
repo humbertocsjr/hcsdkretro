@@ -1,4 +1,5 @@
 section text
+    global cbw
     cbw:
         ld l, a     ; L recebe o byte original
         add a, a    ; desloca bit 7 para o carry

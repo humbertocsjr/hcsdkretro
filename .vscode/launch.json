@@ -120,6 +120,32 @@
         "externalConsole": false,
         "preLaunchTask": "make retrolang",
         "MIMode": "lldb"
+    },
+    {
+        "name": "retrolang z80/tty_print_str.rl",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/retrolang-z80",
+        "args": ["-o", "${workspaceFolder}/libs/common/tty_print_str.__s", "${workspaceFolder}/libs/common/tty_print_str.rl"],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}/libs/",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make retrolang",
+        "MIMode": "lldb"
+    },
+    {
+        "name": "retrolang 8086/tty_print_str.rl",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/retrolang-8086",
+        "args": ["-o", "${workspaceFolder}/libs/common/tty_print_str.__s", "${workspaceFolder}/libs/common/tty_print_str.rl"],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}/libs/",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make retrolang",
+        "MIMode": "lldb"
     }
     ]
 }

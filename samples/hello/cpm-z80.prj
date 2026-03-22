@@ -6,17 +6,17 @@ keep = true
 /usr/local/include/
 
 [libs:start]
-/usr/local/share/hcsdk/libs/start-dos-8086.obj
+/usr/local/share/hcsdk/libs/start-cpm-z80.obj
 
 [libs]
-/usr/local/share/hcsdk/libs/dos-8086.lib
+/usr/local/share/hcsdk/libs/cpm-z80.lib
 
-[files:8086]
+[files:z80]
 main.rl
 
 [link:release]
 format = bin
-filename = main.com
+filename = helloz80.com
 text = 0x100
-symbols = main.sym
+symbols = helloz80.sym
 verbose = true
