@@ -1,7 +1,7 @@
 #include "emu.h"
 
 bool _debug = false;
-uint8_t _memory[0x10000];
+uint8_t _memory[0x1000f];
 z80_regs_t _regs_curr;
 z80_regs_t _regs_prev;
 bool _executing = true;

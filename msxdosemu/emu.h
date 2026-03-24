@@ -100,7 +100,7 @@ typedef struct z80_regs_t
 // --== emu.c ==--
 
 extern bool _debug;
-extern uint8_t _memory[0x10000];
+extern uint8_t _memory[0x1000f];
 extern z80_regs_t _regs_curr;
 extern z80_regs_t _regs_prev;
 extern bool _executing;
@@ -135,6 +135,7 @@ uint16_t ip_get_word();
 
 // --== screen.c ==--
 
+char printable(char c);
 void screen_draw();
 void screen_draw_if_changed();
 void screen_put_char(char c);
@@ -183,3 +184,8 @@ uint8_t hardware_in(uint8_t port);
 // --== abi_dos.c ==--
 
 void abi_dos_call_5();
+
+// --== disasm.c ==--
+
+extern char _disasm[256];
+void disasm(uint16_t address);
