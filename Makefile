@@ -16,7 +16,7 @@ all clean test posix linux macos win win32 samples_zip:
 	$M tests
 	@make --no-print-directory --silent distro_$@
 
-distro: linux macos win win32 samples_zip
+distro: all linux macos win win32 samples_zip
 	@true
 
 install: all

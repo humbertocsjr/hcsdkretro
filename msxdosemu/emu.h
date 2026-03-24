@@ -144,7 +144,6 @@ void screen_put_char(char c);
 
 void keyb_init();
 void keyb_exit();
-char _keyb_key;
 void keyb_process();
 
 // --== alu.c ==--

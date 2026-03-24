@@ -23,10 +23,10 @@ linux: $(LINUX_OUT)
 macos: $(MACOS_OUT)
 	@true
 
-win: $(WIN_OUT)
+win: $(filter-out $(WIN_PATH)msxdosemu.exe,$(WIN_OUT))
 	@true
 
-win32: $(WIN32_OUT)
+win32: $(filter-out $(WIN32_PATH)msxdosemu.exe,$(WIN32_OUT))
 	@true
 
 clean:

@@ -15,7 +15,7 @@ Cross-compiler tools for retro computing.
 
 - MSX-DOS 1.0 (CP/M 2.2 Compatible) Emulator (In progress)
     - Windows Console Compatibility (Planned 2.1)
-    - POSIX Console Compatibility (Done)
+    - POSIX (macOS/Linux/BSD/Windows WSL) Console Compatibility (Done)
     - Z80 Emulation (In progress)
         - 8080 Opcodes (Done)
         - Z80 Exclusive Opcodes (Done)
