@@ -11,7 +11,7 @@ static bool _changed = true;
 
 void screen_draw()
 {
-    printf("\\033[H\\033[2J");
+    printf("\033[H\033[2J\033[3J");
     for(int y = 0; y < TTY_HEIGHT; y++)
     {
         for(int x = 0; x < TTY_WIDTH; x++)
@@ -23,87 +23,95 @@ void screen_draw()
         switch(y)
         {
             case 0:
-                printf(" MSX-DOS 1 Emulator");
+                printf(" == MSX-DOS 1.0 Emulator =============");
                 break;
             case 1:
-                if(!_debug) printf(" == F12 = Enter Step Mode ============");
-                else printf(" == F12 = Exit Step Mode =============");
+                if(!_debug) printf(" -= CTRL+F9 = Enter Step Mode =-------");
+                else printf(" -= CTRL+F9 = Exit Step Mode =--------");
                 break;
             case 2:
                 if(!_debug) break;
-                printf(" == F11 = Next Step ==================");
+                printf(" -= CTRL+F12 = Step Into =------------");
                 break;
             case 3:
                 if(!_debug) break;
-                if(_regs_curr.af.word == _regs_prev.af.word) printf("   AF: %4x", _regs_curr.af.word);
-                else printf("   AF: %4x <- %4x [CHANGED]", _regs_curr.af.word, _regs_prev.af.word);
+                printf(" -= CTRL+F11 = Step Over =------------");
                 break;
             case 4:
                 if(!_debug) break;
-                if(_regs_curr.bc.word == _regs_prev.bc.word) printf("   BC: %4x", _regs_curr.bc.word);
-                else printf("   BC: %4x <- %4x [CHANGED]", _regs_curr.bc.word, _regs_prev.bc.word);
+                printf(" -= CTRL+C = Exit =-------------------");
                 break;
             case 5:
                 if(!_debug) break;
-                if(_regs_curr.de.word == _regs_prev.de.word) printf("   DE: %4x", _regs_curr.de.word);
-                else printf("   DE: %4x <- %4x [CHANGED]", _regs_curr.de.word, _regs_prev.de.word);
+                if(_regs_curr.af.word == _regs_prev.af.word) printf("   AF: %04x", _regs_curr.af.word);
+                else printf("   AF: %04x <- %04x [CHANGED]", _regs_curr.af.word, _regs_prev.af.word);
                 break;
             case 6:
                 if(!_debug) break;
-                if(_regs_curr.hl.word == _regs_prev.hl.word) printf("   HL: %4x", _regs_curr.hl.word);
-                else printf("   HL: %4x <- %4x [CHANGED]", _regs_curr.hl.word, _regs_prev.hl.word);
+                if(_regs_curr.bc.word == _regs_prev.bc.word) printf("   BC: %04x", _regs_curr.bc.word);
+                else printf("   BC: %04x <- %04x [CHANGED]", _regs_curr.bc.word, _regs_prev.bc.word);
                 break;
             case 7:
                 if(!_debug) break;
-                if(_regs_curr.ix.word == _regs_prev.ix.word) printf("   IX: %4x", _regs_curr.ix.word);
-                else printf("   IX: %4x <- %4x [CHANGED]", _regs_curr.ix.word, _regs_prev.ix.word);
+                if(_regs_curr.de.word == _regs_prev.de.word) printf("   DE: %04x", _regs_curr.de.word);
+                else printf("   DE: %04x <- %04x [CHANGED]", _regs_curr.de.word, _regs_prev.de.word);
                 break;
             case 8:
                 if(!_debug) break;
-                if(_regs_curr.iy.word == _regs_prev.iy.word) printf("   IY: %4x", _regs_curr.iy.word);
-                else printf("   IY: %4x <- %4x [CHANGED]", _regs_curr.iy.word, _regs_prev.iy.word);
+                if(_regs_curr.hl.word == _regs_prev.hl.word) printf("   HL: %04x", _regs_curr.hl.word);
+                else printf("   HL: %04x <- %04x [CHANGED]", _regs_curr.hl.word, _regs_prev.hl.word);
                 break;
             case 9:
                 if(!_debug) break;
-                if(_regs_curr.ip == _regs_prev.ip) printf("   IP: %4x", _regs_curr.ip);
-                else printf("   IP: %4x <- %4x [CHANGED]", _regs_curr.ip, _regs_prev.ip);
+                if(_regs_curr.ix.word == _regs_prev.ix.word) printf("   IX: %04x", _regs_curr.ix.word);
+                else printf("   IX: %04x <- %04x [CHANGED]", _regs_curr.ix.word, _regs_prev.ix.word);
                 break;
             case 10:
                 if(!_debug) break;
-                if(_regs_curr.sp == _regs_prev.sp) printf("   SP: %4x", _regs_curr.sp);
-                else printf("   SP: %4x <- %4x [CHANGED]", _regs_curr.sp, _regs_prev.sp);
+                if(_regs_curr.iy.word == _regs_prev.iy.word) printf("   IY: %04x", _regs_curr.iy.word);
+                else printf("   IY: %04x <- %04x [CHANGED]", _regs_curr.iy.word, _regs_prev.iy.word);
+                break;
+            case 11:
+                if(!_debug) break;
+                if(_regs_curr.ip == _regs_prev.ip) printf("   IP: %04x", _regs_curr.ip);
+                else printf("   IP: %04x <- %04x [CHANGED]", _regs_curr.ip, _regs_prev.ip);
                 break;
             case 12:
                 if(!_debug) break;
-                printf(" [SP]: %4x", _memory[_regs_curr.sp] | (_memory[_regs_curr.sp + 1] << 8));
+                if(_regs_curr.sp == _regs_prev.sp) printf("   SP: %04x", _regs_curr.sp);
+                else printf("   SP: %04x <- %04x [CHANGED]", _regs_curr.sp, _regs_prev.sp);
                 break;
             case 13:
                 if(!_debug) break;
-                printf(" [HL]: %4x", _memory[_regs_curr.hl.word] | (_memory[_regs_curr.hl.word + 1] << 8));
+                printf(" [SP]: %04x", _memory[_regs_curr.sp] | (_memory[_regs_curr.sp + 1] << 8));
                 break;
             case 14:
                 if(!_debug) break;
-                printf(" [IX]: %4x", _memory[_regs_curr.ix.word] | (_memory[_regs_curr.ix.word + 1] << 8));
+                printf(" [HL]: %04x", _memory[_regs_curr.hl.word] | (_memory[_regs_curr.hl.word + 1] << 8));
                 break;
             case 15:
                 if(!_debug) break;
-                printf(" [IY]: %4x", _memory[_regs_curr.iy.word] | (_memory[_regs_curr.iy.word + 1] << 8));
+                printf(" [IX]: %04x", _memory[_regs_curr.ix.word] | (_memory[_regs_curr.ix.word + 1] << 8));
                 break;
             case 16:
                 if(!_debug) break;
-                printf(" [IP]: %s", "NOT IMPLEMENTED");
+                printf(" [IY]: %04x", _memory[_regs_curr.iy.word] | (_memory[_regs_curr.iy.word + 1] << 8));
                 break;
             case 17:
                 if(!_debug) break;
-                if(_regs_curr.value == _regs_prev.value) printf("  VAL: %4x", _regs_curr.value);
-                else printf("  VAL: %4x <- %4x [CHANGED]", _regs_curr.value, _regs_prev.value);
+                printf(" [IP]: %s", "NOT IMPLEMENTED");
                 break;
             case 18:
                 if(!_debug) break;
-                printf(" CF: %c S: %c P/V: %c N: %c H: %c", cf_get() ? 'T':'F', sf_get() ? 'T':'F', pvf_get() ? 'T':'F', nf_get() ? 'T':'F', hf_get() ? 'T':'F');
+                if(_regs_curr.value == _regs_prev.value) printf("  VAL: %04x", _regs_curr.value);
+                else printf("  VAL: %04x <- %04x [CHANGED]", _regs_curr.value, _regs_prev.value);
+                break;
+            case 20:
+                if(!_debug) break;
+                printf(" CF:%c | S:%c | P/V:%c | N:%c | H:%c", cf_get() ? 'T':'F', sf_get() ? 'T':'F', pvf_get() ? 'T':'F', nf_get() ? 'T':'F', hf_get() ? 'T':'F');
                 break;
         }
-        printf("\n");
+        if(y < (TTY_HEIGHT - 1))printf("\n");
     }
     _changed = false;
 }

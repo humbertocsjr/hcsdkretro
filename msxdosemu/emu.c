@@ -5,6 +5,8 @@ uint8_t _memory[0x10000];
 z80_regs_t _regs_curr;
 z80_regs_t _regs_prev;
 bool _executing = true;
+bool _next_step = false;
+bool _skip_call_step = false;
 
 void help()
 {
@@ -56,6 +58,11 @@ int main(int argc, char **argv)
     }
     memset(_memory, 0, 0x10000);
     FILE *com_file = fopen(com_name, "rb");
+    if(!com_file)
+    {
+        fprintf(stderr, "error: file not found: %s\n", com_name);
+        return 1;
+    }
     fread(&_memory[0x100], 1, 0xef00, com_file);
     fclose(com_file);
 

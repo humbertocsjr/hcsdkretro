@@ -18,7 +18,7 @@ uint16_t mem_get_word(uint16_t address)
 void mem_set_word(uint16_t address, uint16_t value)
 {
     _memory[address] = value & 0xff;
-    _memory[address+1] = (value >> 8) * 0xff;
+    _memory[address+1] = (value >> 8) & 0xff;
 }
 
 uint8_t ip_get_byte()

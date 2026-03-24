@@ -15,6 +15,8 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <string.h>
+#include <fcntl.h>
+#include <errno.h>
 #include "../include/version.h"
 
 // --== common ==--
@@ -67,8 +69,8 @@ typedef struct z80_regs_t
         uint16_t word;
         struct
         {
-            uint8_t ixl;
-            uint8_t ixh;
+            uint8_t l;
+            uint8_t h;
         };
     } ix;
     union
@@ -76,12 +78,14 @@ typedef struct z80_regs_t
         uint16_t word;
         struct
         {
-            uint8_t iyl;
-            uint8_t iyh;
+            uint8_t l;
+            uint8_t h;
         };
     } iy;
     uint16_t sp;
     uint16_t ip;
+    uint8_t i;
+    uint8_t r;
     uint16_t value;
     bool prefix_dd;
     bool prefix_fd;
@@ -100,6 +104,8 @@ extern uint8_t _memory[0x10000];
 extern z80_regs_t _regs_curr;
 extern z80_regs_t _regs_prev;
 extern bool _executing;
+extern bool _next_step;
+extern bool _skip_call_step;
 
 // --== flags.c ==--
 
@@ -131,17 +137,30 @@ uint16_t ip_get_word();
 
 void screen_draw();
 void screen_draw_if_changed();
+void screen_put_char(char c);
+
+// --== keyb.c ==--
+
+void keyb_init();
+void keyb_exit();
+char _keyb_key;
+void keyb_process();
 
 // --== alu.c ==--
 
 uint8_t alu_inc_byte(uint8_t value);
 uint8_t alu_dec_byte(uint8_t value);
-uint8_t alu_rcl(uint8_t value);
+uint8_t alu_rlc(uint8_t value);
 uint8_t alu_rrc(uint8_t value);
+uint8_t alu_sla(uint8_t value);
+uint8_t alu_sra(uint8_t value);
+uint8_t alu_sll(uint8_t value);
+uint8_t alu_srl(uint8_t value);
 uint8_t alu_rl(uint8_t value);
 uint8_t alu_rr(uint8_t value);
 uint16_t alu_add_word(uint16_t value1, uint16_t value2);
 uint8_t alu_add_byte(uint8_t value1, uint8_t value2);
+uint16_t alu_adc_word(uint16_t value1, uint16_t value2);
 uint8_t alu_adc_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_sub_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_sbc_byte(uint8_t value1, uint8_t value2);
@@ -160,3 +179,7 @@ void exec();
 
 void hardware_out(uint8_t port, uint8_t value);
 uint8_t hardware_in(uint8_t port);
+
+// --== abi_dos.c ==--
+
+void abi_dos_call_5();

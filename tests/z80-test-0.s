@@ -1,13 +1,32 @@
 section text
 global _main
 _main:
-    ld iy, 2
-    add iy, sp
-    ld ix, 2
-    add ix, sp
+    ld c, 2
+    ld e, 'H'
+    call 5
+    ld c, 2
+    ld e, 'e'
+    call 5
+    ld c, 2
+    ld e, 'l'
+    call 5
+    ld c, 2
+    ld e, 'l'
+    call 5
+    ld c, 2
+    ld e, 'o'
+    call 5
+    ld c, 2
+    ld e, 'r'
+    call 5
+    ld c, 2
+    ld e, 'l'
+    call 5
+    ld c, 2
+    ld e, 'd'
+    call 5
+    ld c, 2
+    ld e, '!'
+    call 5
+    ret
     
-
-dw lbl1, lbl2, lbl3
-lbl1: db "oi1"
-lbl2: db "oi2"
-lbl3: db "oi3"

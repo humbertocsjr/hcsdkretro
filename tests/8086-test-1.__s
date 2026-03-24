@@ -5,6 +5,8 @@
 section text
 global _soma
 _soma:
+  push bp
+  mov bp, sp
 ; RETURN EXPRESSION
   mov ax, [bp+6] ; a
   mov ax, [bp+4] ; b
@@ -12,6 +14,8 @@ _soma:
 ; END RETURN EXPRESSION
   jmp .__END__
   .__END__:
+  mov sp, bp
+  pop bp
   ret
 ; END FUNCTION: soma
 ; FUNCTION: main

@@ -22,6 +22,11 @@
             "label": "make retrolang",
             "type": "shell",
             "command": "make -C ${workspaceFolder}/retrolang all"
+        },
+        {
+            "label": "make msxdosemu",
+            "type": "shell",
+            "command": "make -C ${workspaceFolder}/msxdosemu all"
         }
     ]
 }

@@ -146,6 +146,19 @@
         "externalConsole": false,
         "preLaunchTask": "make retrolang",
         "MIMode": "lldb"
+    },
+    {
+        "name": "msxdosemu tests/z80-test-0.com",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/msxdosemu",
+        "args": ["${workspaceFolder}/tests/z80-test-0.com"],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}/tests/",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make msxdosemu",
+        "MIMode": "lldb"
     }
     ]
 }

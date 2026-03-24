@@ -18,7 +18,7 @@ section text
 
             ld e, a
             ld a, b
-            call div_u8
+            call divu8
 
             pop af
             jp p, .done
