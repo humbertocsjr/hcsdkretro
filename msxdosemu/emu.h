@@ -99,6 +99,7 @@ typedef struct z80_regs_t
 
 // --== emu.c ==--
 
+extern bool _debuggable;
 extern bool _debug;
 extern uint8_t _memory[0x1000f];
 extern z80_regs_t _regs_curr;
@@ -139,6 +140,8 @@ uint16_t ip_get_word();
 char printable(char c);
 void screen_draw();
 void screen_draw_if_changed();
+void screen_clear();
+void screen_goto(int line, int column);
 void screen_put_char(char c);
 
 // --== keyb.c ==--

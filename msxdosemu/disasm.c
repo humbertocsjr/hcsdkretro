@@ -59,6 +59,17 @@ char *disasm_reg16(uint8_t opcode, int offset, enum pre_e prefix, char *last)
     return "";
 }
 
+char *disasm_mainreg(enum pre_e prefix)
+{
+    switch(prefix)
+    {
+        case PRE_DD: return "ix";
+        case PRE_FD: return "iy";
+        default: return "hl";
+    }
+    return "";
+}
+
 uint16_t disasm_16(void *ptr)
 {
     return *(uint16_t*)ptr;
@@ -124,10 +135,15 @@ void disasm(uint16_t address)
                             switch(op & 0x08)
                             {
                                 case 0x00: fmt("ld %s, 0x%04x", disasm_reg16(op, 4, prefix, "sp"), disasm_16(ptr)); break;
-                                case 0x08: fmt("add hl, %s", disasm_reg16(op, 4, prefix, "sp")); break;
+                                case 0x08: fmt("add %s, %s", disasm_mainreg(prefix), disasm_reg16(op, 4, prefix, "sp")); break;
                             }
                             break;
                         case 0x02:
+                            if(prefix == PRE_DD || prefix == PRE_FD)
+                            {
+                                offset = *(int8_t*)ptr;
+                                ptr++;
+                            }
                             switch(op & 0x38)
                             {
                                 case 0x00:
@@ -148,14 +164,29 @@ void disasm(uint16_t address)
                             }
                             break;
                         case 0x04:
+                            if(prefix == PRE_DD || prefix == PRE_FD)
+                            {
+                                offset = *(int8_t*)ptr;
+                                ptr++;
+                            }
                             fmt_arg(0, disasm_reg8(op, 3, prefix, &has_index), offset);
                             fmt("inc %s", _disasm_arg0);
                             break;
                         case 0x05:
+                            if(prefix == PRE_DD || prefix == PRE_FD)
+                            {
+                                offset = *(int8_t*)ptr;
+                                ptr++;
+                            }
                             fmt_arg(0, disasm_reg8(op, 3, prefix, &has_index), offset);
                             fmt("dec %s", _disasm_arg0);
                             break;
                         case 0x06:
+                            if(prefix == PRE_DD || prefix == PRE_FD)
+                            {
+                                offset = *(int8_t*)ptr;
+                                ptr++;
+                            }
                             fmt_arg(0, disasm_reg8(op, 3, prefix, &has_index), offset);
                             fmt("ld %s, 0x%02x ; '%c'", _disasm_arg0, (unsigned)*ptr, printable(*ptr));
                             break;
@@ -175,11 +206,21 @@ void disasm(uint16_t address)
                     }
                     break;
                 case 0x40:
-                    fmt_arg(0, disasm_reg8(op, 3, prefix, &has_index), offset);
-                    fmt_arg(1, disasm_reg8(op, 0, prefix, &has_index), offset);
+                    if(prefix == PRE_DD || prefix == PRE_FD)
+                    {
+                        offset = *(int8_t*)ptr;
+                        ptr++;
+                    }
+                    fmt_arg(0, disasm_reg8(op, 3, (op == 0x66 || op == 0x6e) ? PRE_NO : prefix, &has_index), offset);
+                    fmt_arg(1, disasm_reg8(op, 0, (op == 0x74 || op == 0x75) ? PRE_NO : prefix, &has_index), offset);
                     fmt("ld %s, %s", _disasm_arg0, _disasm_arg1);
                     break;
                 case 0x80:
+                    if(prefix == PRE_DD || prefix == PRE_FD)
+                    {
+                        offset = *(int8_t*)ptr;
+                        ptr++;
+                    }
                     fmt_arg(0, disasm_reg8(op, 0, prefix, &has_index), offset);
                     switch (op & 0x38)
                     {
@@ -218,30 +259,30 @@ void disasm(uint16_t address)
                                 case 0x30: fmt("pop %s", disasm_reg16(op, 4, prefix, "af")); break;
                                 case 0x08: fmt("ret"); break;
                                 case 0x18: fmt("exx"); break;
-                                case 0x28: fmt("jp [hl]"); break;
-                                case 0x38: fmt("ld sp, hl"); break;
+                                case 0x28: fmt("jp [%s]", disasm_mainreg(prefix)); break;
+                                case 0x38: fmt("ld sp, %s", disasm_mainreg(prefix)); break;
                             }
                             break;
                         case 0x02:
                             switch(op & 0x38)
                             {
-                                case 0x00: fmt("jp nz, %i", disasm_16(ptr)); break;
-                                case 0x08: fmt("jp z, %i", disasm_16(ptr)); break;
-                                case 0x10: fmt("jp nc, %i", disasm_16(ptr)); break;
-                                case 0x18: fmt("jp c, %i", disasm_16(ptr)); break;
-                                case 0x20: fmt("jp po, %i", disasm_16(ptr)); break;
-                                case 0x28: fmt("jp pe, %i", disasm_16(ptr)); break;
-                                case 0x30: fmt("jp p, %i", disasm_16(ptr)); break;
-                                case 0x38: fmt("jp m, %i", disasm_16(ptr)); break;
+                                case 0x00: fmt("jp nz, 0x%04x", disasm_16(ptr)); break;
+                                case 0x08: fmt("jp z, 0x%04x", disasm_16(ptr)); break;
+                                case 0x10: fmt("jp nc, 0x%04x", disasm_16(ptr)); break;
+                                case 0x18: fmt("jp c, 0x%04x", disasm_16(ptr)); break;
+                                case 0x20: fmt("jp po, 0x%04x", disasm_16(ptr)); break;
+                                case 0x28: fmt("jp pe, 0x%04x", disasm_16(ptr)); break;
+                                case 0x30: fmt("jp p, 0x%04x", disasm_16(ptr)); break;
+                                case 0x38: fmt("jp m, 0x%04x", disasm_16(ptr)); break;
                             }
                             break;
                         case 0x03:
                             switch(op & 0x38)
                             {
-                                case 0x00: fmt("jp %i", disasm_16(ptr)); break;
+                                case 0x00: fmt("jp 0x%04x", disasm_16(ptr)); break;
                                 case 0x10: fmt("out [%i], a", *ptr); break;
                                 case 0x18: fmt("in a, [%i]", *ptr); break;
-                                case 0x20: fmt("ex [sp], hl"); break;
+                                case 0x20: fmt("ex [sp], %s", disasm_mainreg(prefix)); break;
                                 case 0x28: fmt("ex de, hl"); break;
                                 case 0x30: fmt("di"); break;
                                 case 0x38: fmt("ei"); break;

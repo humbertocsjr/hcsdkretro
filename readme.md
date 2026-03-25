@@ -2,44 +2,59 @@
 
 Cross-compiler tools for retro computing.
 
+![MSX-DOS Emulator Screenshot](imgs/msxdosemu-2026-03-25.png "MSX-DOS Emulator running Hellord! test")
+
+Tools ready to use:
+- Assembler
+- Linker
+- Librarian
+- Project Builder
+
+Tools in development:
+- RetroLang (Simple programming language for 8 bit)
+- MSX-DOS 1.0 / CP/M 2.2 Emulator
+
 [Site e Documentação em Português](https://humbertocsjr.dev.br/hcsdk/pt)
 
 [Site and Documentation in English](https://humbertocsjr.dev.br/hcsdk/en)
 
-[RetroLang (In Pre-Alpha) Documentation](retrolang.md)
-
-![MSX-DOS Emulator Screenshot](msxdosemu-2026-03-24.png "MSX-DOS Emulator (Pre-alpha) running Hellord! test")
+[RetroLang (In Alpha) Documentation](retrolang.md)
 
 
 ## TODO List (2.0 Roadmap | Early April/26)
 
 - MSX-DOS 1.0 (CP/M 2.2 Compatible) Emulator (In progress)
+    - Support for Fxx keys / ALT+Fxx keys / CTRL+Fxx keys alternatives (Done)
+        - ALT+Fxx keys -> tested on macOS Terminal
+        - CTRL+Fxx keys -> tested on VSCode Terminal
+        - F9-F12 keys -> tested on Linux Fullscreen Terminal
+    - Dump memory to file (Done)
+    - Embbed Breakpoint on Binary 'ld b,b' [Inspired on 'xchg bx, bx' from Bochs] (Done)
     - Windows Console Compatibility (Planned 2.1)
     - POSIX (macOS/Linux/BSD/Windows WSL) Console Compatibility (Done)
-    - Z80 Emulation (In progress)
-        - 8080 Opcodes (Done)
-        - Z80 Exclusive Opcodes (Done)
-            - Misc Opcodes (0xeb) (Done)
-            - IX Opcodes (0xdd) (Done)
-            - IY Opcodes (0xfd) (Done)
-            - Bit Opcodes (0xcb) (Done)
-            - IX Bit Opcodes (0xdd 0xcb) (Done)
-            - IY Bit Opcodes (0xfd 0xcb) (Done)
-    - Screen/Keyboard I/O to VT110 TTY Mode (Planned)
+    - Z80 Emulation (Done)
+    - Screen/Keyboard I/O to VT110 TTY Mode (In progress)
     - Screen 40x24 with Debug Mode (In progress)
-    - MegaRAM / Slot Support (Planned for 2.1)
-    - Mapper / MSX-DOS 2.0 Extensions (Planned for 3.0)
     - Screen 80x24 with Debug Mode (Planned for 3.0)
+    - MegaRAM / Slot Support (Planned for 2.9)
+    - Mapper / MSX-DOS 2.0 Extensions (Planned for 3.0)
     - CALL 5 ABI (Planned)
         - File ABI (Planned)
+            - Open FCB (Planned)
+            - Close FCB (Planned)
+            - Read Sequencial FCB (Planned)
+            - Write Sequencial FCB (Planned)
+            - Read Random FCB (Planned)
+            - Write Random FCB (Planned)
         - Console ABI (In progress)
-            - 2:Print char (Done)
+            - Print char/string (Done)
+            - Read char/string (Planned)
     - MSX-BIOS ABI (Planned)
         - Screen ABI (Planned)
     - MSX Hardware Emulation (Planned)
         - Screen 40x24 Direct Manipulation (Planned)
         - Screen 80x24 Direct Manipulation (Planned for 3.0)
-        - Joystick input (Planned for 2.1)
+        - Joystick input (Planned for 3.0)
 - RetroLang Compiler (In progress)
     - Implement all planned pointers (In progress)
     - Structure Support (Planned)
@@ -49,11 +64,11 @@ Cross-compiler tools for retro computing.
         - DOS Library (Planned)
         - BIOS-only Library (Planned) 
     - Z80 Target and Libraries
-        - Z80 Target (In progress / Non functional)
+        - Z80 Target (In progress / Testing)
         - Common Math/Logic Runtime Library (Done / Testing)
         - CP/M 2.2 Library (In progress)
         - MSX-DOS 1.0 Library (Planned)
-    - 8080 Target and Libraries (Planned for 2.1)
+    - 8080 Target and Libraries (Planned for 3.0)
 - HC Builder
     - Embbed SDK BIN/Libraries/Include Path on install (Planned for 2.1)
 - HC Assembler

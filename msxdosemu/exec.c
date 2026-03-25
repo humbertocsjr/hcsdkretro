@@ -360,8 +360,9 @@ void exec_step()
             _regs_prev.value = _regs_curr.bc.b;
             _regs_curr.bc.b = _regs_curr.bc.b;
             _regs_curr.value = _regs_curr.bc.b;
-            if(_debug && !_next_step)
+            if(_debuggable && !_next_step)
             {
+                _debug = true;
                 _next_step = true;
                 _skip_call_step = false;
                 _skip_call_step_address = -1;
@@ -5469,15 +5470,15 @@ void exec_step()
                 offset_value = ip_get_byte_signed();
                 if(_regs_curr.prefix_dd)
                 {
-                    _regs_prev.value = _regs_curr.ix.h;
-                    _regs_curr.ix.h = mem_get_byte(_regs_curr.ix.word + offset_value);
-                    _regs_curr.value = _regs_curr.ix.h;
+                    _regs_prev.value = _regs_curr.hl.h;
+                    _regs_curr.hl.h = mem_get_byte(_regs_curr.ix.word + offset_value);
+                    _regs_curr.value = _regs_curr.hl.h;
                 }
                 else
                 {
-                    _regs_prev.value = _regs_curr.iy.h;
-                    _regs_curr.iy.h = mem_get_byte(_regs_curr.iy.word + offset_value);
-                    _regs_curr.value = _regs_curr.iy.h;
+                    _regs_prev.value = _regs_curr.hl.h;
+                    _regs_curr.hl.h = mem_get_byte(_regs_curr.iy.word + offset_value);
+                    _regs_curr.value = _regs_curr.hl.h;
                 }
                 break;
             case 0x67:
@@ -5582,15 +5583,15 @@ void exec_step()
                 offset_value = ip_get_byte_signed();
                 if(_regs_curr.prefix_dd)
                 {
-                    _regs_prev.value = _regs_curr.ix.l;
-                    _regs_curr.ix.l = mem_get_byte(_regs_curr.ix.word + offset_value);
-                    _regs_curr.value = _regs_curr.ix.l;
+                    _regs_prev.value = _regs_curr.hl.l;
+                    _regs_curr.hl.l = mem_get_byte(_regs_curr.ix.word + offset_value);
+                    _regs_curr.value = _regs_curr.hl.l;
                 }
                 else
                 {
-                    _regs_prev.value = _regs_curr.iy.l;
-                    _regs_curr.iy.l = mem_get_byte(_regs_curr.iy.word + offset_value);
-                    _regs_curr.value = _regs_curr.iy.l;
+                    _regs_prev.value = _regs_curr.hl.l;
+                    _regs_curr.hl.l = mem_get_byte(_regs_curr.iy.word + offset_value);
+                    _regs_curr.value = _regs_curr.hl.l;
                 }
                 break;
             case 0x6f:
@@ -5672,13 +5673,13 @@ void exec_step()
                 if(_regs_curr.prefix_dd)
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.ix.word + offset_value);
-                    mem_set_byte(_regs_curr.ix.word + offset_value, _regs_curr.iy.h);
+                    mem_set_byte(_regs_curr.ix.word + offset_value, _regs_curr.hl.h);
                     _regs_curr.value = mem_get_byte(_regs_curr.ix.word + offset_value);
                 }
                 else
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.iy.word + offset_value);
-                    mem_set_byte(_regs_curr.iy.word + offset_value, _regs_curr.iy.h);
+                    mem_set_byte(_regs_curr.iy.word + offset_value, _regs_curr.hl.h);
                     _regs_curr.value = mem_get_byte(_regs_curr.iy.word + offset_value);
                 }
                 break;
@@ -6872,6 +6873,10 @@ void exec()
             _next_step = false;
         }
         exec_step();
+        if(_regs_curr.prefix_cb || _regs_curr.prefix_dd || _regs_curr.prefix_ed || _regs_curr.prefix_fd)
+        {
+            exec_step();
+        }
         if(_skip_call_step && _skip_call_step_address < 0) _skip_call_step = false;
     }
     keyb_exit();

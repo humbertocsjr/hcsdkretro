@@ -1,5 +1,6 @@
 #include "emu.h"
 
+bool _debuggable = false;
 bool _debug = false;
 uint8_t _memory[0x1000f];
 z80_regs_t _regs_curr;
@@ -16,8 +17,9 @@ void help()
     printf("Copyright (c) 2025,2026 Humberto Costa dos Santos Junior\n\n");
     printf("Usage: msxdosemu [-step] [-sym FILE] [EXECUTABLE] [ARGS]\n");
     printf("Arguments:\n");
-    printf("-step           : Start on step mode\n");
-    printf("-skip ADDRESS   : Start on step mode, step over to address\n");
+    printf("-debug          : Start on debug running mode\n");
+    printf("-step           : Start on debug step mode\n");
+    printf("-skip ADDRESS   : Start on debug step mode, step over to address\n");
     printf("-sym            : Read Symbols File\n");
     exit(1);
 }
@@ -45,12 +47,18 @@ int main(int argc, char **argv)
             i++;
             if(i < argc) sym_name = argv[1];
         }
+        else if(!strcmp(argv[i], "-debug"))
+        {
+            _debuggable = true;
+        }
         else if(!strcmp(argv[i], "-step"))
         {
             _debug = true;
+            _debuggable = true;
         }
         else if(!strcmp(argv[i], "-skip"))
         {
+            _debuggable = true;
             _debug = true;
             _next_step = true;
             _skip_call_step = true;
@@ -73,6 +81,7 @@ int main(int argc, char **argv)
         }
     }
     memset(_memory, 0, 0x10000);
+    if(!com_name) help();
     FILE *com_file = fopen(com_name, "rb");
     if(!com_file)
     {

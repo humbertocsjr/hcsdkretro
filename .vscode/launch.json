@@ -159,6 +159,19 @@
         "externalConsole": false,
         "preLaunchTask": "make msxdosemu",
         "MIMode": "lldb"
+    },
+    {
+        "name": "msxdosemu samples/hello/helloz80.com",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/msxdosemu",
+        "args": ["${workspaceFolder}/samples/hello/helloz80.com"],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}/samples/hello/",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make msxdosemu",
+        "MIMode": "lldb"
     }
     ]
 }

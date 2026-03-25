@@ -2,7 +2,9 @@ section text
 global _main
 _main:
     ld hl, msg
+    ld ix, msg
     call print
+    ld b,b ; breakpoint
     ret
 print:
     .loop:
@@ -16,7 +18,7 @@ print:
         jr .loop
     .end:
     ret
-    
+
 section data
 msg: db "Hellorld!",0
     

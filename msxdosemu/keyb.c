@@ -75,23 +75,43 @@ void keyb_process()
                     switch(params[0])
                     {
                         case 24:
-                            _next_step = true;
+                        case 31:
+                            if(_debug)
+                            {
+                                _next_step = true;
+                            }
                             break;
                         case 23:
-                            _skip_call_step = true;
-                            _next_step = true;
-                            _skip_call_step_address = -1;
-                            break;
-                        case 21:;
-                            FILE *ram_file = fopen("ram.bin", "wb");
-                            if(ram_file)
+                        case 29:
+                            if(_debug)
                             {
-                                fwrite(_memory, 1, 0x10000, ram_file);
-                                fclose(ram_file); 
+                                _skip_call_step = true;
+                                _next_step = true;
+                                _skip_call_step_address = -1;
+                            }
+                            break;
+                        case 21:
+                        case 28:;
+                            if(_debug)
+                            {
+                                FILE *ram_file = fopen("ram.bin", "wb");
+                                if(ram_file)
+                                {
+                                    fwrite(_memory, 1, 0x10000, ram_file);
+                                    fclose(ram_file); 
+                                }
                             }
                             break;
                         case 20:
-                            _debug = !_debug;
+                        case 26:
+                            if(_debuggable)
+                            {
+                                _debug = !_debug;
+                                if(_debug)
+                                {
+                                    _next_step = true;
+                                }
+                            }
                             break;
                         default:
                             printf("\r{ESC%s  -> %c %i %i}", seq, *ptr, params[0], params[1]);

@@ -423,11 +423,12 @@ void cpu_jump_if_true(nativetype_t nt, int label)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  bit 1, a");
+            out_line("  or a");
             out_line("  jp nz, .L%i", label);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  bit 1, l");
+            out_line("  ld a, l");
+            out_line("  or h");
             out_line("  jp nz, .L%i", label);
             break;
         default: error("invalid cpu_comparsion");
@@ -439,11 +440,12 @@ void cpu_jump_if_false(nativetype_t nt, int label)
     switch(nt)
     {
         case NATIVETYPE_8BITS:
-            out_line("  bit 1, a");
+            out_line("  or a");
             out_line("  jp z, .L%i", label);
             break;
         case NATIVETYPE_16BITS:
-            out_line("  bit 1, l");
+            out_line("  ld a, l");
+            out_line("  or h");
             out_line("  jp z, .L%i", label);
             break;
         default: error("invalid cpu_comparsion");
