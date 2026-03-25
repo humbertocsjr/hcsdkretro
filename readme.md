@@ -8,7 +8,7 @@ Cross-compiler tools for retro computing.
 
 [RetroLang (In Pre-Alpha) Documentation](retrolang.md)
 
-![MSX-DOS Emulator Screenshot](msxdosemu.png "MSX-DOS Emulator (Pre-alpha) running Hellord! test")
+![MSX-DOS Emulator Screenshot](msxdosemu-2026-04-24.png "MSX-DOS Emulator (Pre-alpha) running Hellord! test")
 
 
 ## TODO List (2.0 Roadmap | Early April/26)
