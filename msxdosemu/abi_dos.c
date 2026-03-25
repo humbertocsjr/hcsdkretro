@@ -13,7 +13,7 @@ void abi_dos_call_5()
             break;
         default:
             fprintf(stderr, "\n\n[ERROR: NOT IMPLEMENTED COMMAND %i OF CALL 5 ABI]", _regs_curr.bc.c);
-            _executing = false;
+            exit(1);
             break;
     }
 

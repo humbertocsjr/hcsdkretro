@@ -109,7 +109,7 @@ void screen_draw()
                 break;
             case 16:
                 if(!_debug) break;
-                screen_draw_reg(_regs_curr.value, _regs_prev.value, "VAL", true);
+                screen_draw_reg(_regs_curr.value, _regs_prev.value, "->", true);
                 break; 
             case 18:
                 if(!_debug) break;
