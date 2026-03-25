@@ -80,6 +80,15 @@ void keyb_process()
                         case 23:
                             _skip_call_step = true;
                             _next_step = true;
+                            _skip_call_step_address = -1;
+                            break;
+                        case 21:;
+                            FILE *ram_file = fopen("ram.bin", "wb");
+                            if(ram_file)
+                            {
+                                fwrite(_memory, 1, 0x10000, ram_file);
+                                fclose(ram_file); 
+                            }
                             break;
                         case 20:
                             _debug = !_debug;

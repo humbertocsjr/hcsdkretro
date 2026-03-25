@@ -7,6 +7,7 @@ z80_regs_t _regs_prev;
 bool _executing = true;
 bool _next_step = false;
 bool _skip_call_step = false;
+int32_t _skip_call_step_address = 0;
 
 void help()
 {

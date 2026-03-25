@@ -106,6 +106,7 @@ extern z80_regs_t _regs_prev;
 extern bool _executing;
 extern bool _next_step;
 extern bool _skip_call_step;
+extern int32_t _skip_call_step_address;
 
 // --== flags.c ==--
 

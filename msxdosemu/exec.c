@@ -1032,6 +1032,10 @@ void exec_step()
                 _regs_prev.value = _regs_curr.ip;
                 _regs_curr.ip = tmp;
                 _regs_curr.value = _regs_curr.ip;
+                if(_skip_call_step && _skip_call_step_address < 0)
+                {
+                    _skip_call_step_address = mem_get_word(_regs_curr.sp);
+                }
             }
             break;
         case 0xc5:
@@ -1051,6 +1055,10 @@ void exec_step()
             _regs_prev.value = _regs_curr.ip;
             _regs_curr.ip = 0;
             _regs_curr.value = _regs_curr.ip;
+            if(_skip_call_step && _skip_call_step_address < 0)
+            {
+                _skip_call_step_address = mem_get_word(_regs_curr.sp);
+            }
             break;
         case 0xc8:
             if(zf_get())
@@ -1089,6 +1097,10 @@ void exec_step()
                 _regs_prev.value = _regs_curr.ip;
                 _regs_curr.ip = tmp;
                 _regs_curr.value = _regs_curr.ip;
+                if(_skip_call_step && _skip_call_step_address < 0)
+                {
+                    _skip_call_step_address = mem_get_word(_regs_curr.sp);
+                }
             }
             break;
         case 0xcd:
@@ -1098,6 +1110,10 @@ void exec_step()
             _regs_prev.value = _regs_curr.ip;
             _regs_curr.ip = tmp;
             _regs_curr.value = _regs_curr.ip;
+            if(_skip_call_step && _skip_call_step_address < 0)
+            {
+                _skip_call_step_address = mem_get_word(_regs_curr.sp);
+            }
             break;
         case 0xce:
             _regs_prev.value = _regs_curr.af.a;
@@ -1110,6 +1126,10 @@ void exec_step()
             _regs_prev.value = _regs_curr.ip;
             _regs_curr.ip = 8;
             _regs_curr.value = _regs_curr.ip;
+            if(_skip_call_step && _skip_call_step_address < 0)
+            {
+                _skip_call_step_address = mem_get_word(_regs_curr.sp);
+            }
             break;
         case 0xd0:
             if(!cf_get())
@@ -1149,6 +1169,10 @@ void exec_step()
                 _regs_prev.value = _regs_curr.ip;
                 _regs_curr.ip = tmp;
                 _regs_curr.value = _regs_curr.ip;
+                if(_skip_call_step && _skip_call_step_address < 0)
+                {
+                    _skip_call_step_address = mem_get_word(_regs_curr.sp);
+                }
             }
             break;
         case 0xd5:
@@ -1168,6 +1192,10 @@ void exec_step()
             _regs_prev.value = _regs_curr.ip;
             _regs_curr.ip = 0x10;
             _regs_curr.value = _regs_curr.ip;
+            if(_skip_call_step && _skip_call_step_address < 0)
+            {
+                _skip_call_step_address = mem_get_word(_regs_curr.sp);
+            }
             break;
         case 0xd8:
             if(cf_get())
@@ -1212,6 +1240,10 @@ void exec_step()
                 _regs_prev.value = _regs_curr.ip;
                 _regs_curr.ip = tmp;
                 _regs_curr.value = _regs_curr.ip;
+                if(_skip_call_step && _skip_call_step_address < 0)
+                {
+                    _skip_call_step_address = mem_get_word(_regs_curr.sp);
+                }
             }
             break;
         case 0xdd:
@@ -1229,6 +1261,10 @@ void exec_step()
             _regs_prev.value = _regs_curr.ip;
             _regs_curr.ip = 0x18;
             _regs_curr.value = _regs_curr.ip;
+            if(_skip_call_step && _skip_call_step_address < 0)
+            {
+                _skip_call_step_address = mem_get_word(_regs_curr.sp);
+            }
             break;
         case 0xe0:
             if(!pvf_get())
@@ -1270,6 +1306,10 @@ void exec_step()
                 _regs_prev.value = _regs_curr.ip;
                 _regs_curr.ip = tmp;
                 _regs_curr.value = _regs_curr.ip;
+                if(_skip_call_step && _skip_call_step_address < 0)
+                {
+                    _skip_call_step_address = mem_get_word(_regs_curr.sp);
+                }
             }
             break;
         case 0xe5:
@@ -1289,6 +1329,10 @@ void exec_step()
             _regs_prev.value = _regs_curr.ip;
             _regs_curr.ip = 0x20;
             _regs_curr.value = _regs_curr.ip;
+            if(_skip_call_step && _skip_call_step_address < 0)
+            {
+                _skip_call_step_address = mem_get_word(_regs_curr.sp);
+            }
             break;
         case 0xe8:
             if(pvf_get())
@@ -1329,6 +1373,10 @@ void exec_step()
                 _regs_prev.value = _regs_curr.ip;
                 _regs_curr.ip = tmp;
                 _regs_curr.value = _regs_curr.ip;
+                if(_skip_call_step && _skip_call_step_address < 0)
+                {
+                    _skip_call_step_address = mem_get_word(_regs_curr.sp);
+                }
             }
             break;
         case 0xed:
@@ -1346,6 +1394,10 @@ void exec_step()
             _regs_prev.value = _regs_curr.ip;
             _regs_curr.ip = 0x28;
             _regs_curr.value = _regs_curr.ip;
+            if(_skip_call_step && _skip_call_step_address < 0)
+            {
+                _skip_call_step_address = mem_get_word(_regs_curr.sp);
+            }
             break;
         case 0xf0:
             if(!sf_get())
@@ -1383,6 +1435,10 @@ void exec_step()
                 _regs_prev.value = _regs_curr.ip;
                 _regs_curr.ip = tmp;
                 _regs_curr.value = _regs_curr.ip;
+                if(_skip_call_step && _skip_call_step_address < 0)
+                {
+                    _skip_call_step_address = mem_get_word(_regs_curr.sp);
+                }
             }
             break;
         case 0xf5:
@@ -1402,6 +1458,10 @@ void exec_step()
             _regs_prev.value = _regs_curr.ip;
             _regs_curr.ip = 0x30;
             _regs_curr.value = _regs_curr.ip;
+            if(_skip_call_step && _skip_call_step_address < 0)
+            {
+                _skip_call_step_address = mem_get_word(_regs_curr.sp);
+            }
             break;
         case 0xf8:
             if(sf_get())
@@ -1438,6 +1498,10 @@ void exec_step()
                 _regs_prev.value = _regs_curr.ip;
                 _regs_curr.ip = tmp;
                 _regs_curr.value = _regs_curr.ip;
+                if(_skip_call_step && _skip_call_step_address < 0)
+                {
+                    _skip_call_step_address = mem_get_word(_regs_curr.sp);
+                }
             }
             break;
         case 0xfd:
@@ -1455,6 +1519,10 @@ void exec_step()
             _regs_prev.value = _regs_curr.ip;
             _regs_curr.ip = 0x38;
             _regs_curr.value = _regs_curr.ip;
+            if(_skip_call_step && _skip_call_step_address < 0)
+            {
+                _skip_call_step_address = mem_get_word(_regs_curr.sp);
+            }
             break;
     }
     else if(_regs_curr.prefix_ed)
@@ -6780,10 +6848,15 @@ void exec()
     keyb_init();
     while(_executing)
     {
+        if(_debug && _skip_call_step && _regs_curr.ip == _skip_call_step_address)
+        {
+            _skip_call_step = false;
+            _skip_call_step_address = -1;
+        }
         keyb_process();
         if(_debug) screen_draw();
         else screen_draw_if_changed();
-        if(_debug)
+        if(_debug && !_skip_call_step)
         {
             while(!_next_step && _executing && _debug)
             {
@@ -6792,6 +6865,7 @@ void exec()
             _next_step = false;
         }
         exec_step();
+        if(_skip_call_step && _skip_call_step_address < 0) _skip_call_step = false;
     }
     keyb_exit();
 }

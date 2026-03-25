@@ -1,5 +1,6 @@
 /bin
 /distrosite
+ram.bin
 *.dSYM
 *.obj
 *.sym
