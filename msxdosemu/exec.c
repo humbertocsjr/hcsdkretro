@@ -9,7 +9,7 @@ void exec_step()
     bool reset_prefixes = true;
     uint16_t tmp;
     int8_t offset_value;
-    if(_regs_curr.ip == 5)
+    if(_regs_curr.ip == 5 || _regs_curr.ip == 0xf37d)
     {
         // MSX-DOS ABI
         abi_dos_call_5();
@@ -108,7 +108,7 @@ void exec_step()
             _regs_curr.bc.b--;
             if(_regs_curr.bc.b)
             {
-                _regs_curr.ip += ip_get_byte_signed() - 1;
+                _regs_curr.ip += ip_get_byte_signed();
             }
             else ip_get_byte_signed();
             _regs_curr.value = _regs_curr.bc.b;
@@ -150,7 +150,7 @@ void exec_step()
             break;
         case 0x18:
             _regs_prev.value = _regs_curr.ip;
-            _regs_curr.ip += ip_get_byte_signed() - 1;
+            _regs_curr.ip += ip_get_byte_signed();
             _regs_curr.value = _regs_curr.ip;
             break;
         case 0x19:
@@ -190,7 +190,7 @@ void exec_step()
             break;
         case 0x20:
             _regs_prev.value = _regs_curr.ip;
-            if(!zf_get()) _regs_curr.ip += ip_get_byte_signed() - 1;
+            if(!zf_get()) _regs_curr.ip += ip_get_byte_signed();
             else ip_get_byte_signed();
             _regs_curr.value = _regs_curr.ip;
             break;
@@ -232,7 +232,7 @@ void exec_step()
             break;
         case 0x28:
             _regs_prev.value = _regs_curr.ip;
-            if(zf_get()) _regs_curr.ip += ip_get_byte_signed() - 1;
+            if(zf_get()) _regs_curr.ip += ip_get_byte_signed();
             else ip_get_byte_signed();
             _regs_curr.value = _regs_curr.ip;
             break;
@@ -275,7 +275,7 @@ void exec_step()
             break;
         case 0x30:
             _regs_prev.value = _regs_curr.ip;
-            if(!cf_get()) _regs_curr.ip += ip_get_byte_signed() - 1;
+            if(!cf_get()) _regs_curr.ip += ip_get_byte_signed();
             else ip_get_byte_signed();
             _regs_curr.value = _regs_curr.ip;
             break;
@@ -317,7 +317,7 @@ void exec_step()
             break;
         case 0x38:
             _regs_prev.value = _regs_curr.ip;
-            if(cf_get()) _regs_curr.ip += ip_get_byte_signed() - 1;
+            if(cf_get()) _regs_curr.ip += ip_get_byte_signed();
             else ip_get_byte_signed();
             _regs_curr.value = _regs_curr.ip;
             break;
@@ -360,6 +360,12 @@ void exec_step()
             _regs_prev.value = _regs_curr.bc.b;
             _regs_curr.bc.b = _regs_curr.bc.b;
             _regs_curr.value = _regs_curr.bc.b;
+            if(_debug && !_next_step)
+            {
+                _next_step = true;
+                _skip_call_step = false;
+                _skip_call_step_address = -1;
+            }
             break;
         case 0x41:
             _regs_prev.value = _regs_curr.bc.b;
@@ -4701,7 +4707,7 @@ void exec_step()
                 _regs_curr.bc.b--;
                 if(_regs_curr.bc.b)
                 {
-                    _regs_curr.ip += ip_get_byte_signed() - 1;
+                    _regs_curr.ip += ip_get_byte_signed();
                 }
                 else ip_get_byte_signed();
                 _regs_curr.value = _regs_curr.bc.b;
@@ -4743,7 +4749,7 @@ void exec_step()
                 break;
             case 0x18:
                 _regs_prev.value = _regs_curr.ip;
-                _regs_curr.ip += ip_get_byte_signed() - 1;
+                _regs_curr.ip += ip_get_byte_signed();
                 _regs_curr.value = _regs_curr.ip;
                 break;
             case 0x19:
@@ -4792,7 +4798,7 @@ void exec_step()
                 break;
             case 0x20:
                 _regs_prev.value = _regs_curr.ip;
-                if(!zf_get()) _regs_curr.ip += ip_get_byte_signed() - 1;
+                if(!zf_get()) _regs_curr.ip += ip_get_byte_signed();
                 else ip_get_byte_signed();
                 _regs_curr.value = _regs_curr.ip;
                 break;
@@ -4887,7 +4893,7 @@ void exec_step()
                 break;
             case 0x28:
                 _regs_prev.value = _regs_curr.ip;
-                if(zf_get()) _regs_curr.ip += ip_get_byte_signed() - 1;
+                if(zf_get()) _regs_curr.ip += ip_get_byte_signed();
                 else ip_get_byte_signed();
                 _regs_curr.value = _regs_curr.ip;
                 break;
@@ -4984,7 +4990,7 @@ void exec_step()
                 break;
             case 0x30:
                 _regs_prev.value = _regs_curr.ip;
-                if(!cf_get()) _regs_curr.ip += ip_get_byte_signed() - 1;
+                if(!cf_get()) _regs_curr.ip += ip_get_byte_signed();
                 else ip_get_byte_signed();
                 _regs_curr.value = _regs_curr.ip;
                 break;
@@ -5056,7 +5062,7 @@ void exec_step()
                 break;
             case 0x38:
                 _regs_prev.value = _regs_curr.ip;
-                if(cf_get()) _regs_curr.ip += ip_get_byte_signed() - 1;
+                if(cf_get()) _regs_curr.ip += ip_get_byte_signed();
                 else ip_get_byte_signed();
                 _regs_curr.value = _regs_curr.ip;
                 break;
@@ -6853,6 +6859,7 @@ void exec()
             _skip_call_step = false;
             _skip_call_step_address = -1;
         }
+        disasm(_regs_curr.ip);
         keyb_process();
         if(_debug) screen_draw();
         else screen_draw_if_changed();

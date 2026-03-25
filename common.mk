@@ -11,7 +11,7 @@ WIN32_PATH = ../bin/win32/
 WIN32_OUT = $(patsubst %,$(WIN32_PATH)%.exe,$(OUT_BASE))
 
 
-all test posix: $(POSIX_OUT)
+all test test_emu posix: $(POSIX_OUT)
 	@true
 
 samples_zip:

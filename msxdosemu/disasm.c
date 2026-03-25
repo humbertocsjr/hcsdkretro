@@ -33,7 +33,7 @@ enum pre_e
 
 char *disasm_reg8(uint8_t opcode, int offset, enum pre_e prefix, bool *has_index)
 {
-    switch((opcode >> offset) & 3)
+    switch((opcode >> offset) & 7)
     {
         case 0: return "b";
         case 1: return "c";
@@ -112,12 +112,12 @@ void disasm(uint16_t address)
                             {
                                 case 0x00: fmt("nop"); break;
                                 case 0x08: fmt("ex af, af'"); break;
-                                case 0x10: fmt("djnz %i", *ptr++); break;
-                                case 0x18: fmt("jr %i", *ptr++); break;
-                                case 0x20: fmt("jr nz, %i", *ptr++); break;
-                                case 0x28: fmt("jr z, %i", *ptr++); break;
-                                case 0x30: fmt("jr nc, %i", *ptr++); break;
-                                case 0x38: fmt("jr c, %i", *ptr++); break;
+                                case 0x10: fmt("djnz 0x%04x", *(int8_t*)ptr++ + _regs_curr.ip + 2); break;
+                                case 0x18: fmt("jr 0x%04x", *(int8_t*)ptr++ + _regs_curr.ip + 2); break;
+                                case 0x20: fmt("jr nz, 0x%04x", *(int8_t*)ptr++ + _regs_curr.ip + 2); break;
+                                case 0x28: fmt("jr z, 0x%04x", *(int8_t*)ptr++ + _regs_curr.ip + 2); break;
+                                case 0x30: fmt("jr nc, 0x%04x", *(int8_t*)ptr++ + _regs_curr.ip + 2); break;
+                                case 0x38: fmt("jr c, 0x%04x", *(int8_t*)ptr++ + _regs_curr.ip + 2); break;
                             }
                             break;
                         case 0x01:

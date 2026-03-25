@@ -4,7 +4,7 @@ INCDIR = /usr/local/include
 LIBSDIR = /usr/local/share/hcsdk/libs
 include version.mk
 
-all clean test posix linux macos win win32 samples_zip:
+all clean test test_emu posix linux macos win win32 samples_zip:
 	@make --no-print-directory --silent version_$@
 	$M hcasm
 	$M hclink
@@ -46,11 +46,11 @@ bin/dpkg/hcsdk/DEBIAN/control: ./version.mk Makefile
 	@echo "Depends: libc6" >> $@
 	@echo "Description: HC Software Development Kit for Retro Computing" >> $@
 
-version_all version_posix version_test version_win version_win32 version_macos version_linux version_samples_zip version_clean: ./include/version.h
+version_all version_posix version_test version_test_emu version_win version_win32 version_macos version_linux version_samples_zip version_clean: ./include/version.h
 	@true
 
 
-distro_all distro_posix distro_test:
+distro_all distro_posix distro_test distro_test_emu:
 	@true
 
 distro_samples_zip:

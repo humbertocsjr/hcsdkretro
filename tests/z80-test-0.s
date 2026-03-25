@@ -1,32 +1,22 @@
 section text
 global _main
 _main:
-    ld c, 2
-    ld e, 'H'
-    call 5
-    ld c, 2
-    ld e, 'e'
-    call 5
-    ld c, 2
-    ld e, 'l'
-    call 5
-    ld c, 2
-    ld e, 'l'
-    call 5
-    ld c, 2
-    ld e, 'o'
-    call 5
-    ld c, 2
-    ld e, 'r'
-    call 5
-    ld c, 2
-    ld e, 'l'
-    call 5
-    ld c, 2
-    ld e, 'd'
-    call 5
-    ld c, 2
-    ld e, '!'
-    call 5
+    ld hl, msg
+    call print
     ret
+print:
+    .loop:
+        ld a, [hl]
+        cp 0
+        jr z, .end
+        ld e, a
+        ld c, 2
+        call 5
+        inc hl
+        jr .loop
+    .end:
+    ret
+    
+section data
+msg: db "Hellorld!",0
     

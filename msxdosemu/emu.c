@@ -17,6 +17,7 @@ void help()
     printf("Usage: msxdosemu [-step] [-sym FILE] [EXECUTABLE] [ARGS]\n");
     printf("Arguments:\n");
     printf("-step           : Start on step mode\n");
+    printf("-skip ADDRESS   : Start on step mode, step over to address\n");
     printf("-sym            : Read Symbols File\n");
     exit(1);
 }
@@ -26,6 +27,7 @@ int main(int argc, char **argv)
     char *com_name = NULL;
     char *sym_name = NULL;
     char args[128];
+    char *endptr;
     strcpy(args, "");
     for(int i = 1; i < argc; i++)
     {
@@ -46,6 +48,19 @@ int main(int argc, char **argv)
         else if(!strcmp(argv[i], "-step"))
         {
             _debug = true;
+        }
+        else if(!strcmp(argv[i], "-skip"))
+        {
+            _debug = true;
+            _next_step = true;
+            _skip_call_step = true;
+            i++;
+            if(i >= argc)
+            {
+                fprintf(stderr, "error: skip address expected.\n");
+                return 1;
+            }
+            _skip_call_step_address = strtol(argv[i], &endptr, 0);
         }
         else 
         {

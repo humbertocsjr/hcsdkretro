@@ -37,23 +37,30 @@ void screen_draw_reg(uint16_t curr, uint16_t prev, char *name, bool ptr)
 
 void screen_draw()
 {
+    char *title_color = "\033[0m\033[1;36;40m";
+    char *menu_color = "\033[0m\033[0;36;40m";
+    char *info_color = "\033[0m\033[0;37;40m";
     printf("\033[H\033[2J\033[3J");
     for(int y = 0; y < TTY_HEIGHT; y++)
     {
+        printf("\033[0m\033[0;37;40m");
         for(int x = 0; x < TTY_WIDTH; x++)
         {
             char c = _buffer[y * TTY_WIDTH + x];
             if(c >= ' ' && c <= 127) printf("%c", c);
             else printf(" ");
         }
+        if(y == 0) printf("%s", title_color);
+        else if(y < 5 || y > 20) printf("%s", menu_color);
+        else printf("%s", info_color);
         switch(y)
         {
             case 0:
-                printf(" == MSX-DOS 1.0 Emulator ==============");
+                printf(" == MSX-DOS 1.0 Emulator ==== HC SDK ==");
                 break;
             case 1:
                 if(!_debug) printf(" -= CTRL+F9 = Enter Step Mode =--------");
-                else printf(" -= CTRL+F9 = Exit Step Mode =---------");
+                else printf(" -= CTRL+F9 = Continue =---------------");
                 break;
             case 2:
                 if(!_debug) break;
@@ -114,7 +121,7 @@ void screen_draw()
             case 18:
                 if(!_debug) break;
                 disasm(_regs_curr.ip);
-                printf(" %04x:%s", _regs_curr.ip, _disasm);
+                printf(" %04x %s%s", _regs_curr.ip, menu_color, _disasm);
                 break;
             case 19:
                 if(!_debug) break;
@@ -124,12 +131,16 @@ void screen_draw()
                 if(!_debug) break;
                 if(_skip_call_step)printf(" STEP OVER RETURN ADDRESS:  %04x", _skip_call_step_address);
                 break;
+            case 21:
+                if(!_debug) break;
+                printf(" -= Use 'ld b,b' as breakpoint =-------");
+                break;
             case 22:
                 if(!_debug) break;
                 printf(" -= CTRL+F10 = Export RAM [ram.bin] =--");
                 break;
         }
-        if(y < (TTY_HEIGHT - 1))printf("\n");
+        if(y < (TTY_HEIGHT - 1))printf("\033[0m\n");
     }
     _changed = false;
 }
