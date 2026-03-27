@@ -11,7 +11,7 @@ Tools ready to use:
 - Librarian
 - Project Builder
 
-Tools in development:
+Tools in development (Early test only):
 - RetroLang (Simple programming language for 8 bit)
 - MSX-DOS 1.0 / CP/M 2.2 Emulator
 
