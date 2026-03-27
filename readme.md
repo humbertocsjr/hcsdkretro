@@ -20,6 +20,8 @@ Tools in development:
 
 [RetroLang (In Alpha) Documentation](retrolang.md)
 
+[Hackaday Article](https://hackaday.com/2026/03/17/from-8086-to-z80-building-a-nasm-inspired-sdk-for-8-bit-retro-computing/)
+
 
 ## TODO List (2.0 Roadmap | Early April/26)
 
