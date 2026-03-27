@@ -2,13 +2,16 @@
 
 bool _debuggable = false;
 bool _debug = false;
-uint8_t _memory[0x1000f];
+uint8_t _memory[0x100ff];
 z80_regs_t _regs_curr;
 z80_regs_t _regs_prev;
 bool _executing = true;
 bool _next_step = false;
 bool _skip_call_step = false;
 int32_t _skip_call_step_address = 0;
+char *_disk_a_path = "";
+char *_disk_b_path = "";
+uint16_t _disk_transferr_address = 0x80;
 
 void help()
 {
@@ -21,6 +24,8 @@ void help()
     printf("-step           : Start on debug step mode\n");
     printf("-skip ADDRESS   : Start on debug step mode, step over to address\n");
     printf("-sym            : Read Symbols File\n");
+    printf("-diska PATH     : Set Disk A Path\n");
+    printf("-diskb PATH     : Set Disk B Path\n");
     exit(1);
 }
 
@@ -46,6 +51,16 @@ int main(int argc, char **argv)
             }
             i++;
             if(i < argc) sym_name = argv[1];
+        }
+        else if(!strcmp(argv[i], "-diska"))
+        {
+            i++;
+            if(i < argc) _disk_a_path = argv[i];
+        }
+        else if(!strcmp(argv[i], "-diskb"))
+        {
+            i++;
+            if(i < argc) _disk_b_path = argv[i];
         }
         else if(!strcmp(argv[i], "-debug"))
         {

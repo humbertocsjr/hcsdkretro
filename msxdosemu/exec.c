@@ -9,14 +9,40 @@ void exec_step()
     bool reset_prefixes = true;
     uint16_t tmp;
     int8_t offset_value;
-    if(_regs_curr.ip == 5 || _regs_curr.ip == 0xf37d)
+    if(_regs_curr.ip == 0)
     {
-        // MSX-DOS ABI
-        abi_dos_call_5();
+        // MSX BIOS Application Binary Interface
+        abi_msxbios_reboot();
     }
-    else if(_regs_curr.ip == 0)
+    else if(_regs_curr.ip == 0xc)
     {
-        _executing = false;
+        // MSX BIOS Application Binary Interface
+        abi_msxbios_rdslt();
+    }
+    else if(_regs_curr.ip == 0x1c)
+    {
+        // MSX BIOS Application Binary Interface
+        abi_msxbios_wrslt();
+    }
+    else if(_regs_curr.ip == 0x2c)
+    {
+        // MSX BIOS Application Binary Interface
+        abi_msxbios_callslt();
+    }
+    else if(_regs_curr.ip == 0x3c)
+    {
+        // MSX BIOS Application Binary Interface
+        abi_msxbios_enaslt();
+    }
+    else if(_regs_curr.ip == 0x30)
+    {
+        // MSX BIOS Application Binary Interface
+        abi_msxbios_callf();
+    }
+    else if(_regs_curr.ip == 5 || _regs_curr.ip == 0xf37d)
+    {
+        // MSX-DOS Application Binary Interface
+        abi_dos_call_5();
     }
     else if
     (
@@ -24,7 +50,7 @@ void exec_step()
         !_regs_curr.prefix_dd &&
         !_regs_curr.prefix_ed &&
         !_regs_curr.prefix_fd
-    ) switch(ip_get_byte())
+    ) switch(ip_get_byte()) // Common Opcodes (8080 compatible)
     {
         case 0x00:
             break;
@@ -34,9 +60,9 @@ void exec_step()
             _regs_curr.value = _regs_curr.bc.word;
             break;
         case 0x02:
-            _regs_prev.value = _memory[_regs_curr.bc.word];
-            _memory[_regs_curr.bc.word] = _regs_curr.af.a;
-            _regs_curr.value = _memory[_regs_curr.bc.word];
+            _regs_prev.value = mem_get_byte(_regs_curr.bc.word);
+            mem_set_byte(_regs_curr.bc.word, _regs_curr.af.a);
+            _regs_curr.value = mem_get_byte(_regs_curr.bc.word);
             break;
         case 0x03:
             _regs_prev.value = _regs_curr.bc.word;
@@ -75,7 +101,7 @@ void exec_step()
             break;
         case 0x0a:
             _regs_prev.value = _regs_curr.af.a;
-            _regs_curr.af.a =  _memory[_regs_curr.bc.word];
+            _regs_curr.af.a =  mem_get_byte(_regs_curr.bc.word);
             _regs_curr.value = _regs_curr.af.a;
             break;
         case 0x0b:
@@ -119,9 +145,9 @@ void exec_step()
             _regs_curr.value = _regs_curr.de.word;
             break;
         case 0x12:
-            _regs_prev.value = _memory[_regs_curr.de.word];
-            _memory[_regs_curr.de.word] = _regs_curr.af.a;
-            _regs_curr.value = _memory[_regs_curr.de.word];
+            _regs_prev.value = mem_get_byte(_regs_curr.de.word);
+            mem_set_byte(_regs_curr.de.word, _regs_curr.af.a);
+            _regs_curr.value = mem_get_byte(_regs_curr.de.word);
             break;
         case 0x13:
             _regs_prev.value = _regs_curr.de.word;
@@ -160,7 +186,7 @@ void exec_step()
             break;
         case 0x1a:
             _regs_prev.value = _regs_curr.af.a;
-            _regs_curr.af.a = _memory[_regs_curr.de.word];
+            _regs_curr.af.a = mem_get_byte(_regs_curr.de.word);
             _regs_curr.value = _regs_curr.af.a;
             break;
         case 0x1b:
@@ -4625,9 +4651,9 @@ void exec_step()
                 _regs_curr.value = _regs_curr.bc.word;
                 break;
             case 0x02:
-                _regs_prev.value = _memory[_regs_curr.bc.word];
-                _memory[_regs_curr.bc.word] = _regs_curr.af.a;
-                _regs_curr.value = _memory[_regs_curr.bc.word];
+                _regs_prev.value = mem_get_byte(_regs_curr.bc.word);
+                mem_set_byte(_regs_curr.bc.word, _regs_curr.af.a);
+                _regs_curr.value = mem_get_byte(_regs_curr.bc.word);
                 break;
             case 0x03:
                 _regs_prev.value = _regs_curr.bc.word;
@@ -4675,7 +4701,7 @@ void exec_step()
                 break;
             case 0x0a:
                 _regs_prev.value = _regs_curr.af.a;
-                _regs_curr.af.a =  _memory[_regs_curr.bc.word];
+                _regs_curr.af.a =  mem_get_byte(_regs_curr.bc.word);
                 _regs_curr.value = _regs_curr.af.a;
                 break;
             case 0x0b:
@@ -4719,9 +4745,9 @@ void exec_step()
                 _regs_curr.value = _regs_curr.de.word;
                 break;
             case 0x12:
-                _regs_prev.value = _memory[_regs_curr.de.word];
-                _memory[_regs_curr.de.word] = _regs_curr.af.a;
-                _regs_curr.value = _memory[_regs_curr.de.word];
+                _regs_prev.value = mem_get_byte(_regs_curr.de.word);
+                mem_set_byte(_regs_curr.de.word, _regs_curr.af.a);
+                _regs_curr.value = mem_get_byte(_regs_curr.de.word);
                 break;
             case 0x13:
                 _regs_prev.value = _regs_curr.de.word;
@@ -4769,7 +4795,7 @@ void exec_step()
                 break;
             case 0x1a:
                 _regs_prev.value = _regs_curr.af.a;
-                _regs_curr.af.a = _memory[_regs_curr.de.word];
+                _regs_curr.af.a = mem_get_byte(_regs_curr.de.word);
                 _regs_curr.value = _regs_curr.af.a;
                 break;
             case 0x1b:

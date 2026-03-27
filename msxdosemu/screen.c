@@ -186,11 +186,23 @@ void screen_put_char(char c)
                 printf("%c", c);
                 break;
         }
+        fflush(stdout);
         return;
     }
     _changed = true;
     switch(c)
     {
+        case 8:
+            if(_x == 0)
+            {
+                if(_y > 0)
+                {
+                    _x = TTY_WIDTH - 1;
+                    _y--;
+                }
+            }
+            else _x--;
+            break;
         case 12:
             memset(_buffer, ' ', TTY_HEIGHT * TTY_WIDTH);
             _x = 0;

@@ -17,11 +17,42 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <time.h>
 #include "../include/version.h"
 
 // --== common ==--
 
 #pragma pack(1)
+typedef struct abi_dos_fcb_t
+{
+    uint8_t drive;
+    char name[8];
+    char ext[3];
+    uint8_t extent_low;
+    uint8_t attributes;
+    uint8_t extent_high;
+    uint8_t record_count;
+    uint32_t file_size;
+    uint32_t volume_id;
+    uint8_t internal[8];
+    uint8_t current_record;
+    uint32_t random_record_number;
+} abi_dos_fcb_t;
+
+typedef struct abi_dos_fib_t
+{
+    uint8_t zero;
+    char name[8];
+    char ext[3];
+    uint8_t attribute;
+    uint16_t time;
+    uint16_t date;
+    uint16_t start_cluster;
+    uint32_t file_size;
+    uint8_t logical_drive;
+    uint8_t reserved[37];
+} abi_dos_fib_t;
+
 typedef struct z80_regs_t
 {
     union
@@ -101,13 +132,16 @@ typedef struct z80_regs_t
 
 extern bool _debuggable;
 extern bool _debug;
-extern uint8_t _memory[0x1000f];
+extern uint8_t _memory[0x100ff];
 extern z80_regs_t _regs_curr;
 extern z80_regs_t _regs_prev;
 extern bool _executing;
 extern bool _next_step;
 extern bool _skip_call_step;
 extern int32_t _skip_call_step_address;
+extern char *_disk_a_path;
+extern char *_disk_b_path;
+extern uint16_t _disk_transferr_address;
 
 // --== flags.c ==--
 
@@ -149,6 +183,8 @@ void screen_put_char(char c);
 void keyb_init();
 void keyb_exit();
 void keyb_process();
+bool keyb_pop(char *out);
+char keyb_wait_pop();
 
 // --== alu.c ==--
 
@@ -192,3 +228,12 @@ void abi_dos_call_5();
 
 extern char _disasm[256];
 void disasm(uint16_t address);
+
+// --== abi_msxbios.c ==--
+
+void abi_msxbios_reboot();
+void abi_msxbios_rdslt();
+void abi_msxbios_wrslt();
+void abi_msxbios_callslt();
+void abi_msxbios_enaslt();
+void abi_msxbios_callf();

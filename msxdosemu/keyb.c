@@ -4,7 +4,10 @@
 #include <unistd.h>
 
 static struct termios orig_tio;
-char _keyb_key = 0;
+char _keyb_keys[16];
+char _keyb_keys_in = 0;
+char _keyb_keys_out = 0;
+char _keyb_keys_count = 0;
 
 void keyb_init()
 {
@@ -16,6 +19,33 @@ void keyb_init()
     new_tio.c_cc[VMIN] = 0;
     new_tio.c_cc[VTIME] = 0;
     tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
+}
+
+void keyb_push(char c)
+{
+    if(_keyb_keys_count >= 16) return;
+    _keyb_keys[_keyb_keys_in] = c;
+    _keyb_keys_in = (_keyb_keys_in + 1) % 16;
+    _keyb_keys_count++;
+}
+
+bool keyb_pop(char *out)
+{
+    if(_keyb_keys_count == 0) return false;
+    *out = _keyb_keys[_keyb_keys_out];
+    _keyb_keys_out = (_keyb_keys_out + 1) % 16;
+    _keyb_keys_count--;
+    return true;
+}
+
+char keyb_wait_pop()
+{
+    char c;
+    while(!keyb_pop(&c))
+    {
+        keyb_process();
+    }
+    return c;
 }
 
 void keyb_exit()
@@ -33,7 +63,6 @@ static char keyb_getc()
 void keyb_process()
 {
     char c = keyb_getc();
-    if(c != 0) _keyb_key = c;
     if(c == 033)
     {
         int params[5];
@@ -45,7 +74,6 @@ void keyb_process()
             seq[i+1] = 0;
             if(seq[i] == 0 || (seq[i] >= 0x40 && seq[i] <= 0x7f)) break;
         }
-        _keyb_key = 0;
         if(seq[0] == '[')
         {
             char *ptr = seq;
@@ -126,5 +154,9 @@ void keyb_process()
             printf("{ESC%s}", seq);
             exit(1);
         }
+    }
+    else if(c)
+    {
+        keyb_push(c);
     }
 }
