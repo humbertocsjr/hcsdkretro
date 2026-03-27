@@ -3,6 +3,7 @@
 Cross-compiler tools for retro computing.
 
 ![MSX-DOS Emulator Screenshot](imgs/msxdosemu-2026-03-25.png "MSX-DOS Emulator running Hellord! test")
+<sub>Executed with ```make test_emu```</sub>
 
 Tools ready to use:
 - Assembler
