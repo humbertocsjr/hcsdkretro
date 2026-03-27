@@ -101,16 +101,19 @@ void abi_dos_call_5()
                 if(fcb->drive == 0)strcpy(path, _disk_default);
                 else if(fcb->drive == 2) strcpy(path, _disk_b_path);
                 else strcpy(path, _disk_a_path);
+                char c;
                 for(int i = 0; i < 8; i++)
                 {
                     if(fcb->name[i] == ' ') break;
-                    strncat(path, tolower(fcb->name[i]), 1);
+                    c = tolower(fcb->name[i]);
+                    strncat(path, &c, 1);
                 }
                 strcat(path, ".");
                 for(int i = 0; i < 3; i++)
                 {
                     if(fcb->ext[i] == ' ') break;
-                    strncat(path, tolower(fcb->ext[i]), 1);
+                    c = tolower(fcb->ext[i]);
+                    strncat(path, &c, 1);
                 }
                 FILE *file = fopen(path, "rb");
                 if(!file)
@@ -123,14 +126,14 @@ void abi_dos_call_5()
                     _regs_curr.af.a = 0x00;
                 }
                 _regs_curr.hl.l = _regs_curr.af.a;
-                memcpy(fcb->internal, file, sizeof(file));
+                memcpy(fcb->internal, file, sizeof(size_t));
             }
             break;
         case 0x10: // Close FCB
             {
                 abi_dos_fcb_t *fcb = (abi_dos_fcb_t*)&_memory[_regs_curr.de.word];
                 FILE *file;
-                memcpy(file, fcb->internal, sizeof(file));
+                memcpy(file, fcb->internal, sizeof(size_t));
                 if(file)
                 {
                     fclose(file);
@@ -147,7 +150,7 @@ void abi_dos_call_5()
             {
                 abi_dos_fcb_t *fcb = (abi_dos_fcb_t*)&_memory[_regs_curr.de.word];
                 FILE *file;
-                memcpy(file, fcb->internal, sizeof(file));
+                memcpy(file, fcb->internal, sizeof(size_t));
                 ptr = _disk_transferr_address;
                 if(file)
                 {
