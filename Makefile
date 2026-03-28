@@ -66,7 +66,7 @@ distro_dos:
 	@mv bin/dos/hcasm-z80.exe bin/dos/hcasmz80.exe
 	@mv bin/dos/hclink-bin.exe bin/dos/hclnkbin.exe
 	@mv bin/dos/hclink-rex.exe bin/dos/hclnkrex.exe
-	@mv bin/dos/msxdosemu.exe bin/dos/msxdos.exe
+	@#mv bin/dos/msxdosemu.exe bin/dos/msxdos.exe
 	@mv bin/dos/retrolang-8086.exe bin/dos/rlang86.exe
 	@mv bin/dos/retrolang-z80.exe bin/dos/rlangz80.exe
 	@mkdir -p bin/win/include

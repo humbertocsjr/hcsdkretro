@@ -20,7 +20,7 @@ all test test_emu posix: $(POSIX_OUT)
 samples_zip:
 	@true
 
-dos: $(DOS_OUT)
+dos: $(filter-out $(DOS_PATH)msxdosemu.exe,$(DOS_OUT))
 	@true
 
 linux: $(LINUX_OUT)
