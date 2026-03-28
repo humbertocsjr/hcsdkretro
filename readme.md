@@ -129,6 +129,9 @@ make distro
 
 Implement MSX-DOS 1.0 Compatible Emulator with embedded Debugger.
 
+Emulator supports function key shortcuts with modifier keys (ALT and CTRL). \
+For example: F12, CTRL+F12, ALT+F12.
+
 MSX / MSX-DOS Supported Features:
 
 - MSX-DOS CALL 5 ABI
