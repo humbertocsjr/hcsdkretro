@@ -1,6 +1,6 @@
 OUT = start-dos-8086.obj start-cpm-z80.obj $(patsubst dos/%.prj,%.lib,$(wildcard dos/*.prj)) $(patsubst cpm/%.prj,%.lib,$(wildcard cpm/*.prj))
 
-all posix linux macos win win32 samples_zip test test_emu: $(OUT)
+all posix linux macos win win32 dos samples_zip test test_emu: $(OUT)
 	@true
 
 

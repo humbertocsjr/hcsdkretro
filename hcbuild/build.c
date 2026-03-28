@@ -1,5 +1,7 @@
 #include "build.h"
 
+char *dirname(char *path);
+
 #ifdef WINDOWS_HOST
 #define PATHSEPARATOR '\\'
 #define PATHSEPARATORSTR "\\"

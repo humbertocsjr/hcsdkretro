@@ -4,7 +4,7 @@ INCDIR = /usr/local/include
 LIBSDIR = /usr/local/share/hcsdk/libs
 include version.mk
 
-all clean test test_emu posix linux macos win win32 samples_zip:
+all clean test test_emu posix linux macos win win32 dos samples_zip:
 	@make --no-print-directory --silent version_$@
 	$M hcasm
 	$M hclink
@@ -16,7 +16,7 @@ all clean test test_emu posix linux macos win win32 samples_zip:
 	$M tests
 	@make --no-print-directory --silent distro_$@
 
-distro: all linux macos win win32 samples_zip
+distro: all linux macos win win32 dos samples_zip
 	@true
 
 install: all
@@ -46,7 +46,7 @@ bin/dpkg/hcsdk/DEBIAN/control: ./version.mk Makefile
 	@echo "Depends: libc6" >> $@
 	@echo "Description: HC Software Development Kit for Retro Computing" >> $@
 
-version_all version_posix version_test version_test_emu version_win version_win32 version_macos version_linux version_samples_zip version_clean: ./include/version.h
+version_all version_posix version_test version_test_emu version_dos version_win version_win32 version_macos version_linux version_samples_zip version_clean: ./include/version.h
 	@true
 
 
@@ -57,6 +57,19 @@ distro_samples_zip:
 	@echo [ZIP] hcsdk-samples-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip
 	@cd samples; zip -r ../hcsdk-samples-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip ./  > /dev/null
 	@cp hcsdk-samples-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip distrosite/hcsdk-samples.zip
+
+distro_dos:
+	@mkdir -p bin/dos/
+	@mkdir -p bin/win/include
+	@cp include/*.rl bin/win/include/
+	@mkdir -p bin/win/libs
+	@cp libs/*.obj bin/win/libs/
+	@cp libs/*.lib bin/win/libs/
+	@echo [ZIP] hcsdk-dos-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip
+	@cd bin/dos; zip -r ../../hcsdk-dos-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip ./  > /dev/null
+	@mkdir -p distrosite
+	@cp hcsdk-dos-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip distrosite/hcsdk-dos.zip
+
 
 distro_win:
 	@mkdir -p bin/win/
@@ -74,7 +87,7 @@ distro_win:
 	@rm hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip 2>/dev/null | true
 	@cd bin/win; zip -r ../../hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip ./  > /dev/null
 	@mkdir -p distrosite
-	@cp hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip distrosite/hcsdk-win.pkg
+	@cp hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip distrosite/hcsdk-win.zip
 	@echo [EXE] hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION)-setup.exe
 	@cd bin/win; makensis windows.nsi > /dev/null
 	@mv hcsdk-win-installer.exe hcsdk-win-v$(VERSION)-$(SUBVERSION)-R$(REVISION)-setup.exe
@@ -97,7 +110,7 @@ distro_win32:
 	@rm hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip 2>/dev/null | true
 	@cd bin/win32; zip -r ../../hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip ./  > /dev/null
 	@mkdir -p distrosite
-	@cp hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip distrosite/hcsdk-win32.pkg
+	@cp hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION).zip distrosite/hcsdk-win32.zip
 	@echo [EXE] hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION)-setup.exe
 	@cd bin/win32; makensis windows.nsi > /dev/null
 	@mv hcsdk-win-installer.exe hcsdk-win32-v$(VERSION)-$(SUBVERSION)-R$(REVISION)-setup.exe

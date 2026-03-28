@@ -9,12 +9,18 @@ WIN_PATH = ../bin/win/
 WIN_OUT = $(patsubst %,$(WIN_PATH)%.exe,$(OUT_BASE))
 WIN32_PATH = ../bin/win32/
 WIN32_OUT = $(patsubst %,$(WIN32_PATH)%.exe,$(OUT_BASE))
+DOS_PATH = ../bin/dos/
+DOS_OUT = $(patsubst %,$(DOS_PATH)%.exe,$(OUT_BASE))
+DJGPP_PATH = /usr/local/djgpp
 
 
 all test test_emu posix: $(POSIX_OUT)
 	@true
 
 samples_zip:
+	@true
+
+dos: $(DOS_OUT)
 	@true
 
 linux: $(LINUX_OUT)
@@ -32,10 +38,26 @@ win32: $(filter-out $(WIN32_PATH)msxdosemu.exe,$(WIN32_OUT))
 clean:
 	@rm -f $(POSIX_OUT) $(WIN_OUT) $(LINUX_OUT) $(MACOS_OUT) $(CLR)
 
+define add_to_path
+ifeq ($(findstring $(1),$(PATH)),)
+    PATH := $(1):$(PATH)
+endif
+endef
+
+# $(eval $(call add_to_path,$(DJGPP_PATH)/bin))
+
+
 $(POSIX_OUT): $(SRC_REQS) Makefile
 	@echo [CC] $(@F)
 	@mkdir -p $(@D)
 	@cc -g -o $@ $(SRC)
+
+$(DOS_OUT):  $(SRC_REQS) Makefile
+	@echo [CC] $(@F)
+	@mkdir -p $(@D)
+	@cp ../license $(@D)/license.txt
+	@cp -R ../samples $(@D)/samples
+	@DJDIR=$(DJGPP_PATH)/i586-pc-msdosdjgpp GCC_EXE_PREFIX=$(DJGPP_PATH)/lib/gcc $(DJGPP_PATH)/bin/i586-pc-msdosdjgpp-gcc -o $@ $(patsubst %.exe.c,%.c,$(SRC))
 
 $(LINUX_OUT):  $(SRC_REQS) Makefile
 	@echo [CC] $(@F)

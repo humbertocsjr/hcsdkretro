@@ -15,7 +15,6 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <string.h>
-#include <libgen.h>
 #include "../include/obj.h"
 #include "../include/version.h"
 
