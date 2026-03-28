@@ -117,6 +117,8 @@ brew tap messense/macos-cross-toolchains
 brew install dpkg llvm cmake xwin mingw-w64 x86_64-unknown-linux-gnu msitools nsis
 ```
 
+Install last DJGPP version from [GitHub](https://github.com/andrewwutw/build-djgpp/releases) to /usr/local/djgpp
+
 **Generating distribution files:**
 
 ```sh
