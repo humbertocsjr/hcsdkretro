@@ -57,7 +57,7 @@ $(DOS_OUT):  $(SRC_REQS) Makefile
 	@mkdir -p $(@D)
 	@cp ../license $(@D)/license.txt
 	@cp -R ../samples $(@D)/samples
-	@DJDIR=$(DJGPP_PATH)/i586-pc-msdosdjgpp GCC_EXE_PREFIX=$(DJGPP_PATH)/lib/gcc $(DJGPP_PATH)/bin/i586-pc-msdosdjgpp-gcc -o $@ $(patsubst %.exe.c,%.c,$(SRC))
+	@DJDIR=$(DJGPP_PATH)/i586-pc-msdosdjgpp GCC_EXE_PREFIX=$(DJGPP_PATH)/lib/gcc $(DJGPP_PATH)/bin/i586-pc-msdosdjgpp-gcc -DWINDOWS_HOST=1 -o $@ $(patsubst %.exe.c,%.c,$(SRC))
 
 $(LINUX_OUT):  $(SRC_REQS) Makefile
 	@echo [CC] $(@F)
