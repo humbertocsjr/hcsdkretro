@@ -72,6 +72,8 @@ Links:
 - **Linux - Intel**
     - hcsdk-linux-v??.??.??.tgz: Linux Binaries
     - hcsdk-linux-v??.??.??.deb: Debian/Ubuntu-based Package
+- **DOS - Pentium or Compatible**
+    - hcsdk-dos-v??.??.??.zip: DOS Binaries
 
 ## Tested Hosts - Build with make
 
