@@ -47,7 +47,6 @@ _main:
             pop bc
 
             inc hl
-            ld b,b
             djnz .print_loop
         
         jr .read_loop

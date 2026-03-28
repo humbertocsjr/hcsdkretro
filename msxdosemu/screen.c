@@ -47,6 +47,9 @@ void screen_draw()
     char *info_color = "\033[0m\033[0;37;40m";
     char *prev_color = "\033[0m\033[0;33;40m";
     char *next_color = "\033[0m\033[0;32;40m";
+    char *true_text = "\033[0m\033[0;32;40mT\033[0m\033[0;37;40m";
+    char *false_text = "\033[0m\033[0;31;40mF\033[0m\033[0;37;40m";
+
     printf("\033[0m\033[0;37;40m\033[H\033[2J\033[3J");
     for(int y = 0; y < TTY_HEIGHT; y++)
     {
@@ -127,21 +130,21 @@ void screen_draw()
                 break; 
             case 17:
                 if(!_debug) break;
+                if(_skip_call_step)printf(" STEP OVER RETURN ADDRESS:  %04x", _skip_call_step_address);
+                break;
+            case 18:
+                if(!_debug) break;
                 disasm(_regs_prev.ip);
                 printf(" %sPREV%s[ %04x ] %s%s", prev_color, info_color, _regs_prev.ip, prev_color, _disasm);
                 break;
-            case 18:
+            case 19:
                 if(!_debug) break;
                 disasm(_regs_curr.ip);
                 printf(" %sNEXT%s[ %04x ] %s%s", next_color, info_color, _regs_curr.ip, next_color, _disasm);
                 break;
-            case 19:
-                if(!_debug) break;
-                printf(" CF:%c | S:%c | P/V:%c | N:%c | H:%c", cf_get() ? 'T':'F', sf_get() ? 'T':'F', pvf_get() ? 'T':'F', nf_get() ? 'T':'F', hf_get() ? 'T':'F');
-                break;
             case 20:
                 if(!_debug) break;
-                if(_skip_call_step)printf(" STEP OVER RETURN ADDRESS:  %04x", _skip_call_step_address);
+                printf(" CF:%s | S:%s | P/V:%s | N:%s | H:%s | Z:%s", cf_get() ? true_text : false_text, sf_get() ? true_text : false_text, pvf_get() ? true_text : false_text, nf_get() ? true_text : false_text, hf_get() ? true_text : false_text, zf_get() ? true_text : false_text);
                 break;
             case 21:
                 if(!_debug) break;
