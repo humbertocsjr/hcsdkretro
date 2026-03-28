@@ -60,6 +60,15 @@ distro_samples_zip:
 
 distro_dos:
 	@mkdir -p bin/dos/
+	@mv bin/dos/hcasm-8080.exe bin/dos/hcasm80.exe
+	@mv bin/dos/hcasm-8085.exe bin/dos/hcasm85.exe
+	@mv bin/dos/hcasm-8086.exe bin/dos/hcasm86.exe
+	@mv bin/dos/hcasm-z80.exe bin/dos/hcasmz80.exe
+	@mv bin/dos/hclink-bin.exe bin/dos/hclnkbin.exe
+	@mv bin/dos/hclink-rex.exe bin/dos/hclnkrex.exe
+	@mv bin/dos/msxdosemu.exe bin/dos/msxdos.exe
+	@mv bin/dos/retrolang-8086.exe bin/dos/rlang86.exe
+	@mv bin/dos/retrolang-z80.exe bin/dos/rlangz80.exe
 	@mkdir -p bin/win/include
 	@cp include/*.rl bin/win/include/
 	@mkdir -p bin/win/libs

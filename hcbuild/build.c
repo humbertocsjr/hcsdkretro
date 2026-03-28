@@ -2,12 +2,17 @@
 
 char *dirname(char *path);
 
+#ifdef DOS_HOST
+#define PATHSEPARATOR '\\'
+#define PATHSEPARATORSTR "\\"
+#else
 #ifdef WINDOWS_HOST
 #define PATHSEPARATOR '\\'
 #define PATHSEPARATORSTR "\\"
 #else
 #define PATHSEPARATOR '/'
 #define PATHSEPARATORSTR "/"
+#endif
 #endif
 
 obj_t *_objs = NULL;
@@ -86,6 +91,12 @@ void make_files(section_t *section)
             strcat(temp_name, ".__s");
             strcpy(cmd, sdk_path);
             if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+            #ifdef DOS_HOST
+            strcat(cmd, "rlang");
+            if(section->subsection[0] == '8' && section->subsection[1] == '0') strcat(cmd, &section->subsection[2]);
+            else strcat(cmd, section->subsection);
+            strcat(cmd, ".exe");
+            #else
             #ifdef WINDOWS_HOST
             strcat(cmd, "retrolang-");
             strcat(cmd, section->subsection);
@@ -93,6 +104,7 @@ void make_files(section_t *section)
             #else
             strcat(cmd, "retrolang-");
             strcat(cmd, section->subsection);
+            #endif
             #endif
             section_t *rl_include_path = get_section("retrolang", "include_path");
             if(rl_include_path)
@@ -120,6 +132,12 @@ void make_files(section_t *section)
             ok = true;
             strcpy(cmd, sdk_path);
             if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+            #ifdef DOS_HOST
+            strcat(cmd, "hcasm");
+            if(section->subsection[0] == '8' && section->subsection[1] == '0') strcat(cmd, &section->subsection[2]);
+            else strcat(cmd, section->subsection);
+            strcat(cmd, ".exe");
+            #else
             #ifdef WINDOWS_HOST
             strcat(cmd, "hcasm-");
             strcat(cmd, section->subsection);
@@ -127,6 +145,7 @@ void make_files(section_t *section)
             #else
             strcat(cmd, "hcasm-");
             strcat(cmd, section->subsection);
+            #endif
             #endif
             strcat(cmd, " -o ");
             strcat(cmd, obj_name);
@@ -225,10 +244,14 @@ void make_link(section_t *section, char *config)
     {
         strcpy(cmd, sdk_path);
         if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+        #ifdef DOS_HOST
+        strcat(cmd, "hclib.exe ");
+        #else
         #ifdef WINDOWS_HOST
         strcat(cmd, "hclib.exe ");
         #else
         strcat(cmd, "hclib ");
+        #endif
         #endif
         if(out_file[0] != PATHSEPARATOR)
         {
@@ -241,6 +264,11 @@ void make_link(section_t *section, char *config)
     {
         strcpy(cmd, sdk_path);
         if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+        #ifdef DOS_HOST
+        strcat(cmd, "hclnk");
+        strcat(cmd, format);
+        strcat(cmd, ".exe");
+        #else
         #ifdef WINDOWS_HOST
         strcat(cmd, "hclink-");
         strcat(cmd, format);
@@ -248,6 +276,7 @@ void make_link(section_t *section, char *config)
         #else
         strcat(cmd, "hclink-");
         strcat(cmd, format);
+        #endif
         #endif
         strcat(cmd, " -o ");
         if(out_file[0] != PATHSEPARATOR)
