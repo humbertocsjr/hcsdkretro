@@ -142,6 +142,8 @@ extern int32_t _skip_call_step_address;
 extern char *_disk_a_path;
 extern char *_disk_b_path;
 extern uint16_t _disk_transferr_address;
+extern int _return_code;
+extern bool keyb_avail();
 
 // --== flags.c ==--
 

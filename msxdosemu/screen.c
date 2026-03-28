@@ -22,12 +22,12 @@ void screen_draw_reg(uint16_t curr, uint16_t prev, char *name, bool ptr, bool st
     char name_fill[5];
     if(prev == curr) strcpy(prev_value, "----");
     else snprintf(prev_value, 5, "%04x", prev);
-    snprintf(curr_value, 11, "%04x[%c|%c]", curr, printable(curr >> 8), printable(curr & 0xff));
+    snprintf(curr_value, 11, "%04x %c %c", curr, printable(curr >> 8), printable(curr & 0xff));
     if(strlen(name) == 2)snprintf(name_fill, 5, " %s ", name);
     else snprintf(name_fill, 5, "%s    ", name);
     if(ptr && str)
     {
-        printf(" %s| %s | %s | %04x'%c%c%c%c%c%c'", name_fill, prev_value, curr_value, mem_get_word(curr), printable(mem_get_byte(curr)), printable(mem_get_byte(curr + 1)), printable(mem_get_byte(curr + 2)), printable(mem_get_byte(curr + 3)), printable(mem_get_byte(curr + 4)), printable(mem_get_byte(curr + 5)));
+        printf(" %s| %s | %s | %04x'%c%c%c%c%c%c%c'", name_fill, prev_value, curr_value, mem_get_word(curr), printable(mem_get_byte(curr)), printable(mem_get_byte(curr + 1)), printable(mem_get_byte(curr + 2)), printable(mem_get_byte(curr + 3)), printable(mem_get_byte(curr + 4)), printable(mem_get_byte(curr + 5)), printable(mem_get_byte(curr + 6)));
     }
     else if(ptr)
     {
@@ -81,11 +81,11 @@ void screen_draw()
                 break;
             case 6:
                 if(!_debug) break;
-                printf("  ** | PREV | CURRENT   | [CURRENT]");
+                printf("  ** | PREV | CURRENT  | [CURRENT]");
                 break;
             case 7:
                 if(!_debug) break;
-                printf(" ----|------|-hhll-h-l--|-val--string--");
+                printf(" ----|------|-hhll-h-l-|-val--string---");
                 break;
             case 8:
                 if(!_debug) break;

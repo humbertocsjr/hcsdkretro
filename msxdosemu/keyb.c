@@ -38,6 +38,11 @@ bool keyb_pop(char *out)
     return true;
 }
 
+bool keyb_avail()
+{
+    return _keyb_keys_count > 0;
+}
+
 char keyb_wait_pop()
 {
     char c;

@@ -12,6 +12,7 @@ int32_t _skip_call_step_address = 0;
 char *_disk_a_path = "";
 char *_disk_b_path = "";
 uint16_t _disk_transferr_address = 0x80;
+int _return_code = 0;
 
 void help()
 {
@@ -33,6 +34,8 @@ int main(int argc, char **argv)
 {
     char *com_name = NULL;
     char *sym_name = NULL;
+    char *args_first_fname = NULL;
+    char *args_second_fname = NULL;
     char args[128];
     char *endptr;
     strcpy(args, "");
@@ -91,12 +94,75 @@ int main(int argc, char **argv)
             {
                 strncpy(args, argv[i], 128 - strlen(args));
                 strncpy(args, " ", 128 - strlen(args));
+                if(!args_first_fname)
+                {
+                    args_first_fname = argv[i];
+                }
+                else if(!args_second_fname)
+                {
+                    args_second_fname = argv[i];
+                }
             }
             else com_name = argv[i];
         }
     }
     memset(_memory, 0, 0x10000);
     if(!com_name) help();
+    abi_dos_fcb_t *fcb = (abi_dos_fcb_t *)&_memory[0x5c];
+    memset(fcb->name, ' ', 11);
+    if(args_first_fname)
+    {
+        int ext_pos = -1;
+        for (size_t i = 0; i < strlen(args_first_fname); i++)
+        {
+            if(ext_pos >= 0)
+            {
+                if(ext_pos < 3)
+                {
+                    fcb->ext[ext_pos++] = toupper(args_first_fname[i]);
+                }
+            }
+            else if(i < 8)
+            {
+                if(args_first_fname[i] == '.')
+                {
+                    ext_pos = 0;
+                }
+                else
+                {
+                    fcb->name[i] = toupper(args_first_fname[i]);
+                }
+            }
+        }
+    }
+    fcb = (abi_dos_fcb_t *)&_memory[0x6c];
+    memset(fcb->name, ' ', 11);
+    if(args_second_fname)
+    {
+        int ext_pos = -1;
+        for (size_t i = 0; i < strlen(args_second_fname); i++)
+        {
+            if(ext_pos >= 0)
+            {
+                if(ext_pos < 3)
+                {
+                    fcb->ext[ext_pos++] = toupper(args_second_fname[i]);
+                }
+            }
+            else if(i < 8)
+            {
+                if(args_second_fname[i] == '.')
+                {
+                    ext_pos = 0;
+                }
+                else
+                {
+                    fcb->name[i] = toupper(args_second_fname[i]);
+                }
+            }
+        }
+    }
+
     FILE *com_file = fopen(com_name, "rb");
     if(!com_file)
     {
@@ -107,6 +173,6 @@ int main(int argc, char **argv)
     fclose(com_file);
 
     exec();
-    return 0;
+    return _return_code;
 }
 

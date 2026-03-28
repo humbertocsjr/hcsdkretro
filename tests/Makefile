@@ -8,7 +8,7 @@ test: $(OUT)
 
 test_emu: test
 	@z80dasm -a -l -g 0x100 -c -o z80-test-0.com.dump --tab-width=4 -t z80-test-0.com
-	@../bin/msxdosemu -step z80-test-0.com
+	@../bin/msxdosemu -diska ./ -step z80-test-0.com test.txt
 
 clean: 
 	@rm $(OUT) *.dump *.obj *.sym *.bin *.lib *.sym 2>/dev/null || true

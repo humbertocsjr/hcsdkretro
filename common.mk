@@ -49,7 +49,7 @@ $(MACOS_OUT):  $(SRC_REQS) Makefile
 	@mkdir -p $(@D)
 	@cp ../license $(@D)/license.txt
 	@cp -R ../samples $(@D)/samples
-	@clang -arch x86_64 -arch arm64 -o $@ $(SRC)
+	@clang -arch x86_64 -arch arm64 -fno-common -o $@ $(SRC)
 
 $(WIN_OUT):  $(patsubst %.exe.c,%.c,$(SRC_REQS)) Makefile
 	@echo [CC] $(@F)

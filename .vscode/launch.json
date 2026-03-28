@@ -152,7 +152,7 @@
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/bin/msxdosemu",
-        "args": ["${workspaceFolder}/tests/z80-test-0.com"],
+        "args": ["-diska", "${workspaceFolder}/tests/", "${workspaceFolder}/tests/z80-test-0.com", "test.txt"],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}/tests/",
         "environment": [],

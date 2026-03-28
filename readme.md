@@ -3,7 +3,7 @@
 Cross-compiler tools for retro computing.
 
 ![MSX-DOS Emulator Screenshot](imgs/msxdosemu-2026-03-25.png "MSX-DOS Emulator running Hellord! test")
-<sub>Executed with ```make test_emu```</sub>
+<sub>Executed with ```make test_emu``` or ```make test && bin/msxdosemu -step tests/z80-test-0.com```</sub>
 
 Tools ready to use:
 - Assembler
@@ -15,47 +15,22 @@ Tools in development (Early test only):
 - RetroLang (Simple programming language for 8 bit)
 - MSX-DOS 1.0 / CP/M 2.2 Emulator
 
-[Site e Documentação em Português](https://humbertocsjr.dev.br/hcsdk/pt)
-
-[Site and Documentation in English](https://humbertocsjr.dev.br/hcsdk/en)
-
-[RetroLang (In Alpha) Documentation](retrolang.md)
-
-[Hackaday Article](https://hackaday.com/2026/03/17/from-8086-to-z80-building-a-nasm-inspired-sdk-for-8-bit-retro-computing/)
+Links:
+- [Site e Documentação em Português](https://humbertocsjr.dev.br/hcsdk/pt)
+- [Site and Documentation in English](https://humbertocsjr.dev.br/hcsdk/en)
+- [RetroLang (In Alpha) Documentation](retrolang.md)
+- [Hackaday Article](https://hackaday.com/2026/03/17/from-8086-to-z80-building-a-nasm-inspired-sdk-for-8-bit-retro-computing/)
 
 
-## TODO List (2.0 Roadmap | Early April/26)
+## TODO List (Pending for 2.0 | Early April/26)
 
 - MSX-DOS 1.0 (CP/M 2.2 Compatible) Emulator (In progress)
-    - Support for Fxx keys / ALT+Fxx keys / CTRL+Fxx keys alternatives (**Done**)
-        - ALT+Fxx keys -> tested on macOS Terminal
-        - CTRL+Fxx keys -> tested on VSCode Terminal
-        - F9-F12 keys -> tested on Linux Fullscreen Terminal
-    - Dump memory to file (**Done**)
-    - Embbed Breakpoint on Binary 'ld b,b' [Inspired on 'xchg bx, bx' from Bochs] (**Done**)
-    - Windows Console Compatibility (Planned 2.1)
-    - POSIX (macOS/Linux/BSD/Windows WSL) Console Compatibility (**Done**)
-    - Z80 Emulation (**Done**)
     - Screen/Keyboard I/O to VT110 TTY Mode (In progress)
     - Screen 40x24 with Debug Mode (In progress)
-    - Screen 80x24 with Debug Mode (Planned for 3.0)
-    - MegaRAM / Slot Support (Planned for 2.9)
-    - Mapper / MSX-DOS 2.0 Extensions (Planned for 3.0)
-    - CALL 5 ABI (In progress)
-        - File ABI (In progress)
-            - Open FCB (**Done** / Testing)
-            - Close FCB (**Done**)
-            - Read Sequencial FCB (**Done** / Testing)
-            - Write Sequencial FCB (Planned)
-            - Read Random FCB (Planned)
-            - Write Random FCB (Planned)
-        - Console ABI (**Done**)
     - MSX-BIOS ABI (Planned)
         - Screen ABI (Planned)
     - MSX Hardware Emulation (Planned)
         - Screen 40x24 Direct Manipulation (Planned)
-        - Screen 80x24 Direct Manipulation (Planned for 3.0)
-        - Joystick input (Planned for 3.0)
 - RetroLang Compiler (In progress)
     - Implement all planned pointers (In progress)
     - Structure Support (Planned)
@@ -145,6 +120,37 @@ brew install dpkg llvm cmake xwin mingw-w64 x86_64-unknown-linux-gnu msitools ns
 ```sh
 make distro
 ```
+
+# MSX-DOS 1.0 (CP/M 2.2) Emulator
+
+Implement MSX-DOS 1.0 Compatible Emulator with embedded Debugger.
+
+MSX / MSX-DOS Supported Features:
+
+- MSX-DOS CALL 5 ABI
+- MSX-DOS / CP/M FCB File I/O
+- Console I/O
+- Prefilled FCBs at 0x5c and 0x6c with filenames in arguments
+- Z80 CPU
+
+Not implemented but planned features:
+
+- MSX-BIOS Calls
+- I/O Ports
+- Slots and Memory Mapping
+- MegaRAM / Mapper
+- MSX-DOS 2.0 Support
+- Windows Console Support
+
+Not supported features:
+
+- MSX Sound Output
+- MSX-DOS CALL 5 ABI C=0x05 - Write Char to Printer
+- MSX-DOS CALL 5 ABI C=0x11 - Search FCB
+- MSX-DOS CALL 5 ABI C=0x12 - Search Next FCB
+- MSX-DOS CALL 5 ABI C=0x13 - Delete file FCB
+- MSX-DOS CALL 5 ABI C=0x18 - Get Login Vector
+
 
 # RetroLang for Retro Computing
 
