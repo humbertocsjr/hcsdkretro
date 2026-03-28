@@ -45,6 +45,8 @@ void screen_draw()
     char *title_color = "\033[0m\033[1;36;40m";
     char *menu_color = "\033[0m\033[0;36;40m";
     char *info_color = "\033[0m\033[0;37;40m";
+    char *prev_color = "\033[0m\033[0;33;40m";
+    char *next_color = "\033[0m\033[0;32;40m";
     printf("\033[0m\033[0;37;40m\033[H\033[2J\033[3J");
     for(int y = 0; y < TTY_HEIGHT; y++)
     {
@@ -123,10 +125,15 @@ void screen_draw()
                 if(!_debug) break;
                 screen_draw_reg(_regs_curr.value, _regs_prev.value, "->", true, true);
                 break; 
+            case 17:
+                if(!_debug) break;
+                disasm(_regs_prev.ip);
+                printf(" %sPREV%s[ %04x ] %s%s", prev_color, info_color, _regs_prev.ip, prev_color, _disasm);
+                break;
             case 18:
                 if(!_debug) break;
                 disasm(_regs_curr.ip);
-                printf(" %04x %s%s", _regs_curr.ip, menu_color, _disasm);
+                printf(" %sNEXT%s[ %04x ] %s%s", next_color, info_color, _regs_curr.ip, next_color, _disasm);
                 break;
             case 19:
                 if(!_debug) break;
