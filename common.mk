@@ -20,7 +20,8 @@ all test test_emu posix: $(POSIX_OUT)
 samples_zip:
 	@true
 
-dos: $(filter-out $(DOS_PATH)msxdosemu.exe,$(DOS_OUT))
+dos: $(filter-out $(DOS_PATH)retrolang-%.exe,$(filter-out $(DOS_PATH)msxdosemu.exe,$(DOS_OUT)))
+	@echo $^
 	@true
 
 linux: $(LINUX_OUT)
