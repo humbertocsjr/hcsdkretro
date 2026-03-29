@@ -132,6 +132,24 @@ Implement MSX-DOS 1.0 Compatible Emulator with embedded Debugger.
 Emulator supports function key shortcuts with modifier keys (ALT and CTRL). \
 For example: F12, CTRL+F12, ALT+F12.
 
+Usage:
+
+```sh
+# Execute cat.com with test.txt as argument
+msxdosemu cat.com test.txt
+# Execute cat.com with test.txt as argument
+# test.txt will be read from new A: path: other/dir/
+msxdosemu -diska other/dir/ cat.com test.txt
+# Run in debug mode cat.com with test.txt as argument
+# will wait next breakpoint (ld b,b) to change to debug step mode
+msxdosemu -debug cat.com test.txt
+# Run in debug step mode cat.com with test.txt as argument
+msxdosemu -step cat.com test.txt
+# Run in debug mode cat.com with test.txt as argument
+# will wait next breakpoint (ld b,b) or IP=0x103 to change to debug step mode
+msxdosemu -skip 0x103 cat.com test.txt
+```
+
 MSX / MSX-DOS Supported Features:
 
 - MSX-DOS CALL 5 ABI
@@ -394,12 +412,12 @@ single.obj
 start.obj
 
 [link:release] ; use link:CONFIGURATION
-format = com ; hclink output format: (use lib to generate library using hclib)
+format = bin ; hclink output format: (use lib to generate library using hclib)
 filename = example.com ; optional (default: a.out)
 text = 0x100 ; optional hclink arguments (eg: text, data, bss, align)
 
 [link:debug]
-format = com
+format = bin
 filename = example.com
 text = 0x100
 symbols = example.sym ; optinal symbols output file name (default: ignore file generation)

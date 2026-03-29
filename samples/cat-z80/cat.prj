@@ -1,0 +1,10 @@
+[config]
+verbose = yes
+
+[files:z80]
+cat.s
+
+[link:release]
+format = bin
+text = 0x100
+filename = cat.com
