@@ -469,3 +469,7 @@ void cpu_set_acc_as_string(nativetype_t nt, char *string);
 void cpu_set_aux_as_string(nativetype_t nt, char *string);
 // Store value to pointer in acc
 void cpu_store_aux_to_acc_pointer(nativetype_t nt);
+// Shift left
+void cpu_shift_left(nativetype_t nt);
+// Shift right
+void cpu_shift_right(nativetype_t nt);

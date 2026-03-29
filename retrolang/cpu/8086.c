@@ -654,3 +654,35 @@ void cpu_store_aux_to_acc_pointer(nativetype_t nt)
         default: error("invalid cpu_store_aux_to_acc_pointer");
     }
 }
+
+void cpu_shift_left(nativetype_t nt)
+{
+    switch(nt)
+    {
+        case NATIVETYPE_8BITS:
+            out_line("  mov cl, bl");
+            out_line("  shl al, cl");
+            break;
+        case NATIVETYPE_16BITS:
+            out_line("  mov cx, bx");
+            out_line("  shl ax, cl");
+            break;
+        default: error("invalid cpu_shift_left");
+    }
+}
+
+void cpu_shift_right(nativetype_t nt)
+{
+    switch(nt)
+    {
+        case NATIVETYPE_8BITS:
+            out_line("  mov cl, bl");
+            out_line("  shr al, cl");
+            break;
+        case NATIVETYPE_16BITS:
+            out_line("  mov cx, bx");
+            out_line("  shr ax, cl");
+            break;
+        default: error("invalid cpu_shift_right");
+    }
+}

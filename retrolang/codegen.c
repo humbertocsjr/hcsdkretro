@@ -267,6 +267,16 @@ void codegen_expr(func_t *func, command_t *cmd, expr_t *e, datatype_t *dt, bool 
             cpu_mod(codegen_avail_expr_type(func, cmd, e->left, dt)->nativetype, codegen_avail_expr_type(func, cmd, e->left, dt)->is_signed);
             codegen_write_to_expr(func, cmd, e->left, codegen_avail_expr_type(func, cmd, e->left, dt));
             break;
+        case TOK_SHIFT_LEFT:
+            codegen_expr(func, cmd, e->left, dt, false);
+            codegen_expr(func, cmd, e->right, dt, true);
+            cpu_shift_left(dt->nativetype);
+            break;
+        case TOK_SHIFT_RIGHT:
+            codegen_expr(func, cmd, e->left, dt, false);
+            codegen_expr(func, cmd, e->right, dt, true);
+            cpu_shift_right(dt->nativetype);
+            break;
         case KEY_ADDRESSOF:
             if(!e->right || e->right->tok != TOK_SYMBOL) error_expr(e, "function/variable expected inside addressof command.");
             ref_var = func_find_var(func, e->right->token);

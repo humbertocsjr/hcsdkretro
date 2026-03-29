@@ -680,3 +680,31 @@ void cpu_store_aux_to_acc_pointer(nativetype_t nt)
         default: error("invalid cpu_store_aux_to_acc_pointer");
     }
 }
+
+void cpu_shift_left(nativetype_t nt)
+{
+    switch(nt)
+    {
+        case NATIVETYPE_8BITS:
+            out_line("  call shl8");
+            break;
+        case NATIVETYPE_16BITS:
+            out_line("  call shl16");
+            break;
+        default: error("invalid cpu_shift_left");
+    }
+}
+
+void cpu_shift_right(nativetype_t nt)
+{
+    switch(nt)
+    {
+        case NATIVETYPE_8BITS:
+            out_line("  call shr8");
+            break;
+        case NATIVETYPE_16BITS:
+            out_line("  call shr16");
+            break;
+        default: error("invalid cpu_shift_right");
+    }
+}
