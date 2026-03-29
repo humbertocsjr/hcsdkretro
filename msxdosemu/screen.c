@@ -8,11 +8,57 @@ static int _x = 0;
 static int _y = 0;
 static int _put_mode = 0;
 static bool _changed = true;
+static uint8_t _vdp_curr_register = 0;
+static uint8_t _vdp_first_byte = 0;
+static bool _vdp_is_first_byte = true;
+static uint16_t _vdp_pointer = 0;
 
 char printable(char c)
 {
     if(c >= ' ' && c <= 127) return c;
     return ' ';
+}
+
+void screen_out_99(uint8_t value) // Set Register
+{
+    if(_vdp_is_first_byte)
+    {
+        _vdp_is_first_byte = false;
+        _vdp_first_byte = value;
+    }
+    else if((value & 0x80) == 0)
+    {
+        _vdp_curr_register = _vdp_first_byte | ((value & 0x3f) << 8);
+        _vdp_is_first_byte = true;
+    }
+    else
+    {
+        switch(value & 0x3f)
+        {
+            default:
+                fprintf(stderr, "[ERROR: VDP REGISTER NOT IMPLEMENTED: %i]", value & 0x3f);
+                exit(1);
+                break;
+        }
+        _vdp_is_first_byte = true;
+    }
+
+}
+
+uint8_t screen_in_99() // Get Status
+{
+    _vdp_is_first_byte = true;
+    return 0x00;
+}
+
+void screen_out_98(uint8_t value) // Data
+{
+    _buffer[_vdp_pointer % (TTY_HEIGHT * TTY_WIDTH)] = value;
+}
+
+uint8_t screen_in_98() // Data
+{
+    return _buffer[_vdp_pointer % (TTY_HEIGHT * TTY_WIDTH)];
 }
 
 void screen_draw_reg(uint16_t curr, uint16_t prev, char *name, bool ptr, bool str)

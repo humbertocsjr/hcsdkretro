@@ -179,6 +179,10 @@ void screen_draw_if_changed();
 void screen_clear();
 void screen_goto(int line, int column);
 void screen_put_char(char c);
+void screen_out_99(uint8_t value);
+uint8_t screen_in_99();
+void screen_out_98(uint8_t value);
+uint8_t screen_in_98();
 
 // --== keyb.c ==--
 
