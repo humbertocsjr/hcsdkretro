@@ -119,10 +119,12 @@ Installing the minimum requirements for development:
 
 ```sh
 brew tap messense/macos-cross-toolchains
-brew install dpkg llvm cmake xwin mingw-w64 x86_64-unknown-linux-gnu msitools nsis
+brew install z80dasm dpkg llvm cmake xwin mingw-w64 x86_64-unknown-linux-gnu msitools nsis
 ```
 
 Install last DJGPP version from [GitHub](https://github.com/andrewwutw/build-djgpp/releases) to /usr/local/djgpp
+
+Execute ```sudo xattr -r -d com.apple.quarantine /usr/local/djgpp```
 
 **Generating distribution files:**
 
