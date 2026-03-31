@@ -32,7 +32,7 @@ Links:
   - MSX-BIOS ABI (Planned) 
     - Screen ABI (Planned)
   - MSX Hardware Emulation (In progress) 
-    - Screen 40x24 Direct Manipulation (In progress / Not usable)
+    - Screen 40x24 Direct Manipulation (In progress / Testing)
 - RetroLang Compiler (In progress) 
   - Implement all planned pointers (In progress)
   - Structure Support (Planned)
