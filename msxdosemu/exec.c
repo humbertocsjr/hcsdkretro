@@ -1804,7 +1804,7 @@ void exec_step()
                 _regs_curr.sp = mem_get_word(tmp);
                 _regs_curr.value = _regs_curr.sp;
                 break;
-            case 0x80:
+            case 0xa0:
                 _regs_prev.value = mem_get_byte(_regs_curr.de.word);
                 mem_set_byte(_regs_curr.de.word, mem_get_byte(_regs_curr.hl.word));
                 _regs_curr.hl.word++;
@@ -1815,7 +1815,7 @@ void exec_step()
                 pvf_set(_regs_curr.bc.word != 0);
                 _regs_curr.value = mem_get_byte(_regs_curr.hl.word);
                 break;
-            case 0x81:
+            case 0xa1:
                 _regs_prev.value = mem_get_byte(_regs_curr.de.word);
                 _regs_curr.value = mem_get_byte(_regs_curr.de.word);
                 tmp = cf_get();
@@ -1825,7 +1825,7 @@ void exec_step()
                 _regs_curr.bc.word--;
                 pvf_set(_regs_curr.bc.word != 0);
                 break;
-            case 0x82:
+            case 0xa2:
                 _regs_prev.value = mem_get_byte(_regs_curr.hl.word);
                 mem_set_byte(_regs_curr.hl.word, hardware_in(_regs_curr.bc.c));
                 _regs_curr.bc.b--;
@@ -1834,7 +1834,7 @@ void exec_step()
                 _regs_curr.value = mem_get_byte(_regs_curr.hl.word);
                 _regs_curr.hl.word ++;
                 break;
-            case 0x83:
+            case 0xa3:
                 _regs_prev.value = mem_get_byte(_regs_curr.hl.word);
                 hardware_out(_regs_curr.bc.c, mem_get_byte(_regs_curr.hl.word));
                 _regs_curr.bc.b--;
@@ -1843,7 +1843,7 @@ void exec_step()
                 _regs_curr.value = mem_get_byte(_regs_curr.hl.word);
                 _regs_curr.hl.word ++;
                 break;
-            case 0x88:
+            case 0xa8:
                 _regs_prev.value = mem_get_byte(_regs_curr.de.word);
                 mem_set_byte(_regs_curr.de.word, mem_get_byte(_regs_curr.hl.word));
                 _regs_curr.hl.word--;
@@ -1854,7 +1854,7 @@ void exec_step()
                 pvf_set(_regs_curr.bc.word != 0);
                 _regs_curr.value = mem_get_byte(_regs_curr.hl.word);
                 break;
-            case 0x89:
+            case 0xa9:
                 _regs_prev.value = mem_get_byte(_regs_curr.de.word);
                 _regs_curr.value = mem_get_byte(_regs_curr.de.word);
                 tmp = cf_get();
@@ -1864,7 +1864,7 @@ void exec_step()
                 _regs_curr.bc.word--;
                 pvf_set(_regs_curr.bc.word != 0);
                 break;
-            case 0x8a:
+            case 0xaa:
                 _regs_prev.value = mem_get_byte(_regs_curr.hl.word);
                 mem_set_byte(_regs_curr.hl.word, hardware_in(_regs_curr.bc.c));
                 _regs_curr.bc.b--;
@@ -1873,7 +1873,7 @@ void exec_step()
                 _regs_curr.value = mem_get_byte(_regs_curr.hl.word);
                 _regs_curr.hl.word --;
                 break;
-            case 0x8b:
+            case 0xab:
                 _regs_prev.value = mem_get_byte(_regs_curr.hl.word);
                 hardware_out(_regs_curr.bc.c, mem_get_byte(_regs_curr.hl.word));
                 _regs_curr.bc.b--;
@@ -1882,7 +1882,7 @@ void exec_step()
                 _regs_curr.value = mem_get_byte(_regs_curr.hl.word);
                 _regs_curr.hl.word --;
                 break;
-            case 0x90:
+            case 0xb0:
                 do
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.de.word);
@@ -1896,7 +1896,7 @@ void exec_step()
                     _regs_curr.value = mem_get_byte(_regs_curr.hl.word);
                 }while(_regs_curr.bc.word != 0);
                 break;
-            case 0x91:
+            case 0xb1:
                 do
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.de.word);
@@ -1909,7 +1909,7 @@ void exec_step()
                     pvf_set(_regs_curr.bc.word != 0);
                 }while(_regs_curr.bc.word != 0);
                 break;
-            case 0x92:
+            case 0xb2:
                 do
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.hl.word);
@@ -1921,7 +1921,7 @@ void exec_step()
                     _regs_curr.hl.word ++;
                 }while(_regs_curr.bc.b != 0);
                 break;
-            case 0x93:
+            case 0xb3:
                 do
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.hl.word);
@@ -1933,7 +1933,7 @@ void exec_step()
                     _regs_curr.hl.word ++;
                 }while(_regs_curr.bc.b != 0);
                 break;
-            case 0x98:
+            case 0xb8:
                 do
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.de.word);
@@ -1947,7 +1947,7 @@ void exec_step()
                     _regs_curr.value = mem_get_byte(_regs_curr.hl.word);
                 }while(_regs_curr.bc.word != 0);
                 break;
-            case 0x99:
+            case 0xb9:
                 do
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.de.word);
@@ -1960,7 +1960,7 @@ void exec_step()
                     pvf_set(_regs_curr.bc.word != 0);
                 }while(_regs_curr.bc.word != 0);
                 break;
-            case 0x9a:
+            case 0xba:
                 do
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.hl.word);
@@ -1972,7 +1972,7 @@ void exec_step()
                     _regs_curr.hl.word --;
                 } while(_regs_curr.bc.b != 0);
                 break;
-            case 0x9b:
+            case 0xbb:
                 do
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.hl.word);
@@ -1984,7 +1984,6 @@ void exec_step()
                     _regs_curr.hl.word --;
                 }while(_regs_curr.bc.b != 0);
                 break;
-            //TODO: Validate all 0xed opcodes
             default: 
                 fprintf(stderr, "[ERROR: OPCODE NOT IMPLEMENTED 0xED 0x%02X]", mem_get_byte(_regs_prev.ip));
                 exit(1);

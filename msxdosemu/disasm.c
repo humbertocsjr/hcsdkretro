@@ -342,10 +342,77 @@ void disasm(uint16_t address)
             }
             break;
         case PRE_ED:
+            switch (op)
+            {
+                case 0x40: fmt("in b, [c]"); break;
+                case 0x50: fmt("in d, [c]"); break;
+                case 0x60: fmt("in h, [c]"); break;
+                case 0x70: fmt("in [c]"); break;
+                case 0x41: fmt("out [c], b"); break;
+                case 0x51: fmt("out [c], d"); break;
+                case 0x61: fmt("out [c], h"); break;
+                case 0x71: fmt("out [c], 0"); break;
+                case 0x42: fmt("sbc hl, bc"); break;
+                case 0x52: fmt("sbc hl, de"); break;
+                case 0x62: fmt("sbc hl, hl"); break;
+                case 0x72: fmt("sbc hl, sp"); break;
+                case 0x43: fmt("ld [0x%04x], bc", disasm_16(ptr)); break;
+                case 0x53: fmt("ld [0x%04x], de", disasm_16(ptr)); break;
+                case 0x63: fmt("ld [0x%04x], hl", disasm_16(ptr)); break;
+                case 0x73: fmt("ld [0x%04x], sp", disasm_16(ptr)); break;
+                case 0x44: fmt("neg"); break;
+                case 0x45: fmt("retn"); break;
+                case 0x46: fmt("im 0"); break;
+                case 0x56: fmt("im 1"); break;
+                case 0x47: fmt("ld i, a"); break;
+                case 0x57: fmt("ld a, i"); break;
+                case 0x67: fmt("rrd"); break;
+                case 0x48: fmt("in c, [c]"); break;
+                case 0x58: fmt("in e, [c]"); break;
+                case 0x68: fmt("in l, [c]"); break;
+                case 0x78: fmt("in a, [c]"); break;
+                case 0x49: fmt("out [c], c"); break;
+                case 0x59: fmt("out [c], e"); break;
+                case 0x69: fmt("out [c], l"); break;
+                case 0x79: fmt("out [c], a"); break;
+                case 0x4a: fmt("adc hl, bc"); break;
+                case 0x5a: fmt("adc hl, de"); break;
+                case 0x6a: fmt("adc hl, hl"); break;
+                case 0x7a: fmt("adc hl, sp"); break;
+                case 0x4b: fmt("ld bc, [0x%04x]", disasm_16(ptr)); break;
+                case 0x5b: fmt("ld de, [0x%04x]", disasm_16(ptr)); break;
+                case 0x6b: fmt("ld hl, [0x%04x]", disasm_16(ptr)); break;
+                case 0x7b: fmt("ld sp, [0x%04x]", disasm_16(ptr)); break;
+                case 0x4d: fmt("reti"); break;
+                case 0x5e: fmt("im 2"); break;
+                case 0x4f: fmt("ld r, a"); break;
+                case 0x5f: fmt("ld a, r"); break;
+                case 0x6f: fmt("rld"); break;
+                case 0xa0: fmt("ldi"); break;
+                case 0xb0: fmt("ldir"); break;
+                case 0xa1: fmt("cpi"); break;
+                case 0xb1: fmt("cpir"); break;
+                case 0xa2: fmt("ini"); break;
+                case 0xb2: fmt("inir"); break;
+                case 0xa3: fmt("outi"); break;
+                case 0xb3: fmt("otir"); break;
+                case 0xa8: fmt("ldd"); break;
+                case 0xb8: fmt("lddr"); break;
+                case 0xa9: fmt("cpd"); break;
+                case 0xb9: fmt("cpdr"); break;
+                case 0xaa: fmt("ind"); break;
+                case 0xba: fmt("indr"); break;
+                case 0xab: fmt("outd"); break;
+                case 0xbb: fmt("otdr"); break;
+            }
             break;
         case PRE_CB:
         case PRE_DDCB:
         case PRE_FDCB:
+            // TODO: Create switch case
+            if(prefix == PRE_DDCB) fmt("0xDD 0xCB 0x%2XX", op);
+            else if(prefix == PRE_FDCB) fmt("0xFD 0xCB 0x%2XX", op);
+            else fmt("0xCB 0x%2XX", op);
             break;
     }
 }
