@@ -2,21 +2,61 @@
 
 #define TTY_WIDTH 40
 #define TTY_HEIGHT 24
+#define VDP_REGISTERS_MAX 8
 
-static char _buffer[TTY_WIDTH * TTY_HEIGHT];
+char _vdp_memory[VDP_MEMORY_MAX];
+static char *_buffer = &_vdp_memory[0];
 static int _x = 0;
 static int _y = 0;
 static int _put_mode = 0;
 static bool _changed = true;
+static uint8_t _vdp_registers[VDP_MEMORY_MAX];
 static uint8_t _vdp_curr_register = 0;
 static uint8_t _vdp_first_byte = 0;
 static bool _vdp_is_first_byte = true;
 static uint16_t _vdp_pointer = 0;
+static bool _vdp_enabled = true;
 
 char printable(char c)
 {
     if(c >= ' ' && c <= 127) return c;
     return ' ';
+}
+
+void screen_set_reg(uint8_t reg, uint8_t value)
+{
+    switch(reg & 0x3f)
+    {
+        case 0:
+
+            break;
+        case 1:
+            _vdp_enabled = value & 2;
+            break;
+        case 2:
+
+            break;
+        case 3:
+
+            break;
+        case 4:
+            _buffer = (char *)&_memory[(value & 0xf) * 0x400];
+            break;
+        case 5:
+
+            break;
+        case 6:
+
+            break;
+        case 7:
+
+            break;
+        default:
+            fprintf(stderr, "[ERROR: VDP REGISTER NOT IMPLEMENTED: %i]", value & 0x3f);
+            exit(1);
+            break;
+    }
+    _vdp_registers[reg] = value;
 }
 
 void screen_out_99(uint8_t value) // Set Register
@@ -28,18 +68,12 @@ void screen_out_99(uint8_t value) // Set Register
     }
     else if((value & 0x80) == 0)
     {
-        _vdp_curr_register = _vdp_first_byte | ((value & 0x3f) << 8);
+        _vdp_pointer = _vdp_first_byte | ((value & 0x3f) << 8);
         _vdp_is_first_byte = true;
     }
     else
     {
-        switch(value & 0x3f)
-        {
-            default:
-                fprintf(stderr, "[ERROR: VDP REGISTER NOT IMPLEMENTED: %i]", value & 0x3f);
-                exit(1);
-                break;
-        }
+        screen_set_reg(value & 0x3f, _vdp_first_byte);
         _vdp_is_first_byte = true;
     }
 
@@ -53,12 +87,12 @@ uint8_t screen_in_99() // Get Status
 
 void screen_out_98(uint8_t value) // Data
 {
-    _buffer[_vdp_pointer % (TTY_HEIGHT * TTY_WIDTH)] = value;
+    _vdp_memory[_vdp_pointer++ % VDP_MEMORY_MAX] = value;
 }
 
 uint8_t screen_in_98() // Data
 {
-    return _buffer[_vdp_pointer % (TTY_HEIGHT * TTY_WIDTH)];
+    return _vdp_memory[_vdp_pointer++ % VDP_MEMORY_MAX];
 }
 
 void screen_draw_reg(uint16_t curr, uint16_t prev, char *name, bool ptr, bool str)
@@ -103,7 +137,7 @@ void screen_draw()
         for(int x = 0; x < TTY_WIDTH; x++)
         {
             char c = _buffer[y * TTY_WIDTH + x];
-            if(c >= ' ' && c <= 127) printf("%c", c);
+            if(c >= ' ' && c <= 127) printf("%c", _vdp_enabled ? c : ' ');
             else printf(" ");
         }
         if(y == 0) printf("%s", title_color);
@@ -198,7 +232,11 @@ void screen_draw()
                 break;
             case 22:
                 if(!_debug) break;
-                printf(" -= CTRL+F10 = Export RAM [ram.bin] =--");
+                printf(" -= CTRL/ALT+F10 = Dump RAM/VRAM =----");
+                break;
+            case 23:
+                if(!_debug) break;
+                printf(" ----------------= ram.bin/vram.bin =-");
                 break;
         }
         if(y < (TTY_HEIGHT - 1))

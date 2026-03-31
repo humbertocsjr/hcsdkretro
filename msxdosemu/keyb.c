@@ -133,6 +133,12 @@ void keyb_process()
                                     fwrite(_memory, 1, 0x10000, ram_file);
                                     fclose(ram_file); 
                                 }
+                                FILE *vram_file = fopen("vram.bin", "wb");
+                                if(vram_file)
+                                {
+                                    fwrite(_vdp_memory, 1, VDP_MEMORY_MAX, vram_file);
+                                    fclose(vram_file); 
+                                }
                             }
                             break;
                         case 20:

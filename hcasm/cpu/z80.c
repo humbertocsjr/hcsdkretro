@@ -661,6 +661,34 @@ static void emit_im(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[]
     else error_expr(argv[0], "invalid constant expression.");
 }
 
+static void emit_out(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
+{
+    uint8_t op;
+    if(argc != 2) error_expr(mnemonic, "invalid argument count.");
+    if(is_address_only(argv[0]) && is_a_register(argv[1]))
+    {
+        op = opcode->op1;
+        out(REC_DATA, 0, 0, &op, 1);
+        generate(argv[0]->right, 0, false);
+        out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
+    }
+    else error_expr(argv[0], "invalid constant expression.");
+}
+
+static void emit_in(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
+{
+    uint8_t op;
+    if(argc != 2) error_expr(mnemonic, "invalid argument count.");
+    if(is_address_only(argv[1]) && is_a_register(argv[0]))
+    {
+        op = opcode->op1;
+        out(REC_DATA, 0, 0, &op, 1);
+        generate(argv[1]->right, 0, false);
+        out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
+    }
+    else error_expr(argv[0], "invalid constant expression.");
+}
+
 reg_t _regs[] = 
 {
     {"b", 0, 0, REG_8BIT},
@@ -745,6 +773,8 @@ opcode_t _opcode[] =
     {"di",      0xf3, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
     {"ei",      0xfb, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
     {"exx",     0xd9, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
+    {"out",     0xd3, 0x00, 0x00, 0x00, 0x00, 0x00, emit_out},
+    {"in",      0xdb, 0x00, 0x00, 0x00, 0x00, 0x00, emit_in},
 
     {"rlc",     0x00, 0x00, 0x00, 0x00, 0xcb, 0x00, emit_logic},
     {"rrc",     0x08, 0x00, 0x00, 0x00, 0xcb, 0x00, emit_logic},

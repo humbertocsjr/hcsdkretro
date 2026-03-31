@@ -29,7 +29,7 @@ _main:
         ld hl, var_buffer
         ld b, 128
         .print_loop:
-            ld b,b
+            ;ld b,b
             ld a, [hl]
             cp 0x1a
             jr z, .exit
@@ -69,8 +69,22 @@ _main:
         ld c, bdos.close_fcb
         ld de, var_fcb
         call bdos
+
+        ; TEST VDP
+        ld b,b
+        di
+        ld a, 0
+        out [0x99], a
+        ld a, 0x40
+        out [0x99], a
+        ld hl, msg
+        ld bc, 0x0498
+        otir
+        ei
+
         ld c, 0
         call bdos
 
 section data
+msg: db "TEST"
 msg_error: db "error: file not found: $"

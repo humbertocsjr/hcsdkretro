@@ -173,6 +173,9 @@ uint16_t ip_get_word();
 
 // --== screen.c ==--
 
+
+#define VDP_MEMORY_MAX 0x20000
+extern char _vdp_memory[VDP_MEMORY_MAX];
 char printable(char c);
 void screen_draw();
 void screen_draw_if_changed();

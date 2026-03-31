@@ -1984,7 +1984,11 @@ void exec_step()
                     _regs_curr.hl.word --;
                 }while(_regs_curr.bc.b != 0);
                 break;
-            default: break;
+            //TODO: Validate all 0xed opcodes
+            default: 
+                fprintf(stderr, "[ERROR: OPCODE NOT IMPLEMENTED 0xED 0x%02X]", mem_get_byte(_regs_prev.ip));
+                exit(1);
+                break;
         }
     }
     else if(_regs_curr.prefix_cb)
