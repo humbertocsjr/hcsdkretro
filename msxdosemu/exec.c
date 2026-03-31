@@ -1560,6 +1560,7 @@ void exec_step()
     }
     else if(_regs_curr.prefix_ed)
     {
+        _regs_prev.ip --;
         switch(ip_get_byte())
         {
             case 0x40:
@@ -1995,6 +1996,7 @@ void exec_step()
         //TODO: if have IX/IY prefix change the register
         if(_regs_curr.prefix_dd || _regs_curr.prefix_fd)
         {
+            _regs_prev.ip --;
             offset_value = ip_get_byte_signed();
         }
         switch(ip_get_byte())
