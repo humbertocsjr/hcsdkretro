@@ -33,6 +33,12 @@ Links:
     - Screen ABI (Planned)
   - MSX Hardware Emulation (In progress) 
     - Screen 40x24 Direct Manipulation (In progress / Testing)
+  - Tests:
+    - BASCOM SAMPLE.COM (Fail Try call WRSLT??)
+    - M80.COM (Fail try output to port 0)
+    - L80.COM (Fail Try call 5 0x13 function)
+    - BASCOM.COM (Run / Testing)
+    - MBASIC.COM (Fail to start)
 - RetroLang Compiler (In progress) 
   - Implement all planned pointers (In progress)
   - Structure Support (Planned)
