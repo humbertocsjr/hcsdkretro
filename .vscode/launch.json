@@ -44,6 +44,19 @@
         "MIMode": "lldb"
     },
     {
+        "name": "hcasm-z80 test-1",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/hcasm-z80",
+        "args": ["-o", "${workspaceFolder}/tests/z80-test-1.obj", "-dump", "${workspaceFolder}/tests/z80-test-1.obj.dump", "${workspaceFolder}/tests/z80-test-1.s"],
+        "stopAtEntry": false,
+        "cwd": "${fileDirname}",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make hcasm",
+        "MIMode": "lldb"
+    },
+    {
         "name": "hclink-bin test-0",
         "type": "cppdbg",
         "request": "launch",
@@ -153,6 +166,19 @@
         "request": "launch",
         "program": "${workspaceFolder}/bin/msxdosemu",
         "args": ["-diska", "${workspaceFolder}/tests/", "${workspaceFolder}/tests/z80-test-0.com", "test.txt"],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}/tests/",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make msxdosemu",
+        "MIMode": "lldb"
+    },
+    {
+        "name": "msxdosemu tests/z80-test-1.com",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/msxdosemu",
+        "args": ["-diska", "${workspaceFolder}/tests/", "${workspaceFolder}/tests/z80-test-1.com", "test.txt"],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}/tests/",
         "environment": [],

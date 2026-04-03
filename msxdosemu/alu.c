@@ -46,6 +46,8 @@ uint8_t alu_sla(uint8_t value)
     nf_set(0);
     hf_set(0);
     value = (value << 1);
+    zf_set(value == 0);
+    sf_set(value & 128);
     return value;
 }
 
@@ -55,6 +57,8 @@ uint8_t alu_sra(uint8_t value)
     nf_set(0);
     hf_set(0);
     value = (value >> 1) | (value & 128);
+    zf_set(value == 0);
+    sf_set(value & 128);
     return value;
 }
 
@@ -64,6 +68,7 @@ uint8_t alu_sll(uint8_t value)
     nf_set(0);
     hf_set(0);
     value = (value << 1) | 1;
+    sf_set(value & 128);
     return value;
 }
 
@@ -73,6 +78,8 @@ uint8_t alu_srl(uint8_t value)
     nf_set(0);
     hf_set(0);
     value = (value >> 1);
+    zf_set(value == 0);
+    sf_set(value & 128);
     return value;
 }
 
@@ -99,9 +106,10 @@ uint8_t alu_rr(uint8_t value)
 uint16_t alu_add_word(uint16_t value1, uint16_t value2)
 {
     uint16_t tmp = value1;
+    uint32_t u = (uint32_t)value1 + (uint32_t)value2;
     hf_set(((value1 & 0xf) + (value2 & 0xf)) >> 4);
     value1 += value2;
-    cf_set(tmp > value1);
+    cf_set(u & 0xff0000);
     nf_set(0);
     return value1;
 }
@@ -111,10 +119,11 @@ uint8_t alu_add_byte(uint8_t value1, uint8_t value2)
     int8_t s1 = (*(int8_t*)&value1);
     int8_t s2 = (*(int8_t*)&value2);
     int16_t s = s1 + s2;
+    uint16_t u = (uint16_t)value1 + (uint16_t)value2;
     uint8_t tmp = value1;
     hf_set(((value1 & 0xf) + (value2 & 0xf)) >> 4);
     value1 += value2;
-    cf_set(tmp > value1);
+    cf_set(u & 0xff00);
     nf_set(0);
     zf_set(value1 == 0);
     sf_set(value1 & 128);
@@ -126,15 +135,16 @@ uint8_t alu_adc_byte(uint8_t value1, uint8_t value2)
 {
     int8_t s1 = (*(int8_t*)&value1);
     int8_t s2 = (*(int8_t*)&value2);
-    int16_t s = s1 + s2;
+    int16_t s = (int16_t)s1 + (int16_t)s2 + (int16_t)(cf_get() ? 1 : 0);
+    uint16_t u = (uint16_t)value1 + (uint16_t)value2 + (cf_get() ? 1 : 0);
     uint8_t tmp = value1;
     hf_set(((value1 & 0xf) + (value2 & 0xf) + (cf_get() ? 1 : 0)) >> 4);
     value1 += value2 + (cf_get() ? 1 : 0);
-    cf_set(tmp > value1);
+    cf_set(u & 0xff00);
     nf_set(0);
     zf_set(value1 == 0);
     sf_set(value1 & 128);
-    pvf_set(s > 127 || s < -128);
+    pvf_set(s > 127 || s < -128 || u > 255);
     return value1;
 }
 
@@ -142,12 +152,13 @@ uint16_t alu_adc_word(uint16_t value1, uint16_t value2)
 {
     int16_t s1 = (*(int16_t*)&value1);
     int16_t s2 = (*(int16_t*)&value2);
-    int32_t s = s1 + s2;
+    int32_t s = s1 + s2 + (cf_get() ? 1 : 0);
+    uint32_t u = (uint32_t)value1 + (uint32_t)value2 + (cf_get() ? 1 : 0);
     uint16_t tmp = value1;
     hf_set(((value1 & 0xf) + (value2 & 0xf) + (cf_get() ? 1 : 0)) >> 4);
     value1 += value2 + (cf_get() ? 1 : 0);
-    cf_set(tmp < value2);
-    nf_set(1);
+    cf_set(u & 0xff0000);
+    nf_set(0);
     zf_set(value1 == 0);
     sf_set(value1 & 0x8000);
     pvf_set(s > 32767 || s < -32768);
@@ -159,14 +170,15 @@ uint8_t alu_sub_byte(uint8_t value1, uint8_t value2)
     int8_t s1 = (*(int8_t*)&value1);
     int8_t s2 = (*(int8_t*)&value2);
     int16_t s = s1 - s2;
+    uint16_t u = (uint16_t)value1 - (uint16_t)value2;
     uint8_t tmp = value1;
-    hf_set(((value1 & 0xf0) - (value2 & 0xf0)) & 0xf);
+    hf_set((((value1) - (value2)) & 0xf) == 0xf);
     value1 -= value2;
-    cf_set(tmp < value2);
+    cf_set(u & 0xff00);
     nf_set(1);
     zf_set(value1 == 0);
     sf_set(value1 & 128);
-    pvf_set(s > 127 || s < -128);
+    pvf_set(s > 127 || s < -128 || tmp < value2);
     return value1;
 }
 
@@ -174,15 +186,15 @@ uint8_t alu_sbc_byte(uint8_t value1, uint8_t value2)
 {
     int8_t s1 = (*(int8_t*)&value1);
     int8_t s2 = (*(int8_t*)&value2);
-    int16_t s = s1 - s2;
+    int16_t s = s1 - (s2 + (cf_get() ? 1 : 0));
     uint8_t tmp = value1;
-    hf_set(((value1 & 0xf0) - ((value2 + (cf_get() ? 1 : 0)) & 0xf0)) & 0xf);
+    hf_set((((value1) - (value2 + (cf_get() ? 1 : 0))) & 0xf) == 0xf);
     value1 -= value2 + (cf_get() ? 1 : 0);
-    cf_set(tmp < value2);
+    cf_set(tmp < (value2 + (cf_get() ? 1 : 0)));
     nf_set(1);
     zf_set(value1 == 0);
     sf_set(value1 & 128);
-    pvf_set(s > 127 || s < -128);
+    pvf_set(s > 127 || s < -128 || (uint16_t)tmp < ((uint16_t)value2 + (cf_get() ? 1 : 0)));
     return value1;
 }
 
@@ -190,11 +202,11 @@ uint16_t alu_sbc_word(uint16_t value1, uint16_t value2)
 {
     int16_t s1 = (*(int16_t*)&value1);
     int16_t s2 = (*(int16_t*)&value2);
-    int32_t s = s1 - s2;
+    int32_t s = s1 - (s2 + (cf_get() ? 1 : 0));
     uint16_t tmp = value1;
-    hf_set(((value1 & 0xf0) - ((value2 + (cf_get() ? 1 : 0)) & 0xf0)) & 0xf);
+    hf_set(((value1) - ((value2 + (cf_get() ? 1 : 0)))) & 0xf00);
     value1 -= value2 + (cf_get() ? 1 : 0);
-    cf_set(tmp < value2);
+    cf_set(tmp < (value2 + (cf_get() ? 1 : 0)));
     nf_set(1);
     zf_set(value1 == 0);
     sf_set(value1 & 0x8000);
@@ -250,18 +262,39 @@ void alu_parity(uint8_t value)
 
 uint8_t alu_daa(uint8_t value)
 {
-    if((value & 0xf) > 9 || hf_get())
+    uint8_t old_value = value;
+    uint16_t u = value;
+    if(nf_get())
     {
-        value += 0x6;
-        hf_set(1);
+        if(((old_value >> 4) & 0xf) > 9 || cf_get())
+        {
+            u -= 0x160;
+            value = u;
+            cf_set(1);
+        }
+        else cf_set(0);
+        if((old_value & 0xf) > 9 || hf_get() || (cf_get() && (old_value & 0xf) > 5))
+        {
+            value -= 0x6;
+            hf_set(1);
+        }
+        else hf_set(0);
     }
-    else hf_set(0);
-    if(((value >> 4) & 0xf) > 9)
+    else
     {
-        value += 0x60;
-        cf_set(1);
+        if((value & 0xf) > 9 || hf_get())
+        {
+            value += 0x6;
+            hf_set(1);
+        }
+        else hf_set(0);
+        if(((value >> 4) & 0xf) > 9 || cf_get())
+        {
+            value += 0x60;
+            cf_set(1);
+        }
+        else cf_set(0);
     }
-    else cf_set(0);
     zf_set(value == 0);
     sf_set(value & 128);
     alu_parity(value);

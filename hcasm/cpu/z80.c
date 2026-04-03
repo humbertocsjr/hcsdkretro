@@ -178,7 +178,7 @@ static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
         }
     }
     else error_expr(mnemonic, "invalid argument count.");
-    if(is_8bit_op && reg1 && reg2 && opcode->op1)
+    if(is_8bit_op && reg1 && reg2 && (opcode->op1 || opcode->op6 == 0xff))
     {
         if(reg2->group & REG_IX_PTR)
         {
@@ -194,18 +194,35 @@ static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
         {
             op = opcode->op5;
             out(REC_DATA, 0, 0, &op, 1);
-        }
-        op = opcode->op1 | reg2->value;
-        out(REC_DATA, 0, 0, &op, 1);
-        if((reg2->group & REG_IX_PTR) || (reg2->group & REG_IY_PTR))
-        {
-            arg = filter_registers(arg);
-            if(generate(arg->right, 2, false))
+            if((reg2->group & REG_IX_PTR) || (reg2->group & REG_IY_PTR))
             {
-                out(REC_EXPR_PUSH_OFFSET, 2, 0, 0, 0);
-                out(REC_EXPR_SUB, 0, 0, 0, 0);
+                arg = filter_registers(arg);
+                if(generate(arg->right, 2, false))
+                {
+                    out(REC_EXPR_PUSH_OFFSET, 2, 0, 0, 0);
+                    out(REC_EXPR_SUB, 0, 0, 0, 0);
+                }
+                out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
             }
-            out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
+            op = opcode->op1 | reg2->value;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
+        else
+        {
+            op = opcode->op5;
+            out(REC_DATA, 0, 0, &op, 1);
+            op = opcode->op1 | reg2->value;
+            out(REC_DATA, 0, 0, &op, 1);
+            if((reg2->group & REG_IX_PTR) || (reg2->group & REG_IY_PTR))
+            {
+                arg = filter_registers(arg);
+                if(generate(arg->right, 2, false))
+                {
+                    out(REC_EXPR_PUSH_OFFSET, 2, 0, 0, 0);
+                    out(REC_EXPR_SUB, 0, 0, 0, 0);
+                }
+                out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
+            }
         }
     }
     else if(is_16bit_op && reg1 && reg2 && opcode->op2)
@@ -330,6 +347,56 @@ static void emit_reg16bitaf_or_reg8bit_or_index(expr_t *mnemonic, opcode_t *opco
     uint8_t op;
     if(argc != 1) error_expr(mnemonic, "invalid argument count.");
     reg_t *reg = tryget_reg(argv[0], REG_16BIT_AF);
+    if(reg && argv[0]->token != TOK_INDEX_OPEN && opcode->op1)
+    {
+        if(reg->group & REG_IX_PTR)
+        {
+            op = 0xdd;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
+        else if(reg->group & REG_IY_PTR)
+        {
+            op = 0xfd;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
+        op = opcode->op1 | reg->value_aux << 4;
+        out(REC_DATA, 0, 0, &op, 1);
+        return;
+    }
+    reg = tryget_reg8bit(argv[0], true);
+    if(reg && opcode->op2)
+    {
+        if(reg->group & REG_IX_PTR)
+        {
+            op = 0xdd;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
+        else if(reg->group & REG_IY_PTR)
+        {
+            op = 0xfd;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
+        op = opcode->op2 | reg->value << 3;
+        out(REC_DATA, 0, 0, &op, 1);
+        if((reg->group & REG_IX_PTR) || (reg->group & REG_IY_PTR))
+        {
+            argv[0] = filter_registers(argv[0]);
+            if(generate(argv[0]->right, 2, false))
+            {
+                out(REC_EXPR_PUSH_OFFSET, 2, 0, 0, 0);
+                out(REC_EXPR_SUB, 0, 0, 0, 0);
+            }
+            out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
+        }
+        return;
+    }
+    error_expr(mnemonic, "invalid arguments.");
+}
+static void emit_reg16bitsp_or_reg8bit_or_index(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
+{
+    uint8_t op;
+    if(argc != 1) error_expr(mnemonic, "invalid argument count.");
+    reg_t *reg = tryget_reg(argv[0], REG_16BIT_SP);
     if(reg && argv[0]->token != TOK_INDEX_OPEN && opcode->op1)
     {
         if(reg->group & REG_IX_PTR)
@@ -636,7 +703,7 @@ static void emit_bit(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[
         if(argv[0]->token != TOK_VALUE) error_expr(argv[0], "constant expression expected.");
         op = 0xcb;
         out(REC_DATA, 0, 0, &op, 1);
-        op = opcode->op1 | argv[0]->value << 3 | argv[1]->reg->value;
+        op = opcode->op1 | argv[0]->value << 3 | reg->value;
         out(REC_DATA, 0, 0, &op, 1);
     }
     else error_expr(argv[0], "invalid bit/register combination.");
@@ -741,13 +808,13 @@ opcode_t _opcode[] =
     {"nop",     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
     {"djnz",    0x10, 0x00, 0x00, 0x00, 0x00, 0x00, emit_offset8bit},
     {"jr",      0x20, 0x18, 0x00, 0x00, 0x00, 0x00, emit_cmp__offset8bit},
-    {"inc",     0x03, 0x04, 0x00, 0x00, 0x00, 0x00, emit_reg16bitaf_or_reg8bit_or_index},
-    {"dec",     0x0b, 0x05, 0x00, 0x00, 0x00, 0x00, emit_reg16bitaf_or_reg8bit_or_index},
+    {"inc",     0x03, 0x04, 0x00, 0x00, 0x00, 0x00, emit_reg16bitsp_or_reg8bit_or_index},
+    {"dec",     0x0b, 0x05, 0x00, 0x00, 0x00, 0x00, emit_reg16bitsp_or_reg8bit_or_index},
     {"rlca",    0x07, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
     {"rla",     0x17, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
     {"daa",     0x27, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
     {"scf",     0x37, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
-    {"rrca",    0x07, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
+    {"rrca",    0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
     {"rra",     0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
     {"cpl",     0x2f, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
     {"ccf",     0x3f, 0x00, 0x00, 0x00, 0x00, 0x00, emit_simple},
@@ -776,7 +843,7 @@ opcode_t _opcode[] =
     {"out",     0xd3, 0x00, 0x00, 0x00, 0x00, 0x00, emit_out},
     {"in",      0xdb, 0x00, 0x00, 0x00, 0x00, 0x00, emit_in},
 
-    {"rlc",     0x00, 0x00, 0x00, 0x00, 0xcb, 0x00, emit_logic},
+    {"rlc",     0x00, 0x00, 0x00, 0x00, 0xcb, 0xff, emit_logic},
     {"rrc",     0x08, 0x00, 0x00, 0x00, 0xcb, 0x00, emit_logic},
     {"rl",      0x10, 0x00, 0x00, 0x00, 0xcb, 0x00, emit_logic},
     {"rr",      0x18, 0x00, 0x00, 0x00, 0xcb, 0x00, emit_logic},

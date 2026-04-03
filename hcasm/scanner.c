@@ -114,7 +114,7 @@ expr_t *scan()
                 if(source_between('a', 'f'))
                     e.value += source_getc() - 'a' + 10;
                 else if(source_between('A', 'F'))
-                    e.value += source_getc() - 'a' + 10;
+                    e.value += source_getc() - 'A' + 10;
                 else
                     e.value += source_getc() - '0';
                 CATNEXT();

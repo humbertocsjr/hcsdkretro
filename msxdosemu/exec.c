@@ -323,12 +323,12 @@ void exec_step()
             break;
         case 0x34:
             _regs_prev.value = mem_get_byte(_regs_curr.hl.word);
-            mem_set_byte(_regs_curr.hl.word, mem_get_byte(_regs_curr.hl.word) + 1);
+            mem_set_byte(_regs_curr.hl.word, alu_inc_byte(mem_get_byte(_regs_curr.hl.word)));
             _regs_curr.value = mem_get_byte(_regs_curr.hl.word);
             break;
         case 0x35:
             _regs_prev.value = mem_get_byte(_regs_curr.hl.word);
-            mem_set_byte(_regs_curr.hl.word, mem_get_byte(_regs_curr.hl.word) - 1);
+            mem_set_byte(_regs_curr.hl.word, alu_dec_byte(mem_get_byte(_regs_curr.hl.word)));
             _regs_curr.value = mem_get_byte(_regs_curr.hl.word);
             break;
         case 0x36:
@@ -378,9 +378,9 @@ void exec_step()
             _regs_curr.value = _regs_curr.af.a;
             break;
         case 0x3f:
+            hf_set(cf_get());
             cf_set(!cf_get());
             nf_set(1);
-            hf_set(!hf_get());
             break;
         case 0x40:
             _regs_prev.value = _regs_curr.bc.b;
@@ -1757,7 +1757,7 @@ void exec_step()
                 _regs_prev.value = mem_get_byte(_regs_curr.hl.word) | (_regs_curr.af.a << 8);
                 tmp = _regs_curr.af.a & 0xf;
                 _regs_curr.af.a = ((mem_get_byte(_regs_curr.hl.word) >> 4) & 0xf) | (_regs_curr.af.a & 0xf0);
-                mem_set_byte(_regs_curr.hl.word, (mem_get_byte(_regs_curr.hl.word) << 4) | (tmp >> 4));
+                mem_set_byte(_regs_curr.hl.word, (mem_get_byte(_regs_curr.hl.word) << 4) | (tmp));
                 _regs_curr.value = mem_get_byte(_regs_curr.hl.word) | (_regs_curr.af.a << 8);
                 alu_parity(_regs_curr.af.a);
                 nf_set(0);
@@ -2601,7 +2601,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 0));
+                zf_set(~tmp & (1 << 0));
                 break;
             case 0x41:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2611,7 +2611,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 0));
+                zf_set(~tmp & (1 << 0));
                 break;
             case 0x42:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2621,7 +2621,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 0));
+                zf_set(~tmp & (1 << 0));
                 break;
             case 0x43:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2631,7 +2631,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 0));
+                zf_set(~tmp & (1 << 0));
                 break;
             case 0x44:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2641,7 +2641,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 0));
+                zf_set(~tmp & (1 << 0));
                 break;
             case 0x45:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2651,7 +2651,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 0));
+                zf_set(~tmp & (1 << 0));
                 break;
             case 0x46:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2661,7 +2661,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 0));
+                zf_set(~tmp & (1 << 0));
                 break;
             case 0x47:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2671,7 +2671,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 0));
+                zf_set(~tmp & (1 << 0));
                 break;
             case 0x48:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2681,7 +2681,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 1));
+                zf_set(~tmp & (1 << 1));
                 break;
             case 0x49:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2691,7 +2691,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 1));
+                zf_set(~tmp & (1 << 1));
                 break;
             case 0x4a:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2701,7 +2701,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 1));
+                zf_set(~tmp & (1 << 1));
                 break;
             case 0x4b:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2711,7 +2711,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 1));
+                zf_set(~tmp & (1 << 1));
                 break;
             case 0x4c:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2721,7 +2721,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 1));
+                zf_set(~tmp & (1 << 1));
                 break;
             case 0x4d:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2731,7 +2731,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 1));
+                zf_set(~tmp & (1 << 1));
                 break;
             case 0x4e:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2741,7 +2741,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 1));
+                zf_set(~tmp & (1 << 1));
                 break;
             case 0x4f:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2751,7 +2751,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 1));
+                zf_set(~tmp & (1 << 1));
                 break;
             case 0x50:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2761,7 +2761,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 2));
+                zf_set(~tmp & (1 << 2));
                 break;
             case 0x51:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2771,7 +2771,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 2));
+                zf_set(~tmp & (1 << 2));
                 break;
             case 0x52:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2781,7 +2781,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 2));
+                zf_set(~tmp & (1 << 2));
                 break;
             case 0x53:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2791,7 +2791,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 2));
+                zf_set(~tmp & (1 << 2));
                 break;
             case 0x54:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2801,7 +2801,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 2));
+                zf_set(~tmp & (1 << 2));
                 break;
             case 0x55:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2811,7 +2811,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 2));
+                zf_set(~tmp & (1 << 2));
                 break;
             case 0x56:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2821,7 +2821,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 2));
+                zf_set(~tmp & (1 << 2));
                 break;
             case 0x57:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2831,7 +2831,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 3));
+                zf_set(~tmp & (1 << 2));
                 break;
             case 0x58:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2841,7 +2841,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 3));
+                zf_set(~tmp & (1 << 3));
                 break;
             case 0x59:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2851,7 +2851,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 3));
+                zf_set(~tmp & (1 << 3));
                 break;
             case 0x5a:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2861,7 +2861,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 3));
+                zf_set(~tmp & (1 << 3));
                 break;
             case 0x5b:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2871,7 +2871,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 3));
+                zf_set(~tmp & (1 << 3));
                 break;
             case 0x5c:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2881,7 +2881,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 3));
+                zf_set(~tmp & (1 << 3));
                 break;
             case 0x5d:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2891,7 +2891,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 3));
+                zf_set(~tmp & (1 << 3));
                 break;
             case 0x5e:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2901,7 +2901,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 3));
+                zf_set(~tmp & (1 << 3));
                 break;
             case 0x5f:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2911,7 +2911,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 3));
+                zf_set(~tmp & (1 << 3));
                 break;
             case 0x60:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2921,7 +2921,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 4));
+                zf_set(~tmp & (1 << 4));
                 break;
             case 0x61:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2931,7 +2931,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 4));
+                zf_set(~tmp & (1 << 4));
                 break;
             case 0x62:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2941,7 +2941,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 4));
+                zf_set(~tmp & (1 << 4));
                 break;
             case 0x63:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2951,7 +2951,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 4));
+                zf_set(~tmp & (1 << 4));
                 break;
             case 0x64:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2961,7 +2961,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 4));
+                zf_set(~tmp & (1 << 4));
                 break;
             case 0x65:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2971,7 +2971,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 4));
+                zf_set(~tmp & (1 << 4));
                 break;
             case 0x66:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2981,7 +2981,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 4));
+                zf_set(~tmp & (1 << 4));
                 break;
             case 0x67:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -2991,7 +2991,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 4));
+                zf_set(~tmp & (1 << 4));
                 break;
             case 0x68:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3001,7 +3001,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 5));
+                zf_set(~tmp & (1 << 5));
                 break;
             case 0x69:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3011,7 +3011,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 5));
+                zf_set(~tmp & (1 << 5));
                 break;
             case 0x6a:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3021,7 +3021,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 5));
+                zf_set(~tmp & (1 << 5));
                 break;
             case 0x6b:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3031,7 +3031,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 5));
+                zf_set(~tmp & (1 << 5));
                 break;
             case 0x6c:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3041,7 +3041,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 5));
+                zf_set(~tmp & (1 << 5));
                 break;
             case 0x6d:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3051,7 +3051,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 5));
+                zf_set(~tmp & (1 << 5));
                 break;
             case 0x6e:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3061,7 +3061,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 5));
+                zf_set(~tmp & (1 << 5));
                 break;
             case 0x6f:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3071,7 +3071,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 5));
+                zf_set(~tmp & (1 << 5));
                 break;
             case 0x70:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3081,7 +3081,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 7));
+                zf_set(~tmp & (1 << 6));
                 break;
             case 0x71:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3091,7 +3091,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 7));
+                zf_set(~tmp & (1 << 6));
                 break;
             case 0x72:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3101,7 +3101,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 7));
+                zf_set(~tmp & (1 << 6));
                 break;
             case 0x73:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3111,7 +3111,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 7));
+                zf_set(~tmp & (1 << 6));
                 break;
             case 0x74:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3121,7 +3121,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 7));
+                zf_set(~tmp & (1 << 6));
                 break;
             case 0x75:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3131,7 +3131,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 7));
+                zf_set(~tmp & (1 << 6));
                 break;
             case 0x76:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3141,7 +3141,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 7));
+                zf_set(~tmp & (1 << 6));
                 break;
             case 0x77:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3151,7 +3151,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 7));
+                zf_set(~tmp & (1 << 6));
                 break;
             case 0x78:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3161,7 +3161,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 8));
+                zf_set(~tmp & (1 << 7));
                 break;
             case 0x79:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3171,7 +3171,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 8));
+                zf_set(~tmp & (1 << 7));
                 break;
             case 0x7a:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3181,7 +3181,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 8));
+                zf_set(~tmp & (1 << 7));
                 break;
             case 0x7b:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3191,7 +3191,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 8));
+                zf_set(~tmp & (1 << 7));
                 break;
             case 0x7c:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3201,7 +3201,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 8));
+                zf_set(~tmp & (1 << 7));
                 break;
             case 0x7d:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3211,7 +3211,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 8));
+                zf_set(~tmp & (1 << 7));
                 break;
             case 0x7e:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3221,7 +3221,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 8));
+                zf_set(~tmp & (1 << 7));
                 break;
             case 0x7f:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -3231,7 +3231,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 nf_set(0);
                 hf_set(0);
-                zf_set(tmp & (1 << 8));
+                zf_set(~tmp & (1 << 7));
                 break;
             case 0x80:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
@@ -5047,13 +5047,13 @@ void exec_step()
                 if(_regs_curr.prefix_dd)
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.ix.word + offset_value);
-                    mem_set_byte(_regs_curr.ix.word + offset_value, mem_get_byte(_regs_curr.ix.word + offset_value) + 1);
+                    mem_set_byte(_regs_curr.ix.word + offset_value, alu_inc_byte(mem_get_byte(_regs_curr.ix.word + offset_value)));
                     _regs_curr.value = mem_get_byte(_regs_curr.ix.word + offset_value);
                 }
                 else
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.iy.word + offset_value);
-                    mem_set_byte(_regs_curr.iy.word + offset_value, mem_get_byte(_regs_curr.iy.word + offset_value) + 1);
+                    mem_set_byte(_regs_curr.iy.word + offset_value, alu_inc_byte(mem_get_byte(_regs_curr.iy.word + offset_value)));
                     _regs_curr.value = mem_get_byte(_regs_curr.iy.word + offset_value);
                 }
                 break;
@@ -5062,13 +5062,13 @@ void exec_step()
                 if(_regs_curr.prefix_dd)
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.ix.word + offset_value);
-                    mem_set_byte(_regs_curr.ix.word + offset_value, mem_get_byte(_regs_curr.ix.word + offset_value) - 1);
+                    mem_set_byte(_regs_curr.ix.word + offset_value, alu_dec_byte(mem_get_byte(_regs_curr.ix.word + offset_value)));
                     _regs_curr.value = mem_get_byte(_regs_curr.ix.word + offset_value);
                 }
                 else
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.iy.word + offset_value);
-                    mem_set_byte(_regs_curr.iy.word + offset_value, mem_get_byte(_regs_curr.iy.word + offset_value) - 1);
+                    mem_set_byte(_regs_curr.iy.word + offset_value, alu_dec_byte(mem_get_byte(_regs_curr.iy.word + offset_value)));
                     _regs_curr.value = mem_get_byte(_regs_curr.iy.word + offset_value);
                 }
                 break;

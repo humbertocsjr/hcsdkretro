@@ -110,8 +110,14 @@ bool generate(expr_t *e, int offset, bool is_seg)
         break;
     case TOK_VALUE:
         {
-            if(e->value < INT16_MIN) error_expr(e, "value underflow.");
-            if(e->value > UINT16_MAX) error_expr(e, "value overflow.");
+            if(e->value > UINT16_MAX) 
+            {
+                error_expr(e, "value overflow.");
+            }
+            else if(e->value < INT16_MIN) 
+            {
+                error_expr(e, "value underflow.");
+            }
             out(e->value >= INT16_MAX ? REC_EXPR_PUSH_VALUE_UNSIGNED : REC_EXPR_PUSH_VALUE, e->value, 0, 0, 0);
         }
         break;
