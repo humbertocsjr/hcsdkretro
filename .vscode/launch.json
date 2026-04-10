@@ -198,6 +198,19 @@
         "externalConsole": false,
         "preLaunchTask": "make msxdosemu",
         "MIMode": "lldb"
+    },
+    {
+        "name": "msxdosemu ../bascom/sample.com",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/msxdosemu",
+        "args": ["${workspaceFolder}/../BASCOM/SAMPLE.COM"],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}/../BASCOM/",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make msxdosemu",
+        "MIMode": "lldb"
     }
     ]
 }

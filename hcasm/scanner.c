@@ -26,6 +26,19 @@ bool curr_is_keyword(char *keyword)
     return false;
 }
 
+bool is_keyword(char *token, char *keyword)
+{
+    char *s1 = token;
+    char *s2 = keyword;
+    while(tolower(*s1) == tolower(*s2))
+    {
+        if(*s1 == 0) return true;
+        s1++;
+        s2++;
+    }
+    return false;
+}
+
 bool next_is(token_t token)
 {
     return _next->token == token;
@@ -164,7 +177,7 @@ expr_t *scan()
         reg = _regs;
         while(reg->name)
         {
-            if(!strcmp(reg->name, token))
+            if(is_keyword(reg->name, token))
             {
                 e.reg = reg;
                 e.token = TOK_REGISTER;

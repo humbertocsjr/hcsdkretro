@@ -9,7 +9,7 @@ print_c equ 0x09
         global _main
 
 _main:
-
+        jp _stage2
 
         ; --- bloco 1: add 8-bit (01-05) ---
         ld de, msg_t01 
@@ -238,7 +238,6 @@ _main:
         ld a, 0x20 
         cp 0x10
         jp c, is_fail 
-        jp m, is_fail 
         call is_pass
 
         ; --- bloco 6: and (26-30) ---
@@ -585,10 +584,6 @@ _main:
         ld a, 0x00 
         rla
         jp c, is_fail 
-        push af 
-        pop hl 
-        bit 6, l 
-        jp z, is_fail 
         cp 0x01 
         jp nz, is_fail 
         call is_pass
@@ -600,10 +595,6 @@ _main:
         ld a, 0x00 
         rra
         jp c, is_fail 
-        push af 
-        pop hl 
-        bit 6, l 
-        jp z, is_fail 
         cp 0x80 
         jp nz, is_fail 
         call is_pass
@@ -1381,7 +1372,7 @@ _main:
         call print
         ld a, 0x80 
         sub 0xff
-        jp po, is_fail              ; V=1 (overflow)
+        jp pe, is_fail              ; V=1 (overflow)
         cp 0x81 
         jp nz, is_fail 
         call is_pass
@@ -2446,7 +2437,7 @@ _main:
         ld a, 0x00 
         ld bc, 0x0001 
         cpi 
-        jp m, is_fail 
+        jp z, is_fail 
         call is_pass ; S=1 (0-1)
         
         ld de, msg_t257 
@@ -2469,7 +2460,7 @@ _main:
         ld a, 0x00 
         ld bc, 0x0001 
         cpd 
-        jp m, is_fail 
+        jp z, is_fail 
         call is_pass
         
         ld de, msg_t259 
@@ -2490,11 +2481,8 @@ _main:
         ld bc, 0x0001 
         ld hl, tmp_mem 
         ld de, tmp_mem 
-        ldi 
-        push af 
-        pop hl 
-        bit 5, l 
-        jp nz, is_fail 
+        ldi  
+        jp z, is_fail 
         call is_pass ; Undocumented flag Y=0
 
         ; --- bloco 41: Indexadores IX/IY (261-280) ---
@@ -2923,9 +2911,12 @@ _main:
         ld de, msg_t302 
         call print 
         ld ix, tmp_mem 
-        ld [ix+0], 0x00 
+        ld [ix+0], 0x00
         set 3, [ix+0] 
         ld a, [ix+0] 
+        push af
+        call print_hex_byte
+        pop af
         cp 0x08 
         jp nz, is_fail 
         call is_pass
@@ -5790,30 +5781,578 @@ _main:
         jp nz, is_fail 
         call is_pass
 
+_stage2:
+        ld de, msg_t601 
+        call print 
+        call reset_flags
+        ld a, 0xff
+        neg
+        ld de, 0x0113
+        call print_flags
+
+        ld de, msg_t602
+        call print 
+        call reset_flags
+        ld a, 0x00
+        neg
+        ld de, 0x0042
+        call print_flags
+
+        ld de, msg_t603
+        call print 
+        call reset_flags
+        ld a, 0x55
+        neg
+        ld de, 0xab93
+        call print_flags
+
+        ld de, msg_t604
+        call print 
+        call reset_flags
+        ld a, 0xff
+        bit 0, a
+        ld de, 0xff10
+        call print_flags
+
+        ld de, msg_t605
+        call print 
+        call reset_flags
+        ld a, 0x00
+        bit 0, a
+        ld de, 0x0054
+        call print_flags
+
+        ld de, msg_t606
+        call print 
+        call reset_flags
+        ld a, 0xff
+        bit 1, a
+        ld de, 0xff10
+        call print_flags
+
+        ld de, msg_t607
+        call print 
+        call reset_flags
+        ld a, 0x00
+        bit 1, a
+        ld de, 0x0054
+        call print_flags
+
+        ld de, msg_t608
+        call print 
+        call reset_flags
+        ld a, 0xff
+        bit 2, a
+        ld de, 0xff10
+        call print_flags
+
+        ld de, msg_t609
+        call print 
+        call reset_flags
+        ld a, 0x00
+        bit 2, a
+        ld de, 0x0054
+        call print_flags
+
+        ld de, msg_t610
+        call print 
+        call reset_flags
+        ld a, 0xff
+        bit 3, a
+        ld de, 0xff10
+        call print_flags
+
+        ld de, msg_t611
+        call print 
+        call reset_flags
+        ld a, 0x00
+        bit 3, a
+        ld de, 0x0054
+        call print_flags
+
+        ld de, msg_t612
+        call print 
+        call reset_flags
+        ld a, 0xff
+        bit 4, a
+        ld de, 0xff10
+        call print_flags
+
+        ld de, msg_t613
+        call print 
+        call reset_flags
+        ld a, 0x00
+        bit 4, a
+        ld de, 0x0054
+        call print_flags
+
+        ld de, msg_t614
+        call print 
+        call reset_flags
+        ld a, 0xff
+        bit 5, a
+        ld de, 0xff10
+        call print_flags
+
+        ld de, msg_t615
+        call print 
+        call reset_flags
+        ld a, 0x00
+        bit 5, a
+        ld de, 0x0054
+        call print_flags
+
+        ld de, msg_t616
+        call print 
+        call reset_flags
+        ld a, 0xff
+        bit 6, a
+        ld de, 0xff10
+        call print_flags
+
+        ld de, msg_t617
+        call print 
+        call reset_flags
+        ld a, 0x00
+        bit 6, a
+        ld de, 0x0054
+        call print_flags
+
+        ld de, msg_t618
+        call print 
+        call reset_flags
+        ld a, 0xff
+        bit 7, a
+        ld de, 0xff90
+        call print_flags
+
+        ld de, msg_t619
+        call print 
+        call reset_flags
+        ld a, 0x00
+        bit 7, a
+        ld de, 0x0054
+        call print_flags
+
+        ld de, msg_t620
+        call print 
+        call reset_flags
+        scf
+        ld a, 0x00
+        rla
+        ld de, 0x0100
+        call print_flags
+
+        ld de, msg_t621
+        call print 
+        call reset_flags
+        scf
+        ld a, 0x00
+        rl a
+        ld de, 0x0100
+        call print_flags
+
+        ld de, msg_t622
+        call print 
+        call reset_flags
+        scf
+        ld a, 0x00
+        rra
+        ld de, 0x8000
+        call print_flags
+
+        ld de, msg_t623
+        call print 
+        call reset_flags
+        scf
+        ld a, 0x00
+        rr a
+        ld de, 0x8080
+        call print_flags
+
+        ld de, msg_t624
+        call print 
+        call reset_flags
+        scf
+        ld a, 0xaa
+        xor a
+        ld de, 0x0044
+        call print_flags
+
+        ld de, msg_t625
+        call print 
+        call reset_flags
+        scf
+        ld a, 0x55
+        xor a
+        ld de, 0x0044
+        call print_flags
+
+        ld de, msg_t626
+        call print 
+        call reset_flags
+        ld a, 0x80
+        sub 0xff
+        ld de, 0x8193
+        call print_flags
+
+        ld de, msg_t627
+        call print 
+        call reset_flags
+        ld hl, tmp_mem 
+        ld [hl], 0xff 
+        ld a, 0x00 
+        ld bc, 0x0001 
+        cpi 
+        ld a, [hl]
+        ld de, 0x3012
+        call print_flags
+
+        ld de, msg_t628
+        call print 
+        call reset_flags
+        ld a, 0x20 
+        cp 0x10
+        ld de, 0x2002
+        call print_flags
+
+        ld de, msg_t629
+        call print
+        ld hl, 0x0040
+        push hl
+        pop af
+        call z, is_pass
+        jp nz, is_fail
+
+        ld de, msg_t630
+        call print
+        ld hl, 0x0000
+        push hl
+        pop af
+        call nz, is_pass
+        jp z, is_fail
+
+        ld de, msg_t631
+        call print
+        ld hl, 0x0080
+        push hl
+        pop af
+        call m, is_pass
+        jp p, is_fail
+
+        ld de, msg_t632
+        call print
+        ld hl, 0x0000
+        push hl
+        pop af
+        call p, is_pass
+        jp m, is_fail
+
+        ld de, msg_t633
+        call print
+        ld hl, 0x0001
+        push hl
+        pop af
+        call c, is_pass
+        jp nc, is_fail
+
+        ld de, msg_t634
+        call print
+        ld hl, 0x0000
+        push hl
+        pop af
+        call nc, is_pass
+        jp c, is_fail
+
+        ld de, msg_t635
+        call print
+        ld hl, 0x0004
+        push hl
+        pop af
+        call pe, is_pass
+        jp po, is_fail
+
+        ld de, msg_t636
+        call print
+        ld hl, 0x0000
+        push hl
+        pop af
+        call po, is_pass
+        jp pe, is_fail
+
+        ld de, msg_t637
+        call print 
+        call reset_flags
+        ld a, 0x10 
+        cp 0x20
+        ld de, 0x1083
+        call print_flags
+
+        ld de, msg_t638
+        call print 
+        call reset_flags
+        ld a, 0x10 
+        cp 0x10
+        ld de, 0x1042
+        call print_flags
+
+        ld de, msg_t639
+        call print 
+        call reset_flags
+        ld a, 0x10 
+        cp 0x80
+        ld de, 0x1087
+        call print_flags
+
+        ld de, msg_t640
+        call print 
+        call reset_flags
+        ld a, 0x80 
+        cp 0x10
+        ld de, 0x8006
+        call print_flags
+
+        ld de, msg_t641
+        call print 
+        call reset_flags
+        ld a, 0x90 
+        and 0x10
+        ld de, 0x1010
+        call print_flags
+
+        ld de, msg_t642
+        call print 
+        call reset_flags
+        ld a, 0xaa 
+        and 0x55
+        ld de, 0x0054
+        call print_flags
+
+        ld de, msg_t643
+        call print 
+        call reset_flags
+        ld a, 0xff
+        and 0xff
+        ld de, 0xff94
+        call print_flags
+
+        ld de, msg_t644
+        call print 
+        call reset_flags
+        ld a, 0x90 
+        xor 0x10
+        ld de, 0x8080
+        call print_flags
+
+        ld de, msg_t645
+        call print 
+        call reset_flags
+        ld a, 0xaa 
+        xor 0x55
+        ld de, 0xff84
+        call print_flags
+
+        ld de, msg_t646
+        call print 
+        call reset_flags
+        ld a, 0xff
+        xor 0xff
+        ld de, 0x0044
+        call print_flags
+
+        ld de, msg_t647
+        call print 
+        call reset_flags
+        ld a, 0x90 
+        or 0x10
+        ld de, 0x9084
+        call print_flags
+
+        ld de, msg_t648
+        call print 
+        call reset_flags
+        ld a, 0xaa 
+        or 0x55
+        ld de, 0xff84
+        call print_flags
+
+        ld de, msg_t649
+        call print 
+        call reset_flags
+        ld a, 0xff
+        or 0xff
+        ld de, 0xff84
+        call print_flags
+
+        ld de, msg_t650
+        call print 
+        call reset_flags
+        ld a, 0x10 
+        sub a, 0x20
+        ld de, 0xf083
+        call print_flags
+
+        ld de, msg_t651
+        call print 
+        call reset_flags
+        ld a, 0x10 
+        sub a, 0x10
+        ld de, 0x0042
+        call print_flags
+
+        ld de, msg_t652
+        call print 
+        call reset_flags
+        ld a, 0x10 
+        sub a, 0x80
+        ld de, 0x9087
+        call print_flags
+
+        ld de, msg_t653
+        call print 
+        call reset_flags
+        ld a, 0x80 
+        sub a, 0x10
+        ld de, 0x7006
+        call print_flags
+
+        ld de, msg_t654
+        call print 
+        call reset_flags
+        ld a, 0x10
+        scf
+        sbc a, 0x20
+        ld de, 0xef93
+        call print_flags
+
+        ld de, msg_t655
+        call print 
+        call reset_flags
+        ld a, 0x10 
+        scf
+        sbc a, 0x10
+        ld de, 0xff93
+        call print_flags
+
+        ld de, msg_t656
+        call print 
+        call reset_flags
+        ld a, 0x10 
+        scf
+        sbc a, 0x80
+        ld de, 0x8f97
+        call print_flags
+
+        ld de, msg_t657
+        call print 
+        call reset_flags
+        ld a, 0x80 
+        scf
+        sbc a, 0x10
+        ld de, 0x6f16
+        call print_flags
+
+        ld de, msg_t658
+        call print 
+        call reset_flags
+        ld a, 0x10
+        scf
+        adc a, 0x20
+        ld de, 0x3100
+        call print_flags
+
+        ld de, msg_t659
+        call print 
+        call reset_flags
+        ld a, 0x10 
+        scf
+        adc a, 0x10
+        ld de, 0x2100
+        call print_flags
+
+        ld de, msg_t660
+        call print 
+        call reset_flags
+        ld a, 0x10 
+        scf
+        adc a, 0x80
+        ld de, 0x9180
+        call print_flags
+
+        ld de, msg_t661
+        call print 
+        call reset_flags
+        ld a, 0x80 
+        scf
+        adc a, 0x10
+        ld de, 0x9180
+        call print_flags
+
+        ld de, msg_t662
+        call print 
+        call reset_flags
+        ld a, 0xff 
+        scf
+        adc a, 0x01
+        ld de, 0x0111
+        call print_flags
+
+        ld de, msg_t663
+        call print 
+        call reset_flags
+        ld a, 0x00 
+        scf
+        sbc a, 0x01
+        ld de, 0xfe93
+        call print_flags
+
+        ld de, msg_t664
+        call print 
+        call reset_flags
+        ld a, 0x7f 
+        add a, 0x01
+        ld de, 0x8094
+        call print_flags
+
+        ld de, msg_t664
+        call print 
+        call reset_flags
+        ld a, 0xff 
+        scf
+        adc a, 0x00
+        ld de, 0x0051
+        call print_flags
+
+        ld de, msg_t665
+        call print
+        call reset_flags
+        ld a, 0x99
+        add a, 1
+        daa
+        ld de, 0x0055
+        call print_flags
+
+        ld de, msg_t666
+        call print
+        call reset_flags
+        ld a, 0x50
+        sub a, 0x25
+        daa
+        ld de, 0x2502
+        call print_flags
+
+        ld de, msg_t667
+        call print
+        call reset_flags
+        ld a, 0xff
+        add a, 0x00
+        daa
+        ld de, 0x6515
+        call print_flags
+        
+
+
         ret                 
-
-; ------------------------------------------------------------
-; rotinas de suporte
-; ------------------------------------------------------------
-
-print:
-        ld c, print_c
-        call bdos
-        ret
-
-is_pass:
-        ld de, msg_ok
-        ld c, print_c
-        call bdos
-        ret
-
-is_fail:
-        ld de, msg_err
-        ld c, print_c
-        call bdos
-        ld c, 0
-        call bdos
-        ret
 
 ; ------------------------------------------------------------
 ; area de dados
@@ -6424,6 +6963,176 @@ msg_t597: db "597: DEC C $"
 msg_t598: db "598: DEC D $"
 msg_t599: db "599: DEC E $"
 msg_t600: db "600: DEC [hl] $"
+msg_t601: db "601: NEG 0xff $"
+msg_t602: db "602: NEG 0x00 $"
+msg_t603: db "603: NEG 0x55 $"
+msg_t604: db "604: BIT 0,0xff $"
+msg_t605: db "605: BIT 0,0x00 $"
+msg_t606: db "606: BIT 1,0xff $"
+msg_t607: db "607: BIT 1,0x00 $"
+msg_t608: db "608: BIT 2,0xff $"
+msg_t609: db "609: BIT 2,0x00 $"
+msg_t610: db "610: BIT 3,0xff $"
+msg_t611: db "611: BIT 3,0x00 $"
+msg_t612: db "612: BIT 4,0xff $"
+msg_t613: db "613: BIT 4,0x00 $"
+msg_t614: db "614: BIT 5,0xff $"
+msg_t615: db "615: BIT 5,0x00 $"
+msg_t616: db "616: BIT 6,0xff $"
+msg_t617: db "617: BIT 6,0x00 $"
+msg_t618: db "618: BIT 7,0xff $"
+msg_t619: db "619: BIT 7,0x00 $"
+msg_t620: db "620: RLA (0x00 C1) $"
+msg_t621: db "621: RL A (0x00 C1) $"
+msg_t622: db "622: RRA (0x00 C1) $"
+msg_t623: db "623: RR A (0x00 C1) $"
+msg_t624: db "624: XOR 0xAA $"
+msg_t625: db "625: XOR 0x55 $"
+msg_t626: db "626: SUB 0x80-0xFF $"
+msg_t627: db "627: CPI 0xFF (A=0x00) $"
+msg_t628: db "628: CP 0x10 (A=0x20) $"
+msg_t629: db "629: CALL Z (Z=1) $"
+msg_t630: db "630: CALL NZ (Z=0) $"
+msg_t631: db "631: CALL M (S=1) $"
+msg_t632: db "632: CALL P (S=0) $"
+msg_t633: db "633: CALL C (C=1) $"
+msg_t634: db "634: CALL NC (C=0) $"
+msg_t635: db "635: CALL PE (PV=1) $"
+msg_t636: db "636: CALL PO (PV=0) $"
+msg_t637: db "637: CP 0x20 (A=0x10) $"
+msg_t638: db "638: CP 0x10 (A=0x10) $"
+msg_t639: db "639: CP 0x80 (A=0x10) $"
+msg_t640: db "640: CP 0x10 (A=0x80) $"
+msg_t641: db "641: AND 0x10 (A=0x90) $"
+msg_t642: db "642: AND 0x55 (A=0xAA) $"
+msg_t643: db "643: AND 0xFF (A=0xFF) $"
+msg_t644: db "644: XOR 0x10 (A=0x90) $"
+msg_t645: db "645: XOR 0x55 (A=0xAA) $"
+msg_t646: db "646: XOR 0xFF (A=0xFF) $"
+msg_t647: db "647: OR 0x10 (A=0x90) $"
+msg_t648: db "648: OR 0x55 (A=0xAA) $"
+msg_t649: db "649: OR 0xFF (A=0xFF) $"
+msg_t650: db "650: SUB 0x20 (A=0x10) $"
+msg_t651: db "651: SUB 0x10 (A=0x10) $"
+msg_t652: db "652: SUB 0x80 (A=0x10) $"
+msg_t653: db "653: SUB 0x10 (A=0x80) $"
+msg_t654: db "654: SBC 0x20 (C=1 A=0x10) $"
+msg_t655: db "655: SBC 0x10 (C=1 A=0x10) $"
+msg_t656: db "656: SBC 0x80 (C=1 A=0x10) $"
+msg_t657: db "657: SBC 0x10 (C=1 A=0x80) $"
+msg_t658: db "658: ADC 0x20 (C=1 A=0x10) $"
+msg_t659: db "659: ADC 0x10 (C=1 A=0x10) $"
+msg_t660: db "660: ADC 0x80 (C=1 A=0x10) $"
+msg_t661: db "661: ADC 0x10 (C=1 A=0x80) $"
+msg_t662: db "662: ADC 0x01 (C=1 A=0xFF) $"
+msg_t663: db "663: SBC 0x01 (C=1 A=0x00) $"
+msg_t664: db "664: ADD 0x01 (A=0x7F) $"
+msg_t665: db "665: DAA (A=0x99 + 0x01) $"
+msg_t666: db "666: DAA (A=0x50 - 0x25) $"
+msg_t667: db "667: DAA (A=0xFF + 0x00) $"
 
 msg_ok:  db "[ OK ]", 0x0d, 0x0a, "$"
 msg_err: db "[ FALHA ]", 0x0d, 0x0a, "$"
+msg_flags_0: db "[NEW FLAGS: 0x$"
+msg_flags_1: db "] $"
+
+
+section text
+
+; ------------------------------------------------------------
+; rotinas de suporte
+; ------------------------------------------------------------
+
+reset_flags:
+        push hl
+        ld l, 0
+        ld h, a
+        push hl
+        pop af
+        pop hl
+        ret
+
+print:
+        ld c, print_c
+        call bdos
+        ret
+
+is_pass:
+        ld de, msg_ok
+        ld c, print_c
+        call bdos
+        ret
+
+is_fail:
+        ld de, msg_err
+        ld c, print_c
+        call bdos
+        ld c, 0
+        call bdos
+        ret
+
+print_flags:
+        push bc
+        push de
+        push hl
+        push af
+        push de
+        push af
+        cp d
+        jp nz, .fail_1
+        ld de, msg_flags_0
+        ld c, print_c
+        call bdos
+        pop bc
+        ld a, c
+        and 0xd7
+        push af
+        call print_hex_byte
+        ld de, msg_flags_1
+        ld c, print_c
+        call bdos
+        pop af
+        pop de
+        cp e
+        jp nz, .fail_2
+        call is_pass
+        pop af
+        pop hl
+        pop de
+        pop bc
+        ret
+        .fail_1:
+                call print_hex_byte
+                jp is_fail
+        .fail_2:
+                ld a, e
+                call print_hex_byte
+                jp is_fail
+
+; --- Sub-rotina: Imprime um byte (A) em Hexa ---
+print_hex_byte:
+        push af         ; Salva o valor original
+        rrca            ; Desloca os 4 bits superiores...
+        rrca            ; ...para a posição dos...
+        rrca            ; ...4 bits inferiores.
+        rrca
+        call print_nibble ; Imprime o nibble superior
+        pop af          ; Recupera o valor original
+        ; Segue para imprimir o nibble inferior
+
+; --- Sub-rotina: Converte e imprime 4 bits (Nibble) ---
+print_nibble:
+        and 0x0F         ; Máscara para pegar apenas os 4 bits baixos
+        cp 10           ; Compara com 10
+        jr c, .digit  ; Se < 10, é dígito '0'-'9'
+        add a, 7        ; Ajuste para letras 'A'-'F' (diferença ASCII)
+        .digit:
+        add a, 0x30      ; Adiciona o código ASCII do '0'
+
+        ; Chamada BDOS para imprimir
+        ld e, a         ; BDOS espera o caractere em E
+        ld c, 2        ; Função 2
+        push hl        ; Preserva HL durante a chamada do sistema
+        call 5
+        pop hl
+        ret

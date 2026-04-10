@@ -9,7 +9,7 @@ bool is_prefix(expr_t *e)
     opcode_t *o = _prefix;
     while(o->mnemonic)
     {
-        if(!strcmp(o->mnemonic, e->text)) return true;
+        if(is_keyword(o->mnemonic, e->text)) return true;
         o++;
     }
     return false;
@@ -20,7 +20,7 @@ bool is_mnemonic(expr_t *e)
     opcode_t *o = _opcode;
     while(o->mnemonic)
     {
-        if(!strcmp(o->mnemonic, e->text)) return true;
+        if(is_keyword(o->mnemonic, e->text)) return true;
         o++;
     }
     return false;
@@ -30,7 +30,7 @@ opcode_t *parse_prefix(expr_t *e)
     opcode_t *o = _prefix;
     while(o->mnemonic)
     {
-        if(!strcmp(o->mnemonic, e->text)) return o;
+        if(is_keyword(o->mnemonic, e->text)) return o;
         o++;
     }
     error_expr(e, "prefix unknown: %s", e->text);
@@ -42,7 +42,7 @@ opcode_t *parse_mnemonic(expr_t *e)
     opcode_t *o = _opcode;
     while(o->mnemonic)
     {
-        if(!strcmp(o->mnemonic, e->text)) return o;
+        if(is_keyword(o->mnemonic, e->text)) return o;
         o++;
     }
     error_expr(e, "mnemonic unknown: %s", e->text);

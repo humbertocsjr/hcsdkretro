@@ -149,7 +149,7 @@ extern char *_current_label;
 // Parse source file
 void parse(char *filename);
 
-// --== scan.c ==--
+// --== scanner.c ==--
 
 // Scan next token
 expr_t *scan();
@@ -165,6 +165,8 @@ expr_t *clone_expr(expr_t *src);
 void free_expr(expr_t *e);
 // Compare if current token is a keyword
 bool curr_is_keyword(char *keyword);
+// Compare if a token is a keyword
+bool is_keyword(char *token, char *keyword);
 
 // --== cpu/?????.c ==--
 
