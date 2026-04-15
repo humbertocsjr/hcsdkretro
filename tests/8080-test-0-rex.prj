@@ -4,6 +4,7 @@ sdk_path = ../bin/
 
 [files:8080]
 8080-test-0.s
+8080-test-0b.s
 
 [libs]
 8080-lib.lib

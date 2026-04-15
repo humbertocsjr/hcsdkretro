@@ -57,6 +57,19 @@
         "MIMode": "lldb"
     },
     {
+        "name": "hclink-bin 8080-test-0",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/hclink-bin",
+        "args": ["-o", "${workspaceFolder}/tests/8080-test-0.bin", "-v",  "${workspaceFolder}/tests/8080-test-0.obj", "${workspaceFolder}/tests/8080-test-0b.obj", "${workspaceFolder}/tests/8080-lib.lib"],
+        "stopAtEntry": false,
+        "cwd": "${fileDirname}",
+        "environment": [],
+        "externalConsole": false,
+        "preLaunchTask": "make hclink",
+        "MIMode": "lldb"
+    },
+    {
         "name": "hclink-bin test-0",
         "type": "cppdbg",
         "request": "launch",

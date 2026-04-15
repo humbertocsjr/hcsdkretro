@@ -1,0 +1,3 @@
+global testb
+testb:
+    ret
