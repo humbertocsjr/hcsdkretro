@@ -10,7 +10,6 @@ all clean test test_emu posix linux macos win win32 dos samples_zip:
 	$M hclink
 	$M hclib
 	$M hcbuild
-	$M retrolang
 	$M msxdosemu
 	$M libs
 	$M tests

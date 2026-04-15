@@ -14,7 +14,6 @@ Tools ready to use:
 
 Tools in development (Early test only):
 
-- RetroLang (Simple programming language for 8 bit)
 - MSX-DOS 1.0 / CP/M 2.2 Emulator
 
 Links:
@@ -24,7 +23,7 @@ Links:
 - [RetroLang (In Alpha) Documentation](retrolang.md)
 - [Hackaday Article](https://hackaday.com/2026/03/17/from-8086-to-z80-building-a-nasm-inspired-sdk-for-8-bit-retro-computing/)
 
-## TODO List (Pending for 2.0 | Early April/26)
+## TODO List (Pending for 2.0 | Early May/26)
 
 - MSX-DOS 1.0 (CP/M 2.2 Compatible) Emulator (In progress) 
   - Screen/Keyboard I/O to VT110 TTY Mode (In progress)
@@ -35,20 +34,6 @@ Links:
     - Screen 40x24 Direct Manipulation (In progress / Testing)
   - ZEXDOC Z80 Tests: (In progress / Evolving)
     ![Tests](imgs/zexdoc-2026-04-10.png)
-- RetroLang Compiler (In progress) 
-  - Implement all planned pointers (In progress)
-  - Structure Support (Planned)
-  - Array Support (Planned)
-  - 8086 Target and Libraries 
-    - 8086 Target (**Done**)
-    - DOS Library (Planned)
-    - BIOS-only Library (Planned)
-  - Z80 Target and Libraries 
-    - Z80 Target (In progress / Testing)
-    - Common Math/Logic Runtime Library (**Done** / Testing)
-    - CP/M 2.2 Library (In progress)
-    - MSX-DOS 1.0 Library (Planned)
-  - 8080 Target and Libraries (Planned for 3.0)
 - HC Builder 
   - Embbed SDK BIN/Libraries/Include Path on install (Planned for 2.1)
 - HC Assembler 

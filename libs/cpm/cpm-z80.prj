@@ -4,7 +4,6 @@ verbose = true
 keep  = true
 
 [files:z80]
-z80/tty_print_char.rl
 ../common/z80/cbw.s
 ../common/z80/mul.s
 ../common/z80/div8.s
@@ -12,8 +11,6 @@ z80/tty_print_char.rl
 ../common/z80/cmp8.s
 ../common/z80/cmp16.s
 ../common/z80/shift.s
-../common/str_len.rl
-../common/tty_print_str.rl
 
 [link:release]
 format = lib

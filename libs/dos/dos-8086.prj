@@ -4,9 +4,6 @@ verbose = true
 keep  = true
 
 [files:8086]
-8086/tty_print_char.rl
-../common/tty_print_str.rl
-../common/str_len.rl
 
 [link:release]
 format = lib
