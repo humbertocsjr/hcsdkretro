@@ -1,0 +1,17 @@
+[config]
+sdk_path = ../bin/
+
+[files:z80]
+z80-test-5.s
+
+[libs:start]
+../libs/start-cpm-z80.obj
+
+[libs]
+../libs/cpm-z80.lib
+
+[link:release]
+format = bin
+filename = z80-test-5.com
+text = 0x100
+symbols = z80-test-5.com.sym

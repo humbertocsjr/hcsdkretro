@@ -6005,7 +6005,7 @@ _stage2:
         ld bc, 0x0001 
         cpi 
         ld a, [hl]
-        ld de, 0x3012
+        ld de, 0x0012
         call print_flags
 
         ld de, msg_t628
@@ -6350,6 +6350,125 @@ _stage2:
         ld de, 0x6515
         call print_flags
         
+        ld de, msg_t668
+        call print
+        call reset_flags
+        ld hl, tmp_mem
+        ld a, 0x00
+        ld [hl], a
+        ld bc, 1
+        cpi
+        ld de, 0x0042
+        call print_flags
+
+        ld de, msg_t669
+        call print
+        call reset_flags
+        ld hl, tmp_mem
+        ld a, 0x00
+        ld [hl], a
+        inc hl
+        inc a
+        ld [hl], a
+        inc hl
+        inc a
+        ld [hl], a
+        inc hl
+        inc a
+        ld hl, tmp_mem
+        ld bc, 4
+        ld a, 0
+        cpi
+        ld de, 0x0046
+        call print_flags
+
+        ld de, msg_t670
+        call print
+        call reset_flags
+        ld hl, tmp_mem
+        ld a, 0x00
+        ld [hl], a
+        inc hl
+        inc a
+        ld [hl], a
+        inc hl
+        inc a
+        ld [hl], a
+        inc hl
+        inc a
+        ld hl, tmp_mem
+        ld bc, 4
+        ld a, 0
+        cpir
+        push af
+        push hl
+        ld de, tmp_mem
+        or a
+        sbc hl, de
+        ld a, h
+        call print_hex_byte
+        ld a, l
+        call print_hex_byte
+        ld de, 0x0046
+        pop hl
+        pop af
+        call print_flags
+
+        ld de, msg_t671
+        call print
+        call reset_flags
+        ld hl, tmp_mem
+        ld a, 0x00
+        ld [hl], a
+        inc hl
+        inc a
+        ld [hl], a
+        inc hl
+        inc a
+        ld [hl], a
+        inc a
+        ld bc, 4
+        ld a, 0
+        cpir
+        push af
+        push hl
+        ld de, tmp_mem
+        or a
+        sbc hl, de
+        ld a, h
+        call print_hex_byte
+        ld a, l
+        call print_hex_byte
+        ld de, 0x0046
+        pop hl
+        pop af
+        call print_flags
+        
+        ld de, msg_t672
+        call print
+        call reset_flags
+        ld hl, tmp_mem
+        ld [hl], 0x05
+        inc hl
+        ld [hl], 0x10
+        ld hl, tmp_mem
+        ld bc, 2
+        ld a, 0x10
+        cpir
+        push af
+        push hl
+        ld de, tmp_mem
+        or a
+        sbc hl, de
+        ld a, h
+        call print_hex_byte
+        ld a, l
+        call print_hex_byte
+        ld de, 0x1042
+        pop hl
+        pop af
+        call print_flags
+        
 
 
         ret                 
@@ -6359,7 +6478,7 @@ _stage2:
 ; ------------------------------------------------------------
 section data
 
-tmp_mem: db 0x00 ; byte auxiliar para testes de memoria
+tmp_mem: ds 16 
 
 ; -- bloco 1 a 14 strings omitidas em modo full text, mas inseridas para completude --
 msg_t01: db "001: ADD A,0 (A=0) $"
@@ -7030,6 +7149,11 @@ msg_t664: db "664: ADD 0x01 (A=0x7F) $"
 msg_t665: db "665: DAA (A=0x99 + 0x01) $"
 msg_t666: db "666: DAA (A=0x50 - 0x25) $"
 msg_t667: db "667: DAA (A=0xFF + 0x00) $"
+msg_t668: db "668: CPI ([HL]=0x00 BC=1 A=0x00) $"
+msg_t669: db "669: CPI ([HL]=0x0,0x1,0x2,0x3 BC=4 A=0x00) $"
+msg_t670: db "670: CPIR ([HL]=0x0,0x1,0x2,0x3 BC=4 A=0x00) $"
+msg_t671: db "671: CPID ([HL-4]=0x0,0x1,0x2,0x3 BC=4 A=0x00) $"
+msg_t672: db "672: CPIR ([HL-1]=0x05,0x10 BC=2 A=0x10) $"
 
 msg_ok:  db "[ OK ]", 0x0d, 0x0a, "$"
 msg_err: db "[ FALHA ]", 0x0d, 0x0a, "$"

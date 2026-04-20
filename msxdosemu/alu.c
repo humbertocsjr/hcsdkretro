@@ -28,6 +28,8 @@ uint8_t alu_rlca(uint8_t value)
     nf_set(0);
     hf_set(0);
     value = (value << 1) | ((value >> 7) & 1);
+    xf_set(value & (1 << 3));
+    yf_set(value & (1 << 5));
     return value;
 }
 
@@ -49,6 +51,8 @@ uint8_t alu_rrca(uint8_t value)
     nf_set(0);
     hf_set(0);
     value = (value >> 1) | ((value << 7) & 128);
+    xf_set(value & (1 << 3));
+    yf_set(value & (1 << 5));
     return value;
 }
 
@@ -120,7 +124,9 @@ uint8_t alu_rla(uint8_t value)
     cf_set(value & 128);
     value = (value << 1) | bit;
     //zf_set(value == 0);
-    alu_parity(value);
+    //alu_parity(value);
+    xf_set(value & (1 << 3));
+    yf_set(value & (1 << 5));
     return value;
 }
 
@@ -132,7 +138,9 @@ uint8_t alu_rra(uint8_t value)
     cf_set(value & 1);
     value = (value >> 1) | bit;
     //zf_set(value == 0);
-    alu_parity(value);
+    //alu_parity(value);
+    xf_set(value & (1 << 3));
+    yf_set(value & (1 << 5));
     return value;
 }
 
@@ -251,7 +259,27 @@ uint8_t alu_cp_byte(uint8_t value1, uint8_t value2)
     uint8_t tmp = value1;
     hf_set(((value1 & 0xf) < (value2 & 0xf)));
     value1 -= value2;
+    xf_set(value2 & (1 << 3));
+    yf_set(value2 & (1 << 5));
     cf_set(u & 0xff00);
+    nf_set(1);
+    zf_set(value1 == 0);
+    sf_set(value1 & 128);
+    pvf_set(s > 127 || s < -128 );
+    return value1;
+}
+
+uint8_t alu_cp_extended_byte(uint8_t value1, uint8_t value2)
+{
+    int8_t s1 = (*(int8_t*)&value1);
+    int8_t s2 = (*(int8_t*)&value2);
+    int16_t s = s1 - s2;
+    uint16_t u = (uint16_t)value1 - (uint16_t)value2;
+    uint8_t tmp = value1;
+    hf_set(((value1 & 0xf) < (value2 & 0xf)));
+    value1 -= value2;
+    xf_set((value1 - (hf_get() ? 1 : 0)) & (1 << 3));
+    yf_set((value1 - (hf_get() ? 1 : 0)) & (1 << 1));
     nf_set(1);
     zf_set(value1 == 0);
     sf_set(value1 & 128);
@@ -270,6 +298,8 @@ uint8_t alu_neg_byte(uint8_t value)
     nf_set(1);
     zf_set(value == 0);
     sf_set(value & 128);
+    xf_set(value & (1 << 3));
+    yf_set(value & (1 << 5));
     return value;
 }
 
@@ -326,6 +356,8 @@ void alu_bit(uint8_t value, uint8_t bit)
     sf_set((value & (1 << bit)) != 0 && bit == 7);
     //pvf_set(value & (1 << bit));
     alu_parity(value & (1 << bit));
+    xf_set(value & (1 << 3));
+    yf_set(value & (1 << 5));
 }
 
 uint8_t alu_xor_byte(uint8_t value1, uint8_t value2)

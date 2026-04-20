@@ -149,6 +149,10 @@ extern bool keyb_avail();
 
 bool cf_get();
 void cf_set(bool value);
+bool yf_get();
+void yf_set(bool value);
+bool xf_get();
+void xf_set(bool value);
 bool nf_get();
 void nf_set(bool value);
 bool pvf_get();
@@ -217,6 +221,7 @@ uint16_t alu_adc_word(uint16_t value1, uint16_t value2);
 uint8_t alu_adc_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_sub_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_cp_byte(uint8_t value1, uint8_t value2);
+uint8_t alu_cp_extended_byte(uint8_t value1, uint8_t value2);
 uint8_t alu_neg_byte(uint8_t value);
 uint8_t alu_sbc_byte(uint8_t value1, uint8_t value2);
 uint16_t alu_sbc_word(uint16_t value1, uint16_t value2);

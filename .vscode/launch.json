@@ -187,11 +187,11 @@
         "MIMode": "lldb"
     },
     {
-        "name": "msxdosemu tests/z80-test-1.com",
+        "name": "msxdosemu tests/z80-test-5.com",
         "type": "cppdbg",
         "request": "launch",
         "program": "${workspaceFolder}/bin/msxdosemu",
-        "args": ["-diska", "${workspaceFolder}/tests/", "${workspaceFolder}/tests/z80-test-1.com", "test.txt"],
+        "args": ["-diska", "${workspaceFolder}/tests/", "${workspaceFolder}/tests/z80-test-5.com", "test.txt"],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}/tests/",
         "environment": [],

@@ -305,6 +305,8 @@ void exec_step()
             nf_set(1);
             hf_set(1);
             _regs_curr.af.a = ~_regs_curr.af.a;
+            xf_set(_regs_curr.af.a & (1 << 3));
+            yf_set(_regs_curr.af.a & (1 << 5));
             _regs_curr.value = _regs_curr.af.a;
             break;
         case 0x30:
@@ -1827,9 +1829,7 @@ void exec_step()
             case 0xa1:
                 _regs_prev.value = mem_get_byte(_regs_curr.de.word);
                 _regs_curr.value = mem_get_byte(_regs_curr.de.word);
-                tmp = cf_get();
-                alu_cp_byte(_regs_curr.af.a, mem_get_byte(_regs_curr.hl.word));
-                cf_set(tmp);
+                alu_cp_extended_byte(_regs_curr.af.a, mem_get_byte(_regs_curr.hl.word));
                 _regs_curr.hl.word++;
                 _regs_curr.bc.word--;
                 pvf_set(_regs_curr.bc.word != 0);
@@ -1866,9 +1866,7 @@ void exec_step()
             case 0xa9:
                 _regs_prev.value = mem_get_byte(_regs_curr.de.word);
                 _regs_curr.value = mem_get_byte(_regs_curr.de.word);
-                tmp = cf_get();
-                alu_cp_byte(_regs_curr.af.a, mem_get_byte(_regs_curr.hl.word));
-                cf_set(tmp);
+                alu_cp_extended_byte(_regs_curr.af.a, mem_get_byte(_regs_curr.hl.word));
                 _regs_curr.hl.word--;
                 _regs_curr.bc.word--;
                 pvf_set(_regs_curr.bc.word != 0);
@@ -1910,13 +1908,12 @@ void exec_step()
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.de.word);
                     _regs_curr.value = mem_get_byte(_regs_curr.de.word);
-                    tmp = cf_get();
-                    alu_cp_byte(mem_get_byte(_regs_curr.hl.word), _regs_curr.af.a);
-                    cf_set(tmp);
+                    alu_cp_extended_byte(_regs_curr.af.a, mem_get_byte(_regs_curr.hl.word));
                     _regs_curr.hl.word++;
                     _regs_curr.bc.word--;
-                    pvf_set(_regs_curr.bc.word != 0);
-                }while(_regs_curr.bc.word != 0);
+                    pvf_set(_regs_curr.bc.word!= 0);
+                    if(mem_get_byte(_regs_curr.hl.word-1) == _regs_curr.af.a) break;
+                }while(_regs_curr.bc.word != 0 );
                 break;
             case 0xb2:
                 do
@@ -1961,12 +1958,11 @@ void exec_step()
                 {
                     _regs_prev.value = mem_get_byte(_regs_curr.de.word);
                     _regs_curr.value = mem_get_byte(_regs_curr.de.word);
-                    tmp = cf_get();
-                    alu_cp_byte(mem_get_byte(_regs_curr.hl.word), _regs_curr.af.a);
-                    cf_set(tmp);
+                    alu_cp_extended_byte(_regs_curr.af.a, mem_get_byte(_regs_curr.hl.word));
                     _regs_curr.hl.word--;
                     _regs_curr.bc.word--;
                     pvf_set(_regs_curr.bc.word != 0);
+                    if(mem_get_byte(_regs_curr.hl.word+1) == _regs_curr.af.a) break;
                 }while(_regs_curr.bc.word != 0);
                 break;
             case 0xba:
@@ -6765,15 +6761,17 @@ void exec()
     _regs_curr.ip = 0x100;
     _regs_curr.sp = 0xf000;
     keyb_init();
+    int count = 0;
     while(_executing)
     {
+        count = (count+1) % (_debug ? 5 : 40);
         if(_debug && _skip_call_step && _regs_curr.ip == _skip_call_step_address)
         {
             _skip_call_step = false;
             _skip_call_step_address = -1;
         }
         disasm(_regs_curr.ip);
-        keyb_process();
+        if(count == 0)keyb_process();
         if(_debug) screen_draw();
         else screen_draw_if_changed();
         if(_debug && !_skip_call_step)

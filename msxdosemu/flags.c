@@ -12,6 +12,28 @@ bool cf_get()
     return _regs_curr.af.f & 1;
 }
 
+void xf_set(bool value)
+{
+    _regs_curr.af.f &= ~8;
+    _regs_curr.af.f |= value ? 8 : 0;
+}
+
+bool xf_get()
+{
+    return _regs_curr.af.f & 8;
+}
+
+void yf_set(bool value)
+{
+    _regs_curr.af.f &= ~32;
+    _regs_curr.af.f |= value ? 32 : 0;
+}
+
+bool yf_get()
+{
+    return _regs_curr.af.f & 32;
+}
+
 void nf_set(bool value)
 {
     _regs_curr.af.f &= ~2;

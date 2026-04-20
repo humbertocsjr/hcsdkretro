@@ -51,7 +51,7 @@ endef
 $(POSIX_OUT): $(SRC_REQS) Makefile
 	@echo [CC] $(@F)
 	@mkdir -p $(@D)
-	@cc -g -o $@ $(SRC)
+	@cc -g -O2 -o $@ $(SRC)
 
 $(DOS_OUT):  $(SRC_REQS) Makefile
 	@echo [CC] $(@F)

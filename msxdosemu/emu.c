@@ -170,11 +170,20 @@ int main(int argc, char **argv)
     FILE *com_file = fopen(com_name, "rb");
     if(!com_file)
     {
+        char *com_name_extended = malloc(strlen(com_name) + 5 + strlen(_disk_a_path));
+        sprintf(com_name_extended, "%s%s", _disk_a_path, com_name);
+        com_file = fopen(com_name_extended, "rb");
+    }
+    if(!com_file)
+    {
         fprintf(stderr, "error: file not found: %s\n", com_name);
         return 1;
     }
     fread(&_memory[0x100], 1, 0xef00, com_file);
     fclose(com_file);
+
+    memcpy(&_memory[0x81], args, 127);
+    _memory[0x80] = strlen(args) > 127 ? 127 : strlen(args);
 
     exec();
     return _return_code;
