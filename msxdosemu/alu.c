@@ -435,6 +435,8 @@ uint8_t alu_daa(uint8_t value)
     }
     zf_set(value == 0);
     sf_set(value & 128);
+    xf_set(value & (1 << 3));
+    yf_set(value & (1 << 5));
     alu_parity(value);
     return value;
 }

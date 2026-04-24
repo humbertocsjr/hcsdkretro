@@ -350,6 +350,8 @@ void exec_step()
             cf_set(1);
             nf_set(0);
             hf_set(0);
+            xf_set(_regs_curr.af.a & (1 << 3));
+            yf_set(_regs_curr.af.a & (1 << 5));
             break;
         case 0x38:
             _regs_prev.value = _regs_curr.ip;
@@ -390,7 +392,9 @@ void exec_step()
         case 0x3f:
             hf_set(cf_get());
             cf_set(!cf_get());
-            nf_set(1);
+            nf_set(0);
+            xf_set(_regs_curr.af.a & (1 << 3));
+            yf_set(_regs_curr.af.a & (1 << 5));
             break;
         case 0x40:
             _regs_prev.value = _regs_curr.bc.b;

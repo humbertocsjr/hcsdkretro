@@ -131,7 +131,18 @@ expr_t *parse_expr2()
 expr_t *parse_expr3()
 {
     expr_t *e = parse_expr2();
-    while(curr_is(TOK_ADD) || curr_is(TOK_SUB))
+    if(e->token == TOK_REGISTER)
+    {
+        if(curr_is(TOK_ADD) || curr_is(TOK_SUB))
+        {
+            expr_t *op = clone_expr(curr());
+            scan();
+            op->left = e;
+            op->right = parse_expr3();
+            e = op;
+        }
+    }
+    else while(curr_is(TOK_ADD) || curr_is(TOK_SUB))
     {
         expr_t *op = clone_expr(curr());
         scan();
