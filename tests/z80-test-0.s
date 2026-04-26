@@ -11,6 +11,7 @@ var_buffer equ 0x80
 section text
 global _main
 _main:
+    or [ix+0]
     ld de, var_fcb
     ld c, bdos.open_fcb
     call bdos

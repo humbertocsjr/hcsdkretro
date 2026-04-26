@@ -209,8 +209,8 @@ static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
         }
         else
         {
-            op = opcode->op5;
-            out(REC_DATA, 0, 0, &op, 1);
+            //op = opcode->op5;
+            //out(REC_DATA, 0, 0, &op, 1);
             op = opcode->op1 | reg2->value;
             out(REC_DATA, 0, 0, &op, 1);
             if((reg2->group & REG_IX_PTR) || (reg2->group & REG_IY_PTR))
