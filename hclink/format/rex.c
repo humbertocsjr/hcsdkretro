@@ -86,8 +86,11 @@ void format_process(step_t step)
     consts_set(_objs, "__data_start__", section_find("data")->start_pos);
     consts_set(_objs, "__bss_start__", section_find("bss")->start_pos);
     consts_set(_objs, "__text_end__", section_find("text")->position);
+    consts_set(_objs, "_etext", section_find("text")->position);
     consts_set(_objs, "__data_end__", section_find("data")->position);
+    consts_set(_objs, "_edata", section_find("data")->position);
     consts_set(_objs, "__bss_end__", section_find("bss")->position);
+    consts_set(_objs, "_ebss", section_find("bss")->position);
     consts_set(_objs, "__text_size__", section_find("text")->size);
     consts_set(_objs, "__data_size__", section_find("data")->size);
     consts_set(_objs, "__bss_size__", section_find("bss")->size);
