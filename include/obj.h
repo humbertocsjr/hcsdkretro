@@ -67,6 +67,7 @@ typedef enum rectype_t
     REC_CPU_8085, // intel 8085
     REC_CPU_Z80, // zilog z80
     REC_CPU_8086, // intel 8086
+    REC_CPU_6502, // mos technology 6502
     MASK_REC_TYPE = 0xf,
 } rectype_t;
 

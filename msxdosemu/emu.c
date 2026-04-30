@@ -2,6 +2,7 @@
 
 bool _debuggable = false;
 bool _debug = false;
+
 uint8_t _memory[0x100ff];
 z80_regs_t _regs_curr;
 z80_regs_t _regs_prev;
@@ -96,8 +97,8 @@ int main(int argc, char **argv)
         {
             if(com_name)
             {
-                strncpy(args, argv[i], 128 - strlen(args));
-                strncpy(args, " ", 128 - strlen(args));
+                if(args[0]) strncat(args, " ", 128 - strlen(args) - 1);
+                strncat(args, argv[i], 128 - strlen(args) - 1);
                 if(!args_first_fname)
                 {
                     args_first_fname = argv[i];
@@ -181,6 +182,9 @@ int main(int argc, char **argv)
     }
     fread(&_memory[0x100], 1, 0xef00, com_file);
     fclose(com_file);
+
+    // NOTE: ZEXDOC test skipping would go here
+    // (requires understanding the ZEXDOC's internal test table structure)
 
     memcpy(&_memory[0x81], args, 127);
     _memory[0x80] = strlen(args) > 127 ? 127 : strlen(args);

@@ -308,6 +308,11 @@ expr_t *scan()
         e.token = TOK_MUL;
         CATNEXT();
     }
+    else if(source_is('#'))
+    {
+        e.token = TOK_HASH;
+        CATNEXT();
+    }
     else if(source_is(':'))
     {
         e.token = TOK_COLON;

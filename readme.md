@@ -11,9 +11,6 @@ Tools ready to use:
 - Linker
 - Librarian
 - Project Builder
-
-Tools in development (Early test only):
-
 - MSX-DOS 1.0 / CP/M 2.2 Emulator
 
 Links:
@@ -38,7 +35,7 @@ Links:
 - HC Builder 
   - Embbed SDK BIN/Libraries/Include Path on install (Planned for 2.1)
 - HC Assembler 
-  - 6502 Target Support (Planned for 3.0)
+  - 65C02 Enhanced Instructions (Planned)
 - Integration on VSCode (Planned for 3.0)
 
 ## Supported Targets
@@ -47,6 +44,7 @@ Links:
 - **8085**:  Intel 8085 or Compatibles
 - **8086**:  Intel 8086/8088 or Compatibles (Single segment executable output)
 - **Z80**: Zilog Z80 or Compatibles
+- **6502**: MOS Technology 6502 or Compatibles
 
 ## Supported Hosts - Pre-compiled distribution
 
@@ -152,6 +150,23 @@ MSX / MSX-DOS Supported Features:
 - Console I/O
 - Prefilled FCBs at 0x5c and 0x6c with filenames in arguments
 - Z80 CPU
+- MSX-DOS 1.0 BDOS Calls:
+  - 0x00-0x2F: FCB-based file I/O, console, directory, date/time
+  - 0x32: Get MSX-DOS Version
+  - 0x62: Terminate with error code
+  - 0x6F: Get MSX-DOS Version Number
+- MSX-DOS 2.0 BDOS Calls:
+  - 0x40-0x47: File handle API (open/close/read/write/delete/seek/move)
+  - 0x48-0x49: Get/Set default drive
+  - 0x4A-0x4D: Directory operations (mkdir/rmdir/chdir/getdir)
+  - 0x4E-0x4F: Find First/Next (ASCIIZ wildcard)
+  - 0x50-0x53: File date/time, size, truncate (by handle)
+  - 0x54: Get disk free space
+  - 0x56: IOCTL
+  - 0x5A: Rename (ASCIIZ)
+  - 0x5B-0x5C: Get file info, set file attributes
+  - 0x5D-0x5F: Environment variables (get/set/list)
+  - 0x63: Get MSX-DOS 2.0 version
 
 Not implemented but planned features:
 
@@ -159,17 +174,13 @@ Not implemented but planned features:
 - I/O Ports
 - Slots and Memory Mapping
 - MegaRAM / Mapper
-- MSX-DOS 2.0 Support
 - Windows Console Support
 
 Not supported features:
 
 - MSX Sound Output
-- MSX-DOS CALL 5 ABI C=0x05 - Write Char to Printer
-- MSX-DOS CALL 5 ABI C=0x11 - Search FCB
-- MSX-DOS CALL 5 ABI C=0x12 - Search Next FCB
-- MSX-DOS CALL 5 ABI C=0x13 - Delete file FCB
-- MSX-DOS CALL 5 ABI C=0x18 - Get Login Vector
+- MSX-DOS CALL 5 ABI C=0x2F - Absolute Sector Read
+- MSX-DOS CALL 5 ABI C=0x30 - Absolute Sector Write
 
 # RetroLang for Retro Computing
 
@@ -208,6 +219,46 @@ Inspired in NASM Source Code Format.
   ```asm
   ld a, [0x1234]
   ld a, [bc]
+  ```
+
+## MOS Technology 6502 Support
+
+- Use # for immediate values, \[\] for memory references, ,x/,y for indexed modes.
+
+  ```asm
+  ; Implied instructions
+  nop
+  clc
+  tax
+  inx
+
+  ; Immediate (#)
+  lda #0xFF
+  ldx #0x80
+  cpx #0x0A
+
+  ; Zero Page / Absolute (automatically selected by value range)
+  lda 0x12        ; zero page (value < 0x100)
+  lda 0x1234      ; absolute (value >= 0x100)
+
+  ; Indexed X/Y (comma separated)
+  lda 0x12, x     ; zero page X
+  lda 0x1234, x   ; absolute X
+  ldx 0x12, y     ; zero page Y
+  ldx 0x1234, y   ; absolute Y
+
+  ; Indirect X (pre-indexed) — use + inside brackets
+  lda [0x12 + x]  ; LDA ($12,X)
+
+  ; Indirect Y (post-indexed) — brackets + comma Y
+  lda [0x12], y   ; LDA ($12),Y
+
+  ; Indirect Jump
+  jmp [0x1234]    ; JMP ($1234)
+
+  ; Branches
+  bne label
+  beq label
   ```
 
 ## Intel 8086/8088 Support
@@ -465,6 +516,7 @@ CPU IDs:
 - 0xF2: Zilog Z80
 - 0xF3: Intel 8086
 - 0xF4: Intel 8052
+- 0xF5: MOS Technology 6502
 
 ## How to load
 

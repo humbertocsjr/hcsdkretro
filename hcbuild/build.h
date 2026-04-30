@@ -41,6 +41,12 @@ typedef struct obj_t
     char name[1];
 } obj_t;
 
+typedef struct include_path_t
+{
+    char path[1024];
+    struct include_path_t *next;
+} include_path_t;
+
 // --== cfg.c ==--
 
 // Process project file
