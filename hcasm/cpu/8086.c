@@ -121,9 +121,11 @@ static bool is_address(expr_t *arg)
 
 static bool is_reg_address(expr_t *arg)
 {
-    if(arg->left && !is_value_or_ptr(arg->left)) return false;
-    if(arg->right && !is_value_or_ptr(arg->right)) return false;
-    return arg->token == TOK_INDEX_OPEN;
+    if(arg->token != TOK_INDEX_OPEN) return false;
+    expr_t *e = arg->right;
+    if(e->token == TOK_COLON && e->left && e->left->token == TOK_REGISTER && (e->left->reg->group & REG_SEG))
+        e = e->right;
+    return is_value_or_ptr(e);
 }
 
 static reg_t *get_mrm_reg(expr_t *arg)
@@ -138,6 +140,8 @@ static int get_mrm(expr_t *arg)
     reg_t *reg1 = NULL;
     reg_t *reg2 = NULL;
     expr_t *e = arg->right;
+    if(e->token == TOK_COLON && e->left && e->left->token == TOK_REGISTER && (e->left->reg->group & REG_SEG))
+        e = e->right;
     while(e)
     {
         if(e->token == TOK_REGISTER)
@@ -243,6 +247,25 @@ static int get_mrm(expr_t *arg)
     return 0;
 }
 
+static void emit_seg_prefix(int argc, expr_t *argv[])
+{
+    for(int i = 0; i < argc; i++)
+    {
+        if(argv[i]->token == TOK_INDEX_OPEN && argv[i]->right->token == TOK_COLON &&
+           argv[i]->right->left && argv[i]->right->left->token == TOK_REGISTER &&
+           (argv[i]->right->left->reg->group & REG_SEG))
+        {
+            static const uint8_t seg_ops[] = {0x26, 0x2E, 0x36, 0x3E};
+            uint8_t op = seg_ops[argv[i]->right->left->reg->value];
+            out(REC_DATA, 0, 0, &op, 1);
+            expr_t *colon = argv[i]->right;
+            argv[i]->right = colon->right;
+            colon->right = NULL;
+            free_expr(colon);
+        }
+    }
+}
+
 static void emit_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -263,6 +286,7 @@ static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
     bool include_value = false;
     uint8_t op = 0;
     if(argc != 2) error_expr(mnemonic, "invalid argument count.");
+    emit_seg_prefix(argc, argv);
     // op1: Reg/Mem with Reg to Reg
     // op2 op3: Imm to Reg/Memory
     // op4: Imm to Acc
@@ -378,6 +402,7 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
     bool include_value = false;
     uint8_t op = 0;
     if(argc != 2) error_expr(mnemonic, "invalid argument count.");
+    emit_seg_prefix(argc, argv);
     // op1: Reg/Mem with Reg to Reg
     // op2 op3: Imm to Reg/Memory
     // op4: Imm to Acc
@@ -552,6 +577,7 @@ static void emit_embbed_reg16bit_or_single_mrm(expr_t *mnemonic, opcode_t *opcod
     bool include_value = false;
     uint8_t op = opcode->op1;
     if(argc != 1) error_expr(mnemonic, "invalid argument count.");
+    emit_seg_prefix(argc, argv);
     if(is_reg_16bit(argv[0]))
     {
         validate(mnemonic, false, true, false, false);
@@ -600,6 +626,7 @@ static void emit_single_mrm(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
     bool include_value = false;
     uint8_t op = opcode->op1;
     if(argc != 1) error_expr(mnemonic, "invalid argument count.");
+    emit_seg_prefix(argc, argv);
     if(is_reg_8bit(argv[0]))
     {
         validate(mnemonic, true, false, false, false);
@@ -650,6 +677,7 @@ static void emit_reg16bit_single_mrm(expr_t *mnemonic, opcode_t *opcode, int arg
     bool include_value = false;
     uint8_t op = opcode->op1;
     if(argc != 2) error_expr(mnemonic, "invalid argument count.");
+    emit_seg_prefix(argc, argv);
     if(!is_acc_16bit(argv[0])) error_expr(argv[0], "16 bit register expected.");
     if(is_address(argv[1]))
     {
@@ -783,6 +811,7 @@ static void emit_push_pop(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *
     bool include_value = false;
     uint8_t op = opcode->op1;
     if(argc != 1) error_expr(mnemonic, "invalid argument count.");
+    emit_seg_prefix(argc, argv);
     if(is_reg_16bit(argv[0]))
     {
         validate(mnemonic, false, true, false, false);
@@ -831,6 +860,7 @@ static void emit_shift_rotate(expr_t *mnemonic, opcode_t *opcode, int argc, expr
     uint8_t op = opcode->op1;
     uint8_t op2 = opcode->op2;
     if(argc != 2) error_expr(mnemonic, "invalid argument count.");
+    emit_seg_prefix(argc, argv);
     if(is_reg_8bit(argv[0]))
     {
         validate(mnemonic, true, false, false, false);
@@ -1070,6 +1100,7 @@ static void emit_call(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
     // op5: call near memory pointer
     // op6: call far memory pointer
     validate_distance(mnemonic, false, true, true);
+    emit_seg_prefix(argc, argv);
     if(argc == 2 && mnemonic->force_far) 
     {
         op = opcode->op2;
@@ -1242,7 +1273,6 @@ opcode_t _opcode[] =
     {"into",    0b11001110, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
     {"iret",    0b11001111, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
     {"lahf",    0b10011111, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
-    {"lahf",    0b10011111, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
     {"lds",     0b11000101, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_reg16bit_single_mrm},
     {"les",     0b11000100, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_reg16bit_single_mrm},
     {"lea",     0b10001101, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_reg16bit_single_mrm},
@@ -1276,7 +1306,7 @@ opcode_t _opcode[] =
     {"sar",     0b11010000, 0b00111000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_shift_rotate},
     {"shl",     0b11010000, 0b00100000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_shift_rotate},
     {"shr",     0b11010000, 0b00101000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_shift_rotate},
-    {"sbb",     0b00011000, 0b10000000, 0b00011000, 0b00001110, 0b00000000, 0b00000000, emit_mrm_simple},
+    {"sbb",     0b00011000, 0b10000000, 0b00011000, 0b00011100, 0b00000000, 0b00000000, emit_mrm_simple},
     {"scasb",   0b10101110, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
     {"scasw",   0b10101111, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
     {"stc",     0b11111001, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
@@ -1284,10 +1314,10 @@ opcode_t _opcode[] =
     {"sti",     0b11111011, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
     {"stosb",   0b10101010, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
     {"stosw",   0b10101011, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
-    {"sub",     0b00101000, 0b10000000, 0b00101000, 0b00010110, 0b00000000, 0b00000000, emit_mrm_simple},
+    {"sub",     0b00101000, 0b10000000, 0b00101000, 0b00101100, 0b00000000, 0b00000000, emit_mrm_simple},
     {"test",    0b10000100, 0b11110110, 0b00000000, 0b10101000, 0b00000000, 0b00000000, emit_mrm_simple},
     {"wait",    0b10011011, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
-    {"xchg",    0b10010000, 0b10000110, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_mrm_simple},
+    {"xchg",    0b10000110, 0b10000110, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_mrm_simple},
     {"xlat",    0b11010111, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
     {"xor",     0b00110000, 0b10000000, 0b00110000, 0b00110100, 0b00000000, 0b00000000, emit_mrm_simple},
     {"jo",      0b01110000, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},
@@ -1320,7 +1350,6 @@ opcode_t _opcode[] =
     {"jg",      0b01111111, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},
     {"jcxz",    0b11100011, 0b11101001, 0b11101010, 0b11101011, 0b00000000, 0b00000000, emit_loop},
     {"jcxe",    0b11100011, 0b11101001, 0b11101010, 0b11101011, 0b00000000, 0b00000000, emit_loop},
-    {"jecxz",   0b11100011, 0b11101001, 0b11101010, 0b11101011, 0b00000000, 0b00000000, emit_loop},
     {"jecxz",   0b11100011, 0b11101001, 0b11101010, 0b11101011, 0b00000000, 0b00000000, emit_loop},
     {"jmp",     0b11101001, 0b11101010, 0b11111111, 0b00100000, 0b00100000, 0b00101000, emit_call},
     {"loop",    0b11100010, 0b11101001, 0b11101010, 0b11101011, 0b00000000, 0b00000000, emit_loop},

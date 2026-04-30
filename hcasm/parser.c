@@ -102,16 +102,7 @@ expr_t *parse_expr0()
 
 expr_t *parse_expr1()
 {
-    expr_t *e = parse_expr0();
-    while(curr_is(TOK_COLON))
-    {
-        expr_t *op = clone_expr(curr());
-        scan();
-        op->left = e;
-        op->right = parse_expr0();
-        e = op;
-    }
-    return e;
+    return parse_expr0();
 }
 
 expr_t *parse_expr2()
@@ -148,6 +139,14 @@ expr_t *parse_expr3()
         scan();
         op->left = e;
         op->right = parse_expr2();
+        e = op;
+    }
+    while(curr_is(TOK_COLON))
+    {
+        expr_t *op = clone_expr(curr());
+        scan();
+        op->left = e;
+        op->right = parse_expr();
         e = op;
     }
     return e;
