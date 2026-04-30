@@ -5,6 +5,13 @@ static expr_t *_next = NULL;
 
 #define CAT() c[0] = source_getc(); strncat(token, c, 255);
 #define CATNEXT() CAT(); source_nextc();
+
+static inline int hex_val(char c)
+{
+    if(c >= '0' && c <= '9') return c - '0';
+    if(c >= 'a' && c <= 'f') return c - 'a' + 10;
+    return c - 'A' + 10;
+}
 #define CATESC() c[0] = source_getescapec(); strncat(token, c, 255);
 #define CATESCNEXT() CATESC(); source_nextc();
 
@@ -135,11 +142,40 @@ expr_t *scan()
         }
         else 
         {
-            while(source_between('0', '7'))
+            bool has_non_octal = false;
+            int hex_count = 0;
+            while(source_between('0', '9') || source_between('a', 'f') || source_between('A', 'F'))
             {
-                e.value <<= 3;
-                e.value += source_getc() - '0';
+                if(!source_between('0', '7')) has_non_octal = true;
                 CATNEXT();
+                hex_count++;
+            }
+            if(source_is('h') || source_is('H'))
+            {
+                CATNEXT();
+                char *p = token;
+                e.value = 0;
+                while(*p && *p != 'h' && *p != 'H')
+                {
+                    e.value = (e.value << 4) | hex_val(*p);
+                    p++;
+                }
+            }
+            else if(!has_non_octal && hex_count > 0)
+            {
+                e.value = 0;
+                char *p = token;
+                while(*p)
+                {
+                    e.value <<= 3;
+                    e.value += *p - '0';
+                    p++;
+                }
+            }
+            else
+            {
+                strcpy(token, "0");
+                e.value = 0;
             }
         }
     }
@@ -152,15 +188,16 @@ expr_t *scan()
             e.value += source_getc() - '0';
             CATNEXT();
         }
-    }
-    else if(source_between('0', '9'))
-    {
-        e.token = TOK_VALUE;
-        while(source_between('0', '9'))
+        if(source_is('h') || source_is('H'))
         {
-            e.value *= 10;
-            e.value += source_getc() - '0';
             CATNEXT();
+            char *p = token;
+            e.value = 0;
+            while(*p && *p != 'h' && *p != 'H')
+            {
+                e.value = (e.value << 4) | hex_val(*p);
+                p++;
+            }
         }
     }
     else if(source_between('0', '9') || source_between('a', 'z') || source_between('A', 'Z') || source_is('_') || source_is('.'))
@@ -184,6 +221,30 @@ expr_t *scan()
                 break;
             }
             reg++;
+        }
+        if(e.token == TOK_SYMBOL)
+        {
+            int tlen = strlen(token);
+            if(tlen > 1 && (token[tlen-1] == 'h' || token[tlen-1] == 'H'))
+            {
+                bool is_hex = true;
+                for(int i = 0; i < tlen-1; i++)
+                {
+                    char c = token[i];
+                    if(!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')))
+                    {
+                        is_hex = false;
+                        break;
+                    }
+                }
+                if(is_hex)
+                {
+                    e.token = TOK_VALUE;
+                    e.value = 0;
+                    for(int i = 0; i < tlen-1; i++)
+                        e.value = (e.value << 4) | hex_val(token[i]);
+                }
+            }
         }
         if(token[0] == '.')
         {
