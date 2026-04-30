@@ -131,6 +131,11 @@ static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
             {
                 arg = argv[1];
                 is_8bit_op = true;
+                if(!opcode->op5 && reg1->value != 7 && reg2->value == 7)
+                {
+                    reg_t *tmp = reg1; reg1 = reg2; reg2 = tmp;
+                    arg = argv[0];
+                }
             }
             else
             {
@@ -180,6 +185,16 @@ static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
     else error_expr(mnemonic, "invalid argument count.");
     if(is_8bit_op && reg1 && reg2 && (opcode->op1 || opcode->op6 == 0xff))
     {
+        if(reg1->group & REG_IX_PTR)
+        {
+            op = 0xdd;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
+        else if(reg1->group & REG_IY_PTR)
+        {
+            op = 0xfd;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
         if(reg2->group & REG_IX_PTR)
         {
             op = 0xdd;
@@ -194,7 +209,17 @@ static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
         {
             op = opcode->op5;
             out(REC_DATA, 0, 0, &op, 1);
-            if((reg2->group & REG_IX_PTR) || (reg2->group & REG_IY_PTR))
+            if(reg1->group & (REG_IX_PTR | REG_IY_PTR))
+            {
+                expr_t *disp = filter_registers(argv[0]);
+                if(generate(disp->right, 2, false))
+                {
+                    out(REC_EXPR_PUSH_OFFSET, 2, 0, 0, 0);
+                    out(REC_EXPR_SUB, 0, 0, 0, 0);
+                }
+                out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
+            }
+            else if(reg2->group & (REG_IX_PTR | REG_IY_PTR))
             {
                 arg = filter_registers(arg);
                 if(generate(arg->right, 2, false))
@@ -209,11 +234,19 @@ static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
         }
         else
         {
-            //op = opcode->op5;
-            //out(REC_DATA, 0, 0, &op, 1);
             op = opcode->op1 | reg2->value;
             out(REC_DATA, 0, 0, &op, 1);
-            if((reg2->group & REG_IX_PTR) || (reg2->group & REG_IY_PTR))
+            if(reg1->group & (REG_IX_PTR | REG_IY_PTR))
+            {
+                expr_t *disp = filter_registers(argv[0]);
+                if(generate(disp->right, 2, false))
+                {
+                    out(REC_EXPR_PUSH_OFFSET, 2, 0, 0, 0);
+                    out(REC_EXPR_SUB, 0, 0, 0, 0);
+                }
+                out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
+            }
+            else if(reg2->group & (REG_IX_PTR | REG_IY_PTR))
             {
                 arg = filter_registers(arg);
                 if(generate(arg->right, 2, false))
@@ -314,6 +347,21 @@ static void emit_cmp__offset16bit(expr_t *mnemonic, opcode_t *opcode, int argc, 
         op |= cmp->value_aux << 3;
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[1], -1, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+    }
+    else if(argc == 1 && argv[0]->token == TOK_INDEX_OPEN && argv[0]->right->token == TOK_REGISTER && (argv[0]->right->reg->group & REG_MAIN_PTR))
+    {
+        if(argv[0]->right->reg->group & REG_IX_PTR)
+        {
+            op = 0xdd;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
+        else if(argv[0]->right->reg->group & REG_IY_PTR)
+        {
+            op = 0xfd;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
+        op = 0xe9;
+        out(REC_DATA, 0, 0, &op, 1);
     }
     else if(argc == 1 && opcode->op2)
     {
@@ -701,8 +749,28 @@ static void emit_bit(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[
     if(is_value_only(argv[0]) && (reg = tryget_reg8bit(argv[1], true)))
     {
         if(argv[0]->token != TOK_VALUE) error_expr(argv[0], "constant expression expected.");
+        if(reg->group & REG_IX_PTR)
+        {
+            op = 0xdd;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
+        else if(reg->group & REG_IY_PTR)
+        {
+            op = 0xfd;
+            out(REC_DATA, 0, 0, &op, 1);
+        }
         op = 0xcb;
         out(REC_DATA, 0, 0, &op, 1);
+        if((reg->group & REG_IX_PTR) || (reg->group & REG_IY_PTR))
+        {
+            argv[1] = filter_registers(argv[1]);
+            if(generate(argv[1]->right, 2, false))
+            {
+                out(REC_EXPR_PUSH_OFFSET, 2, 0, 0, 0);
+                out(REC_EXPR_SUB, 0, 0, 0, 0);
+            }
+            out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
+        }
         op = opcode->op1 | argv[0]->value << 3 | reg->value;
         out(REC_DATA, 0, 0, &op, 1);
     }
@@ -739,7 +807,25 @@ static void emit_out(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[
         generate(argv[0]->right, 0, false);
         out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
     }
-    else error_expr(argv[0], "invalid constant expression.");
+    else if(is_8bit_register(argv[1]) && tryget_reg(argv[0], REG_CMP))
+    {
+        reg_t *c_port = tryget_reg(argv[0], REG_CMP);
+        if(c_port->value_aux != 3) error_expr(argv[0], "register C expected.");
+        op = 0xed;
+        out(REC_DATA, 0, 0, &op, 1);
+        op = 0x41 | (argv[1]->reg->value << 3);
+        out(REC_DATA, 0, 0, &op, 1);
+    }
+    else if(tryget_reg(argv[0], REG_CMP) && is_value_only(argv[1]))
+    {
+        reg_t *c_port = tryget_reg(argv[0], REG_CMP);
+        if(c_port->value_aux != 3) error_expr(argv[0], "register C expected.");
+        op = 0xed;
+        out(REC_DATA, 0, 0, &op, 1);
+        op = 0x71;
+        out(REC_DATA, 0, 0, &op, 1);
+    }
+    else error_expr(argv[0], "invalid arguments.");
 }
 
 static void emit_in(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
@@ -753,7 +839,16 @@ static void emit_in(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[]
         generate(argv[1]->right, 0, false);
         out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
     }
-    else error_expr(argv[0], "invalid constant expression.");
+    else if(is_8bit_register(argv[0]) && tryget_reg(argv[1], REG_CMP))
+    {
+        reg_t *c_port = tryget_reg(argv[1], REG_CMP);
+        if(c_port->value_aux != 3) error_expr(argv[1], "register C expected.");
+        op = 0xed;
+        out(REC_DATA, 0, 0, &op, 1);
+        op = 0x40 | (argv[0]->reg->value << 3);
+        out(REC_DATA, 0, 0, &op, 1);
+    }
+    else error_expr(argv[0], "invalid arguments.");
 }
 
 reg_t _regs[] = 
@@ -851,8 +946,6 @@ opcode_t _opcode[] =
     {"sra",     0x28, 0x00, 0x00, 0x00, 0xcb, 0x00, emit_logic},
     {"sll",     0x30, 0x00, 0x00, 0x00, 0xcb, 0x00, emit_logic},
     {"srl",     0x38, 0x00, 0x00, 0x00, 0xcb, 0x00, emit_logic},
-    {"rlc",     0x00, 0x00, 0x00, 0x00, 0xcb, 0x00, emit_logic},
-    {"rrc",     0x08, 0x00, 0x00, 0x00, 0xcb, 0x00, emit_logic},
     {"bit",     0x40, 0x00, 0x00, 0x00, 0x00, 0x00, emit_bit},
     {"res",     0x80, 0x00, 0x00, 0x00, 0x00, 0x00, emit_bit},
     {"set",     0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, emit_bit},
