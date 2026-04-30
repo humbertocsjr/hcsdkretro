@@ -15,11 +15,22 @@ char *dirname(char *path);
 #endif
 #endif
 
+// --== Configuration state (CLI + env overrides) ==--
+static char cfg_sdk_path[1024] = "";
+static char cfg_asm_path[1024] = "";
+static char cfg_link_path[1024] = "";
+static char cfg_lib_path[1024] = "";
+static char cfg_output_dir[1024] = "";
+static bool cfg_cli_verbose = false;
+static bool cfg_cli_dump = false;
+static bool cfg_cli_keep = false;
+static include_path_t *cfg_cli_include_paths = NULL;
+
 obj_t *_objs = NULL;
 obj_t *_last_obj = NULL;
 char *_path = "";
 
-void remove_ext(char *filename) 
+void remove_ext(char *filename)
 {
     char *last_dot = strrchr(filename, '.');
     if (last_dot != NULL && last_dot != filename) {
@@ -27,25 +38,146 @@ void remove_ext(char *filename)
     }
 }
 
-char *get_ext(char *filename) 
+char *get_ext(char *filename)
 {
     char *last_dot = strrchr(filename, '.');
-    if (last_dot != NULL && last_dot != filename) 
-    {
+    if (last_dot != NULL && last_dot != filename) {
         return last_dot;
     }
     return "";
 }
 
-void help()
+static void append_include_path(const char *path)
+{
+    include_path_t *node = malloc(sizeof(include_path_t));
+    strncpy(node->path, path, sizeof(node->path) - 1);
+    node->path[sizeof(node->path) - 1] = '\0';
+    node->next = cfg_cli_include_paths;
+    cfg_cli_include_paths = node;
+}
+
+static void resolve_config(void)
+{
+    char *env;
+
+    if (!cfg_sdk_path[0]) {
+        env = getenv("HC_SDK_PATH");
+        if (env) {
+            strncpy(cfg_sdk_path, env, sizeof(cfg_sdk_path) - 1);
+            cfg_sdk_path[sizeof(cfg_sdk_path) - 1] = '\0';
+        } else {
+            const char *prj = get_value("config", "", "sdk_path");
+            strncpy(cfg_sdk_path, prj, sizeof(cfg_sdk_path) - 1);
+            cfg_sdk_path[sizeof(cfg_sdk_path) - 1] = '\0';
+        }
+    }
+
+    if (!cfg_asm_path[0] && cfg_sdk_path[0]) {
+        strncpy(cfg_asm_path, cfg_sdk_path, sizeof(cfg_asm_path) - 1);
+        cfg_asm_path[sizeof(cfg_asm_path) - 1] = '\0';
+    }
+    if (!cfg_link_path[0] && cfg_sdk_path[0]) {
+        strncpy(cfg_link_path, cfg_sdk_path, sizeof(cfg_link_path) - 1);
+        cfg_link_path[sizeof(cfg_link_path) - 1] = '\0';
+    }
+    if (!cfg_lib_path[0] && cfg_sdk_path[0]) {
+        strncpy(cfg_lib_path, cfg_sdk_path, sizeof(cfg_lib_path) - 1);
+        cfg_lib_path[sizeof(cfg_lib_path) - 1] = '\0';
+    }
+
+    if (!cfg_output_dir[0]) {
+        env = getenv("HC_OUTPUT_DIR");
+        if (env) {
+            strncpy(cfg_output_dir, env, sizeof(cfg_output_dir) - 1);
+            cfg_output_dir[sizeof(cfg_output_dir) - 1] = '\0';
+        } else {
+            const char *prj = get_value("config", "", "output_dir");
+            strncpy(cfg_output_dir, prj, sizeof(cfg_output_dir) - 1);
+            cfg_output_dir[sizeof(cfg_output_dir) - 1] = '\0';
+        }
+    }
+}
+
+static void cmd_puts(char *buf, size_t size, const char *s)
+{
+    strncat(buf, s, size - strlen(buf) - 1);
+}
+
+static void cmd_put_base(char *buf, size_t size, const char *base)
+{
+    if (base && base[0]) {
+        cmd_puts(buf, size, base);
+        size_t len = strlen(buf);
+        if (len > 0 && buf[len-1] != PATHSEPARATOR && len + 1 < size) {
+            buf[len] = PATHSEPARATOR;
+            buf[len+1] = '\0';
+        }
+    }
+}
+
+static void cmd_put_tool(char *buf, size_t size, const char *s)
+{
+    cmd_puts(buf, size, s);
+    #if defined(DOS_HOST) || defined(WINDOWS_HOST)
+    cmd_puts(buf, size, ".exe");
+    #endif
+}
+
+static void resolve_output_path(char *out, size_t out_size, const char *filename)
+{
+    if (filename[0] == PATHSEPARATOR) {
+        strncpy(out, filename, out_size - 1);
+        out[out_size - 1] = '\0';
+        return;
+    }
+    const char *base = cfg_output_dir[0] ? cfg_output_dir : _path;
+    int n = snprintf(out, out_size, "%s", base);
+    if (n > 0 && out[n-1] != PATHSEPARATOR && (size_t)n + 1 < out_size) {
+        out[n] = PATHSEPARATOR;
+        out[n+1] = '\0';
+    }
+    strncat(out, filename, out_size - strlen(out) - 1);
+}
+
+static void resolve_source_path(char *out, size_t out_size, const char *filename)
+{
+    if (filename[0] != PATHSEPARATOR) {
+        int n = snprintf(out, out_size, "%s%s%s",
+            _path,
+            (*_path && _path[strlen(_path)-1] != PATHSEPARATOR) ? PATHSEPARATORSTR : "",
+            filename);
+        if (n < 0 || (size_t)n >= out_size) {
+            out[out_size - 1] = '\0';
+        }
+    } else {
+        strncpy(out, filename, out_size - 1);
+        out[out_size - 1] = '\0';
+    }
+}
+
+void help(void)
 {
     printf("HC Builder for Retro Computing v%d.%d R%d\n", VERSION, SUBVERSION, REVISION);
     printf("HC Software Development Kit for Retro Computing\n");
     printf("Copyright (c) 2025,2026 Humberto Costa dos Santos Junior\n\n");
-    printf("Usage: hcbuild [PROJECT FILE] [COMMAND] [CONFIGURATION NAME (default: release)]\n");
+    printf("Usage: hcbuild [options] <project.prj> <command> [config]\n");
     printf("Commands:\n");
-    printf(" make           : Make project configuration\n");
-    printf(" clean          : Clean project output files\n");
+    printf("  make           Build project configuration\n");
+    printf("  clean          Remove project output files\n");
+    printf("Options:\n");
+    printf("  --sdk-path <dir>     Set SDK tools directory\n");
+    printf("  --asm-path <dir>     Set assembler directory\n");
+    printf("  --link-path <dir>    Set linker directory\n");
+    printf("  --lib-path <dir>     Set librarian directory\n");
+    printf("  --output-dir <dir>   Set output directory\n");
+    printf("  -I <dir>             Add include path for RetroLang\n");
+    printf("  --verbose, -v        Enable verbose output\n");
+    printf("  --dump               Generate assembly dump files\n");
+    printf("  --keep               Keep intermediate files\n");
+    printf("  --help, -h           Show this help\n");
+    printf("\nEnvironment variables:\n");
+    printf("  HC_SDK_PATH          SDK tools directory\n");
+    printf("  HC_OUTPUT_DIR        Output directory\n");
     exit(1);
 }
 
@@ -57,127 +189,115 @@ void make_files(section_t *section)
     char temp_name[2048];
     char obj_name[2048];
     char dump_name[2048];
-    char *sdk_path = get_value("config", "", "sdk_path");
     bool ok = false;
+    bool verbose = cfg_cli_verbose || get_value_bool("config", "", "verbose");
+    bool dump = cfg_cli_dump || get_value_bool("config", "", "dump");
+    bool keep = cfg_cli_keep || get_value_bool("config", "", "keep");
+    const char *asm_dir = cfg_asm_path[0] ? cfg_asm_path : cfg_sdk_path;
 
-    if(!section) return;
+    if (!section) return;
     keyvalue_t *kv = section->keys;
-    while(kv)
-    {
+    while (kv) {
         ok = false;
-        if(kv->key[0] != PATHSEPARATOR)
-        {
-            strcpy(source_name, _path);
-            if(*_path && _path[strlen(_path)-1] != PATHSEPARATOR) strcat(source_name, PATHSEPARATORSTR);
-            strncat(source_name, kv->key, 1000);
-        }
-        else strncpy(source_name, kv->key, 1000);
-        strcpy(obj_name, source_name);
+        resolve_source_path(source_name, sizeof(source_name), kv->key);
+
+        snprintf(obj_name, sizeof(obj_name), "%s", source_name);
         remove_ext(obj_name);
-        strcat(obj_name, ".obj");
-        strcpy(dump_name, source_name);
+        strncat(obj_name, ".obj", sizeof(obj_name) - strlen(obj_name) - 1);
+
+        snprintf(dump_name, sizeof(dump_name), "%s", source_name);
         remove_ext(dump_name);
-        strcat(dump_name, ".dump");
-        if(!strcmp(get_ext(source_name), ".__s"))
-        {
+        strncat(dump_name, ".dump", sizeof(dump_name) - strlen(dump_name) - 1);
+
+        const char *ext = get_ext(source_name);
+        if (!strcmp(ext, ".__s")) {
             fprintf(stderr, "error: invalid file extension: %s\n", source_name);
             exit(1);
         }
-        if(!strcmp(get_ext(source_name), ".rl") || !strcmp(get_ext(source_name), ".RL"))
-        {
+
+        if (!strcmp(ext, ".rl") || !strcmp(ext, ".RL")) {
             ok = true;
-            strcpy(temp_name, source_name);
+            snprintf(temp_name, sizeof(temp_name), "%s", source_name);
             remove_ext(temp_name);
-            strcat(temp_name, ".__s");
-            strcpy(cmd, sdk_path);
-            if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+            strncat(temp_name, ".__s", sizeof(temp_name) - strlen(temp_name) - 1);
+
+            cmd[0] = '\0';
+            cmd_put_base(cmd, sizeof(cmd), cfg_sdk_path);
             #ifdef DOS_HOST
-            strcat(cmd, "rlang");
-            if(section->subsection[0] == '8' && section->subsection[1] == '0') strcat(cmd, &section->subsection[2]);
-            else strcat(cmd, section->subsection);
-            strcat(cmd, ".exe");
+            cmd_puts(cmd, sizeof(cmd), "rlang");
+            if (section->subsection[0] == '8' && section->subsection[1] == '0')
+                cmd_puts(cmd, sizeof(cmd), &section->subsection[2]);
+            else
+                cmd_puts(cmd, sizeof(cmd), section->subsection);
+            cmd_put_tool(cmd, sizeof(cmd), "");
             #else
-            #ifdef WINDOWS_HOST
-            strcat(cmd, "retrolang-");
-            strcat(cmd, section->subsection);
-            strcat(cmd, ".exe");
-            #else
-            strcat(cmd, "retrolang-");
-            strcat(cmd, section->subsection);
+            cmd_puts(cmd, sizeof(cmd), "retrolang-");
+            cmd_puts(cmd, sizeof(cmd), section->subsection);
+            cmd_put_tool(cmd, sizeof(cmd), "");
             #endif
-            #endif
+
+            for (include_path_t *inc = cfg_cli_include_paths; inc; inc = inc->next) {
+                snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -I %s", inc->path);
+            }
             section_t *rl_include_path = get_section("retrolang", "include_path");
-            if(rl_include_path)
-            {
-                keyvalue_t *kv = rl_include_path->keys;
-                while(kv)
-                {
-                    strcat(cmd, " -I ");
-                    strcat(cmd, kv->key);
-                    if(cmd[strlen(cmd)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
-                    kv = kv->next;
+            if (rl_include_path) {
+                keyvalue_t *ikv = rl_include_path->keys;
+                while (ikv) {
+                    snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -I %s", ikv->key);
+                    ikv = ikv->next;
                 }
             }
-            strcat(cmd, " -o ");
-            strcat(cmd, temp_name);
-            strcat(cmd, " ");
-            strcat(cmd, source_name);
-            if(get_value_bool("config", "", "verbose")) printf("%s\n", cmd);
+            snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -o %s %s", temp_name, source_name);
+
+            if (verbose) printf("%s\n", cmd);
             st = system(cmd);
-            if(st) exit(-1);
-            strcpy(source_name, temp_name);
+            if (st) exit(-1);
+            strncpy(source_name, temp_name, sizeof(source_name) - 1);
         }
-        if(!strcmp(get_ext(source_name), ".s") || !strcmp(get_ext(source_name), ".S") || !strcmp(get_ext(source_name), ".__s"))
-        {
+
+        ext = get_ext(source_name);
+        if (!strcmp(ext, ".s") || !strcmp(ext, ".S") || !strcmp(ext, ".__s")) {
             ok = true;
-            strcpy(cmd, sdk_path);
-            if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+            cmd[0] = '\0';
+            cmd_put_base(cmd, sizeof(cmd), asm_dir);
             #ifdef DOS_HOST
-            strcat(cmd, "hcasm");
-            if(section->subsection[0] == '8' && section->subsection[1] == '0') strcat(cmd, &section->subsection[2]);
-            else strcat(cmd, section->subsection);
-            strcat(cmd, ".exe");
+            cmd_puts(cmd, sizeof(cmd), "hcasm");
+            if (section->subsection[0] == '8' && section->subsection[1] == '0')
+                cmd_puts(cmd, sizeof(cmd), &section->subsection[2]);
+            else
+                cmd_puts(cmd, sizeof(cmd), section->subsection);
+            cmd_put_tool(cmd, sizeof(cmd), "");
             #else
-            #ifdef WINDOWS_HOST
-            strcat(cmd, "hcasm-");
-            strcat(cmd, section->subsection);
-            strcat(cmd, ".exe");
-            #else
-            strcat(cmd, "hcasm-");
-            strcat(cmd, section->subsection);
+            cmd_puts(cmd, sizeof(cmd), "hcasm-");
+            cmd_puts(cmd, sizeof(cmd), section->subsection);
+            cmd_put_tool(cmd, sizeof(cmd), "");
             #endif
-            #endif
-            strcat(cmd, " -o ");
-            strcat(cmd, obj_name);
-            if(get_value_bool("config", "", "dump"))
-            {
-                strcat(cmd, " -dump ");
-                strcat(cmd, dump_name);
+
+            snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -o %s", obj_name);
+            if (dump) {
+                snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -dump %s", dump_name);
             }
-            strcat(cmd, " ");
-            strcat(cmd, source_name);
-            if(get_value_bool("config", "", "verbose")) printf("%s\n", cmd);
+            snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " %s", source_name);
+
+            if (verbose) printf("%s\n", cmd);
             st = system(cmd);
-            if(st) exit(-1);
+            if (st) exit(-1);
+
             obj_t *obj = malloc(sizeof(obj_t) + strlen(obj_name));
             strcpy(obj->name, obj_name);
             obj->next = NULL;
-            if(_last_obj)
-            {
+            if (_last_obj)
                 _last_obj->next = obj;
-            }
             else
-            {
                 _objs = obj;
-            }
             _last_obj = obj;
         }
-        if(!strcmp(get_ext(source_name), ".__s"))
-        {
-            if(!get_value_bool("config", "", "keep")) remove(source_name);
+
+        if (!strcmp(ext, ".__s")) {
+            if (!keep) remove(source_name);
         }
-        if(!ok)
-        {
+
+        if (!ok) {
             fprintf(stderr, "error: extension not supported: %s\n", source_name);
             exit(1);
         }
@@ -188,18 +308,20 @@ void make_files(section_t *section)
 void clean_files(section_t *section)
 {
     char obj_name[1024];
-    if(!section) return;
+    char file_name[1024];
+    if (!section) return;
+    bool dump = cfg_cli_dump || get_value_bool("config", "", "dump");
     keyvalue_t *kv = section->keys;
-    while(kv)
-    {
-        strncpy(obj_name, kv->key, 1000);
+    while (kv) {
+        resolve_source_path(file_name, sizeof(file_name), kv->key);
+        strncpy(obj_name, file_name, sizeof(obj_name) - 1);
+        obj_name[sizeof(obj_name) - 1] = '\0';
         remove_ext(obj_name);
-        strcat(obj_name, ".obj");
+        strncat(obj_name, ".obj", sizeof(obj_name) - strlen(obj_name) - 1);
         remove(obj_name);
-        if(get_value_bool("config", "", "dump"))
-        {
+        if (dump) {
             remove_ext(obj_name);
-            strcat(obj_name, ".dump");
+            strncat(obj_name, ".dump", sizeof(obj_name) - strlen(obj_name) - 1);
             remove(obj_name);
         }
         kv = kv->next;
@@ -217,12 +339,16 @@ void make_link(section_t *section, char *config)
     char *data_offset = NULL;
     char *bss_offset = NULL;
     char *align = NULL;
-    char *sdk_path = get_value("config", "", "sdk_path");
-    if(!section)
-    {
+    char output_path[2048];
+    const char *link_dir = cfg_link_path[0] ? cfg_link_path : cfg_sdk_path;
+    const char *lib_dir = cfg_lib_path[0] ? cfg_lib_path : cfg_sdk_path;
+    bool verbose = cfg_cli_verbose || get_value_bool("config", "", "verbose");
+
+    if (!section) {
         fprintf(stderr, "error: link configuration not found: %s\n", config);
         exit(1);
     }
+
     out_file = get_value(section->name, section->subsection, "filename");
     sym_file = get_value(section->name, section->subsection, "symbols");
     format = get_value(section->name, section->subsection, "format");
@@ -230,177 +356,211 @@ void make_link(section_t *section, char *config)
     data_offset = get_value(section->name, section->subsection, "data");
     bss_offset = get_value(section->name, section->subsection, "bss");
     align = get_value(section->name, section->subsection, "align");
-    if(strlen(format) == 0) format = "bin";
-    if(strlen(out_file) == 0) out_file = "a.out";
+    if (strlen(format) == 0) format = "bin";
+    if (strlen(out_file) == 0) out_file = "a.out";
+
+    resolve_output_path(output_path, sizeof(output_path), out_file);
+
     obj_t *obj = _objs;
-    size_t cmd_size = 5120 + strlen(out_file) + strlen(_path) + strlen(sym_file) + strlen(sdk_path);
-    while(obj)
-    {
-        cmd_size += 2 + strlen(obj->name);
+    size_t cmd_size = 8192;
+    cmd_size += strlen(output_path) + strlen(sym_file) + strlen(text_offset)
+              + strlen(data_offset) + strlen(bss_offset) + strlen(align) + 256;
+    while (obj) {
+        cmd_size += strlen(obj->name) + 4;
         obj = obj->next;
     }
     cmd = malloc(cmd_size);
-    if(!strcmp(format, "lib"))
-    {
-        strcpy(cmd, sdk_path);
-        if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+
+    if (!strcmp(format, "lib")) {
+        cmd[0] = '\0';
+        cmd_put_base(cmd, cmd_size, lib_dir);
+        cmd_puts(cmd, cmd_size, "hclib");
+        cmd_put_tool(cmd, cmd_size, "");
+        cmd_puts(cmd, cmd_size, " ");
+        cmd_puts(cmd, cmd_size, output_path);
+    } else {
+        cmd[0] = '\0';
+        cmd_put_base(cmd, cmd_size, link_dir);
         #ifdef DOS_HOST
-        strcat(cmd, "hclib.exe ");
+        cmd_puts(cmd, cmd_size, "hclnk");
+        cmd_puts(cmd, cmd_size, format);
+        cmd_put_tool(cmd, cmd_size, "");
         #else
-        #ifdef WINDOWS_HOST
-        strcat(cmd, "hclib.exe ");
-        #else
-        strcat(cmd, "hclib ");
+        cmd_puts(cmd, cmd_size, "hclink-");
+        cmd_puts(cmd, cmd_size, format);
+        cmd_put_tool(cmd, cmd_size, "");
         #endif
-        #endif
-        if(out_file[0] != PATHSEPARATOR)
-        {
-            strcat(cmd, _path);
-            if(*_path && _path[strlen(_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+
+        snprintf(cmd + strlen(cmd), cmd_size - strlen(cmd), " -o %s", output_path);
+
+        if (strlen(text_offset)) {
+            snprintf(cmd + strlen(cmd), cmd_size - strlen(cmd), " -text %s", text_offset);
         }
-        strcat(cmd, out_file);
-    }
-    else
-    {
-        strcpy(cmd, sdk_path);
-        if(strlen(sdk_path) && sdk_path[strlen(sdk_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
-        #ifdef DOS_HOST
-        strcat(cmd, "hclnk");
-        strcat(cmd, format);
-        strcat(cmd, ".exe");
-        #else
-        #ifdef WINDOWS_HOST
-        strcat(cmd, "hclink-");
-        strcat(cmd, format);
-        strcat(cmd, ".exe");
-        #else
-        strcat(cmd, "hclink-");
-        strcat(cmd, format);
-        #endif
-        #endif
-        strcat(cmd, " -o ");
-        if(out_file[0] != PATHSEPARATOR)
-        {
-            strcat(cmd, _path);
-            if(*_path && _path[strlen(_path)-1] != PATHSEPARATOR) strcat(cmd, PATHSEPARATORSTR);
+        if (strlen(data_offset)) {
+            snprintf(cmd + strlen(cmd), cmd_size - strlen(cmd), " -data %s", data_offset);
         }
-        strcat(cmd, out_file);
-        if(strlen(text_offset))
-        {
-            strcat(cmd, " -text ");
-            strcat(cmd, text_offset);
+        if (strlen(bss_offset)) {
+            snprintf(cmd + strlen(cmd), cmd_size - strlen(cmd), " -bss %s", bss_offset);
         }
-        if(strlen(data_offset))
-        {
-            strcat(cmd, " -data ");
-            strcat(cmd, data_offset);
+        if (strlen(align)) {
+            snprintf(cmd + strlen(cmd), cmd_size - strlen(cmd), " -align %s", align);
         }
-        if(strlen(bss_offset))
-        {
-            strcat(cmd, " -bss ");
-            strcat(cmd, bss_offset);
-        }
-        if(strlen(align))
-        {
-            strcat(cmd, " -align ");
-            strcat(cmd, align);
-        }
-        if(strlen(sym_file))
-        {
-            strcat(cmd, " -sym ");
-            strcat(cmd, sym_file);
+        if (strlen(sym_file)) {
+            snprintf(cmd + strlen(cmd), cmd_size - strlen(cmd), " -sym %s", sym_file);
         }
     }
+
     obj = _objs;
-    while(obj)
-    {
-        strcat(cmd, " ");
-        strcat(cmd, obj->name);
+    while (obj) {
+        snprintf(cmd + strlen(cmd), cmd_size - strlen(cmd), " %s", obj->name);
         obj = obj->next;
     }
-    if(get_value_bool("config", "", "verbose")) printf("%s\n", cmd);
+
+    if (verbose) printf("%s\n", cmd);
     st = system(cmd);
-    if(st) exit(-1);
+    if (st) exit(-1);
+    free(cmd);
 }
 
 void clean_link(section_t *section, char *config)
 {
-    char cmd[8000];
     char *out_file = NULL;
-    if(!section)
-    {
+    char output_path[2048];
+    if (!section) {
         fprintf(stderr, "error: link configuration not found: %s\n", config);
         exit(1);
     }
     out_file = get_value(section->name, section->subsection, "filename");
-    if(strlen(out_file) == 0) out_file = "a.out";
-    remove(out_file);
-    out_file = get_value(section->name, section->subsection, "symbols");
-    if(strlen(out_file)) remove(out_file);
+    if (strlen(out_file) == 0) out_file = "a.out";
+    resolve_output_path(output_path, sizeof(output_path), out_file);
+    remove(output_path);
 
+    out_file = get_value(section->name, section->subsection, "symbols");
+    if (strlen(out_file)) {
+        resolve_output_path(output_path, sizeof(output_path), out_file);
+        remove(output_path);
+    }
 }
 
 void make_libs(section_t *section)
 {
     char obj_name[2048];
-    if(!section) return;
+    if (!section) return;
     keyvalue_t *kv = section->keys;
-    while(kv)
-    {
-        if(kv->key[0] != PATHSEPARATOR)
-        {
-            strcpy(obj_name, _path);
-            if(*_path && _path[strlen(_path)-1] != PATHSEPARATOR) strcat(obj_name, PATHSEPARATORSTR);
-            strncat(obj_name, kv->key, 1000);
-        }
-        else strncpy(obj_name, kv->key, 1000);
+    while (kv) {
+        resolve_source_path(obj_name, sizeof(obj_name), kv->key);
         obj_t *obj = malloc(sizeof(obj_t) + strlen(obj_name));
         strcpy(obj->name, obj_name);
         obj->next = NULL;
-        if(_last_obj)
-        {
+        if (_last_obj)
             _last_obj->next = obj;
-        }
         else
-        {
             _objs = obj;
-        }
         _last_obj = obj;
         kv = kv->next;
     }
+}
 
+static void parse_args(int argc, char **argv, char **project_file, char **command, char **config)
+{
+    int i;
+    for (i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "--sdk-path") || !strcmp(argv[i], "-s")) {
+            if (++i >= argc) { fprintf(stderr, "error: --sdk-path requires a path\n"); help(); }
+            strncpy(cfg_sdk_path, argv[i], sizeof(cfg_sdk_path) - 1);
+            cfg_sdk_path[sizeof(cfg_sdk_path) - 1] = '\0';
+        }
+        else if (!strcmp(argv[i], "--asm-path")) {
+            if (++i >= argc) { fprintf(stderr, "error: --asm-path requires a path\n"); help(); }
+            strncpy(cfg_asm_path, argv[i], sizeof(cfg_asm_path) - 1);
+            cfg_asm_path[sizeof(cfg_asm_path) - 1] = '\0';
+        }
+        else if (!strcmp(argv[i], "--link-path")) {
+            if (++i >= argc) { fprintf(stderr, "error: --link-path requires a path\n"); help(); }
+            strncpy(cfg_link_path, argv[i], sizeof(cfg_link_path) - 1);
+            cfg_link_path[sizeof(cfg_link_path) - 1] = '\0';
+        }
+        else if (!strcmp(argv[i], "--lib-path")) {
+            if (++i >= argc) { fprintf(stderr, "error: --lib-path requires a path\n"); help(); }
+            strncpy(cfg_lib_path, argv[i], sizeof(cfg_lib_path) - 1);
+            cfg_lib_path[sizeof(cfg_lib_path) - 1] = '\0';
+        }
+        else if (!strcmp(argv[i], "--output-dir")) {
+            if (++i >= argc) { fprintf(stderr, "error: --output-dir requires a path\n"); help(); }
+            strncpy(cfg_output_dir, argv[i], sizeof(cfg_output_dir) - 1);
+            cfg_output_dir[sizeof(cfg_output_dir) - 1] = '\0';
+        }
+        else if (!strcmp(argv[i], "-I")) {
+            if (++i >= argc) { fprintf(stderr, "error: -I requires a path\n"); help(); }
+            append_include_path(argv[i]);
+        }
+        else if (!strcmp(argv[i], "--verbose") || !strcmp(argv[i], "-v")) {
+            cfg_cli_verbose = true;
+        }
+        else if (!strcmp(argv[i], "--dump")) {
+            cfg_cli_dump = true;
+        }
+        else if (!strcmp(argv[i], "--keep")) {
+            cfg_cli_keep = true;
+        }
+        else if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
+            help();
+        }
+        else if (argv[i][0] == '-') {
+            fprintf(stderr, "error: unknown option: %s\n", argv[i]);
+            help();
+        }
+        else {
+            if (!*project_file) *project_file = argv[i];
+            else if (!*command) *command = argv[i];
+            else if (!*config) *config = argv[i];
+            else {
+                fprintf(stderr, "error: unexpected argument: %s\n", argv[i]);
+                help();
+            }
+        }
+    }
 }
 
 int main(int argc, char **argv)
 {
-    section_t *section = NULL;
-    if(argc != 4) help();
-    cfg_process(argv[1]);
-    _path = strdup(argv[1]);
+    char *project_file = NULL;
+    char *command = NULL;
+    char *config = NULL;
+
+    parse_args(argc, argv, &project_file, &command, &config);
+
+    if (!project_file || !command) help();
+    if (!config) config = "release";
+
+    cfg_process(project_file);
+    resolve_config();
+
+    _path = strdup(project_file);
     _path = dirname(_path);
-    if(!strcmp(argv[2], "make"))
-    {
+
+    if (!strcmp(command, "make")) {
         make_libs(get_section("lib", "start"));
         make_libs(get_section("libs", "start"));
         make_files(get_section("files", "8080"));
         make_files(get_section("files", "8085"));
         make_files(get_section("files", "8086"));
         make_files(get_section("files", "z80"));
+        make_files(get_section("files", "6502"));
         make_libs(get_section("lib", ""));
         make_libs(get_section("libs", ""));
-        make_link(get_section("link", argv[3]), argv[3]);
+        make_link(get_section("link", config), config);
     }
-    else if(!strcmp(argv[2], "clean"))
-    {
+    else if (!strcmp(command, "clean")) {
         clean_files(get_section("files", "8080"));
         clean_files(get_section("files", "8085"));
         clean_files(get_section("files", "8086"));
         clean_files(get_section("files", "z80"));
-        clean_link(get_section("link", argv[3]), argv[3]);
+        clean_files(get_section("files", "6502"));
+        clean_link(get_section("link", config), config);
     }
-    else 
-    {
-        fprintf(stderr, "error: hcbuild command unknown: %s\n", argv[2]);
+    else {
+        fprintf(stderr, "error: hcbuild command unknown: %s\n", command);
         return 1;
     }
     return 0;

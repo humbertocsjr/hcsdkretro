@@ -4563,7 +4563,7 @@ void exec_step()
                 break;
             case 0x07:
                 _regs_prev.value = _regs_curr.af.a;
-                _regs_curr.af.a = alu_rlc(_regs_curr.af.a);
+                _regs_curr.af.a = alu_rlca(_regs_curr.af.a);
                 _regs_curr.value = _regs_curr.af.a;
                 break;
             case 0x08:
@@ -4612,7 +4612,7 @@ void exec_step()
                 break;
             case 0x0f:
                 _regs_prev.value = _regs_curr.af.a;
-                _regs_curr.af.a = alu_rrc(_regs_curr.af.a);
+                _regs_curr.af.a = alu_rrca(_regs_curr.af.a);
                 _regs_curr.value = _regs_curr.af.a;
                 break;
             case 0x10:
@@ -4706,7 +4706,7 @@ void exec_step()
                 break;
             case 0x1f:
                 _regs_prev.value = _regs_curr.af.a;
-                _regs_curr.af.a = alu_rr(_regs_curr.af.a);
+                _regs_curr.af.a = alu_rra(_regs_curr.af.a);
                 _regs_curr.value = _regs_curr.af.a;
                 break;
             case 0x20:

@@ -147,8 +147,10 @@ void cfg_process(char *filename)
         fprintf(stderr, "error: can't open file: %s\n", filename);
         exit(1);
     }
-    while(!feof(cfg))
+    while(1)
     {
+        c = fgetc(cfg);
+        if(c == EOF) break;
         if(key_i >= 1023)
         {
             fprintf(stderr, "error: key size overflow: %s\n", key);
@@ -159,7 +161,6 @@ void cfg_process(char *filename)
             fprintf(stderr, "error: value size overflow: %s = %s\n", key, value);
             exit(1);
         }
-        c = fgetc(cfg);
         if(c == ';' || c == '#')
         {
             while(c != '\n') c = fgetc(cfg);
@@ -236,7 +237,11 @@ void cfg_process(char *filename)
                 break;
             case 4: // value
                 {
-                    if(c == '\n' || c == '\r' || c == EOF)
+                    if(c == '"')
+                    {
+                        step = 5;
+                    }
+                    else if(c == '\n' || c == '\r' || c == EOF)
                     {
                         step = 0;
                         set_key(section, key, value);
@@ -249,13 +254,32 @@ void cfg_process(char *filename)
                     
                 }
                 break;
+            case 5: // quoted value
+                {
+                    if(c == '"')
+                    {
+                        step = 0;
+                        set_key(section, key, value);
+                    }
+                    else if(c == '\n' || c == '\r' || c == EOF)
+                    {
+                        fprintf(stderr, "error: unterminated quoted value\n");
+                        exit(1);
+                    }
+                    else
+                    {
+                        value[value_i++] = c;
+                        value[value_i] = 0;
+                    }
+                }
+                break;
         }
     }
     if(step == 1 || step == 2)
     {
         add_section(key, value);
     }
-    else if(step == 3 || step == 4)
+    else if(step == 3 || step == 4 || step == 5)
     {
         set_key(section, key, value);
     }

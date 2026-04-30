@@ -52,7 +52,8 @@ typedef enum token_t
     TOK_INDEX_CLOSE,
     TOK_PARAMS_OPEN,
     TOK_PARAMS_CLOSE,
-    TOK_SUB_LABEL
+    TOK_SUB_LABEL,
+    TOK_HASH
 } token_t;
 
 typedef struct reg_t
@@ -78,6 +79,7 @@ typedef struct expr_t
     bool force_short;
     bool force_near;
     bool force_far;
+    bool immediate;
     struct expr_t *left;
     struct expr_t *right;
     char text[1];

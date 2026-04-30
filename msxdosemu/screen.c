@@ -9,13 +9,31 @@ static char *_buffer = &_vdp_memory[0];
 static int _x = 0;
 static int _y = 0;
 static int _put_mode = 0;
+static int _esc_state = 0;
+static uint8_t _esc_row = 0;
 static bool _changed = true;
-static uint8_t _vdp_registers[VDP_MEMORY_MAX];
-static uint8_t _vdp_curr_register = 0;
-static uint8_t _vdp_first_byte = 0;
+static uint8_t _vdp_registers[8];
+static uint16_t _vdp_first_byte = 0;
 static bool _vdp_is_first_byte = true;
 static uint16_t _vdp_pointer = 0;
 static bool _vdp_enabled = true;
+static uint8_t _vdp_status = 0;
+static uint8_t _vdp_foreground = 7;  // white
+static uint8_t _vdp_background = 4;   // blue (MSX default)
+
+// MSX color to ANSI mapping
+static const char *_vdp_ansi_fg[16] = {
+    "\033[30m","\033[34m","\033[31m","\033[35m",
+    "\033[32m","\033[36m","\033[33m","\033[37m",
+    "\033[90m","\033[94m","\033[91m","\033[95m",
+    "\033[92m","\033[96m","\033[93m","\033[97m"
+};
+static const char *_vdp_ansi_bg[16] = {
+    "\033[40m","\033[44m","\033[41m","\033[45m",
+    "\033[42m","\033[46m","\033[43m","\033[47m",
+    "\033[100m","\033[104m","\033[101m","\033[105m",
+    "\033[102m","\033[106m","\033[103m","\033[107m"
+};
 
 char printable(char c)
 {
@@ -25,38 +43,30 @@ char printable(char c)
 
 void screen_set_reg(uint8_t reg, uint8_t value)
 {
-    switch(reg & 0x3f)
+    _vdp_registers[reg] = value;
+    switch(reg & 7)
     {
-        case 0:
-
+        case 0: // Mode + external video
             break;
-        case 1:
-            _vdp_enabled = value & 2;
+        case 1: // Display on/off, mode, IE0
+            _vdp_enabled = value & 0x40;
             break;
-        case 2:
-
+        case 2: // Name table base address (bits 4-6)
             break;
-        case 3:
-
+        case 3: // Color table (not used in text mode)
             break;
-        case 4:
-            _buffer = (char *)&_memory[(value & 0xf) * 0x400];
+        case 4: // Pattern table base address
+            _buffer = (char*)&_vdp_memory[(value & 7) * 0x800];
             break;
-        case 5:
-
+        case 5: // Sprite attribute table
             break;
-        case 6:
-
+        case 6: // Sprite pattern table
             break;
-        case 7:
-
-            break;
-        default:
-            fprintf(stderr, "[ERROR: VDP REGISTER NOT IMPLEMENTED: %i]", value & 0x3f);
-            exit(1);
+        case 7: // Foreground/background color
+            _vdp_foreground = (value >> 4) & 0xF;
+            _vdp_background = value & 0xF;
             break;
     }
-    _vdp_registers[reg] = value;
 }
 
 void screen_out_99(uint8_t value) // Set Register
@@ -82,7 +92,9 @@ void screen_out_99(uint8_t value) // Set Register
 uint8_t screen_in_99() // Get Status
 {
     _vdp_is_first_byte = true;
-    return 0x00;
+    uint8_t s = _vdp_status;
+    _vdp_status &= 0x7F; // clear interrupt flag on read
+    return s;
 }
 
 void screen_out_98(uint8_t value) // Data
@@ -130,10 +142,10 @@ void screen_draw()
     char *true_text = "\033[0m\033[0;32;40mT\033[0m\033[0;37;40m";
     char *false_text = "\033[0m\033[0;31;40mF\033[0m\033[0;37;40m";
 
-    printf("\033[0m\033[0;37;40m\033[H\033[2J\033[3J");
+    printf("\033[0m%s%s\033[H\033[2J\033[3J", _vdp_ansi_bg[_vdp_background], _vdp_ansi_fg[_vdp_foreground]);
     for(int y = 0; y < TTY_HEIGHT; y++)
     {
-        printf("\033[0m\033[0;37;40m");
+        printf("\033[0m%s%s", _vdp_ansi_bg[_vdp_background], _vdp_ansi_fg[_vdp_foreground]);
         for(int x = 0; x < TTY_WIDTH; x++)
         {
             char c = _buffer[y * TTY_WIDTH + x];
@@ -267,61 +279,78 @@ void screen_goto(int line, int column)
     if(_y >= TTY_HEIGHT) _y %= TTY_HEIGHT;
 }
 
+static void screen_scroll()
+{
+    memmove(_buffer, &_buffer[TTY_WIDTH], TTY_WIDTH * (TTY_HEIGHT -1));
+    memset(&_buffer[TTY_WIDTH * (TTY_HEIGHT -1)], ' ', TTY_WIDTH);
+    _y--;
+}
+
 void screen_put_char(char c)
 {
     if(!_debuggable)
     {
         switch(c)
         {
-            case 12:
-                screen_clear();
-                break;
-            default:
-                printf("%c", c);
-                break;
+            case 7:  printf("\a"); break;
+            case 8:  printf("\b \b"); break;
+            case 9:  printf("\t"); break;
+            case 12: screen_clear(); break;
+            default: printf("%c", c); break;
         }
         fflush(stdout);
         return;
     }
     _changed = true;
+
+    // Handle escape sequences statefully
+    if(_esc_state == 1) {
+        if(c == 'Y') { _esc_state = 2; return; }    // ESC Y r c - cursor position
+        if(c == 'K') { for(int cx = _x; cx < TTY_WIDTH; cx++) _buffer[_y * TTY_WIDTH + cx] = ' '; _esc_state = 0; return; }
+        if(c == 'J') { for(int cy = _y; cy < TTY_HEIGHT; cy++) for(int cx = (cy==_y?_x:0); cx < TTY_WIDTH; cx++) _buffer[cy * TTY_WIDTH + cx] = ' '; _esc_state = 0; return; }
+        if(c == 'H') { _x = 0; _y = 0; _esc_state = 0; return; }
+        if(c == 'E') { memset(_buffer, ' ', TTY_HEIGHT * TTY_WIDTH); _x = 0; _y = 0; _esc_state = 0; return; }
+        _esc_state = 0; // unknown sequence, abort
+    }
+    if(_esc_state == 2) { _esc_row = c - 32; _esc_state = 3; return; }
+    if(_esc_state == 3) { _y = _esc_row; _x = c - 32; _esc_state = 0; return; }
+
     switch(c)
     {
-        case 8:
-            if(_x == 0)
-            {
-                if(_y > 0)
-                {
-                    _x = TTY_WIDTH - 1;
-                    _y--;
-                }
-            }
+        case 7:  // BEL
+            printf("\a");
+            fflush(stdout);
+            break;
+        case 8:  // BS
+            if(_x == 0) { if(_y > 0) { _x = TTY_WIDTH - 1; _y--; } }
             else _x--;
             break;
-        case 12:
-            memset(_buffer, ' ', TTY_HEIGHT * TTY_WIDTH);
-            _x = 0;
-            _y = 0;
+        case 9:  // HT
+            _x = (_x + 8) & ~7;
             break;
-        case 13:
-            _x = 0;
-            break;
-        case 10:
+        case 10: // LF
             _y++;
+            break;
+        case 11: // VT
+            _y++;
+            break;
+        case 12: // FF
+            memset(_buffer, ' ', TTY_HEIGHT * TTY_WIDTH);
+            _x = 0; _y = 0;
+            break;
+        case 13: // CR
+            _x = 0;
+            break;
+        case 27: // ESC - start escape sequence
+            _esc_state = 1;
+            break;
+        case 127: // DEL
             break;
         default:
             _buffer[_y * TTY_WIDTH + _x] = c;
             _x++;
             break;
     }
-    while(_x >= TTY_WIDTH)
-    {
-        _x -= TTY_WIDTH;
-        _y++;
-    }
-    while(_y >= TTY_HEIGHT)
-    {
-        memmove(_buffer, &_buffer[TTY_WIDTH], TTY_WIDTH * (TTY_HEIGHT -1));
-        memset(&_buffer[TTY_WIDTH * (TTY_HEIGHT -1)], ' ', TTY_WIDTH);
-        _y--;
-    }
+    while(_x >= TTY_WIDTH) { _x -= TTY_WIDTH; _y++; }
+    while(_y >= TTY_HEIGHT) screen_scroll();
 }

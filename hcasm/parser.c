@@ -211,7 +211,17 @@ void parse_line()
                 mnemonic->force_far = true;
                 scan();
             }
-            argv[argc++] = parse_expr();
+            if(curr_is(TOK_HASH))
+            {
+                scan();
+                argv[argc] = parse_expr();
+                argv[argc]->immediate = true;
+                argc++;
+            }
+            else
+            {
+                argv[argc++] = parse_expr();
+            }
             if(!curr_is(TOK_COMMA)) break;
             scan();
         }
