@@ -6764,6 +6764,7 @@ void exec()
     memset(&_regs_curr, 0, sizeof(z80_regs_t));
     _regs_curr.ip = 0x100;
     _regs_curr.sp = 0xf000;
+    screen_init();
     keyb_init();
     int count = 0;
     while(_executing)
