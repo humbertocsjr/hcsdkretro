@@ -63,6 +63,9 @@ sdk_path = ./bin
 [files:z80]
 hello.s
 
+[libs]
+libs/z80-cpm-b.lib
+
 [link:release]
 format = bin
 text = 0x100
@@ -84,6 +87,9 @@ Create `calc.prj`:
 
 [files:z80]
 calc.b
+
+[libs]
+libs/z80-cpm-b.lib
 
 [link:release]
 format = bin
