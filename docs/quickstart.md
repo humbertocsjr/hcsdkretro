@@ -48,15 +48,7 @@ Compile and link:
 ```sh
 hcbcomp-z80 -o hello.s hello.b
 hcasm-z80 -o hello.obj hello.s
-hclink-bin -text 0x100 -o hello.com hello.obj
-```
-
-Or use the runtime library:
-
-```sh
-hcbcomp-z80 -o hello.s hello.b
-hcasm-z80 -o hello.obj hello.s
-hclink-bin -text 0x100 -o hello.com hello.obj libs/b/z80/putchar.obj
+hclink-bin -text 0x100 -o hello.com hello.obj libs/z80-cpm-b.lib
 ```
 
 ## Using the Project Builder
