@@ -97,12 +97,12 @@ test test_emu:
 
 define b_compile_template
 # $$1 = cpu arch (e.g., z80), $$2 = module name (e.g., strlen)
-$(1)/$(2).s: $(2).b Makefile
+$(1)/$(2).__s: $(2).b Makefile
 	@mkdir -p $(1)
-	@echo [B]   $(1)/$(2).s
+	@echo [B]   $(1)/$(2).__s
 	@$(BCOM)/hcbcomp-$(patsubst 8085,8080,$(1)) -o $$@ $$< 2>/dev/null
 
-$(1)/$(2).obj: $(1)/$(2).s Makefile
+$(1)/$(2).obj: $(1)/$(2).__s Makefile
 	@echo [ASM] $(1)/$(2).obj
 	@$(ASM)/hcasm-$(patsubst 8085,8080,$(1)) -o $$@ $$< 2>/dev/null
 endef
@@ -113,18 +113,16 @@ $(foreach cpu,z80 8080 8085 8086,\
     $(eval $(call b_compile_template,$(cpu),$(mod)))))
 
 # --== Pattern: assemble .s -> .obj for arch-specific modules ==--
-# Z80-specific B modules (compile .b -> .s -> .obj)
+# Z80-specific B modules (compile .b -> .__s -> .obj)
 Z80_BMODS = cpm_data cpm_byte cpm_str cpm_slot cpm_name fopen fclose fread fwrite fdelete frename fseek ftell feof
 
-$(Z80_ARCH)/%.s: $(Z80_ARCH)/%.b Makefile
+$(Z80_ARCH)/%.__s: $(Z80_ARCH)/%.b Makefile
 	@echo [B]   $@
 	@$(BCOM)/hcbcomp-z80 -o $@ $< 2>/dev/null
 
-$(Z80_ARCH)/%.obj: $(Z80_ARCH)/%.b Makefile
-	@echo [B]   $(Z80_ARCH)/$*.s
-	@$(BCOM)/hcbcomp-z80 -o $(Z80_ARCH)/$*.s $<
+$(Z80_ARCH)/%.obj: $(Z80_ARCH)/%.__s Makefile
 	@echo [ASM] $@
-	@$(ASM)/hcasm-z80 -o $@ $(Z80_ARCH)/$*.s 2>/dev/null
+	@$(ASM)/hcasm-z80 -o $@ $< 2>/dev/null
 
 # Z80 assembly modules
 $(Z80_ARCH)/bdos.obj: $(Z80_ARCH)/bdos.s Makefile
@@ -171,13 +169,9 @@ $(CPU_8086)/%.obj: $(CPU_8086)/%.s Makefile
 	@echo [LIB] $@
 	@$(ASM)/hclib $@ $(CPU_8086_OBJECTS) 2>/dev/null
 
-# Generated .s files (from .b compilation, safe to delete on clean)
-GEN_S = $(foreach cpu,z80 8080 8085 8086,$(foreach m,$(B_COMMON),$(cpu)/$(m).s))
-
 # --== Clean: remove generated files only, keep hand-written .s sources ==--
 clean:
-	@rm -f $(Z80_ARCH)/*.obj $(CPU_8080)/*.obj $(CPU_8085)/*.obj $(CPU_8086)/*.obj
-	@rm -f $(GEN_S)
+	@rm -f *.obj $(Z80_ARCH)/*.obj $(CPU_8080)/*.obj $(CPU_8085)/*.obj $(CPU_8086)/*.obj
+	@rm -f *.__s $(Z80_ARCH)/*.__s
 	@rm -f $(BLIBS)
 	@rm -f ../z80-cpm-start.obj
-	@echo [CLEAN] libs/b
