@@ -44,7 +44,7 @@ hclink-rex -o program.rex main.obj lib.obj
 
 ## Object Reordering
 
-The linker automatically reorders objects so the one containing the `_start` or `_main` label is placed first in the output, ensuring the entry point is at the beginning of the text section.
+The linker automatically reorders objects so the one containing the `_start` label is placed first in the output, ensuring the entry point is at the beginning of the text section.
 
 ## Dead Code Elimination
 
