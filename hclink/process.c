@@ -380,7 +380,7 @@ void reorder_start_first(void)
         {
             if (rec.header.type == REC_CONST_AS_GLOBAL_LABEL)
             {
-                if (!strcmp((char *)rec.data, "_start") || !strcmp((char *)rec.data, "_main"))
+                if (!strcmp((char *)rec.data, "_start"))
                 {
                     found = obj;
                     found_name = (char *)rec.data;
