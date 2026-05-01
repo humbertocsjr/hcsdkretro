@@ -1,529 +1,77 @@
 # HC Software Development Kit for Retro Computing
 
-Cross-compiler tools for retro computing.
+**Version 2.0** — Cross-compilation toolchain for 8-bit and 16-bit retro computer platforms.
 
-![MSX-DOS Emulator Screenshot](imgs/msxdosemu-2026-03-28-2.png "MSX-DOS Emulator running Hellord! test")
-<sub>Executed with `make test_emu` or `make test && bin/msxdosemu -diska tests/  -step tests/z80-test-0.com test.txt`</sub>
 
-Tools ready to use:
+![MSX-DOS Emulator Screenshot](imgs/msxdosemu-2026-03-28-2.png)
 
-- Assembler
-- Linker
-- Librarian
-- Project Builder
-- MSX-DOS 1.0 / CP/M 2.2 Emulator
+## Quick Links
 
-Links:
+| Document | Description |
+|----------|-------------|
+| [Quick Start Guide](docs/quickstart.md) | Get started in 5 minutes |
+| [HC Assembler](docs/assembler.md) | hcasm — multi-target assembler |
+| [HC B Compiler](docs/bcompiler.md) | hcbcomp — B language compiler with full reference |
+| [HC Linker](docs/linker.md) | hclink — linker with bin/rex output |
+| [HC Librarian](docs/librarian.md) | hclib — object/library manager |
+| [HC Builder](docs/builder.md) | hcbuild — project build system |
+| [MSX-DOS Emulator](docs/emulator.md) | msxdosemu — CP/M 2.2 emulator |
+| [REX Format](docs/format-rex.md) | Relocatable executable format |
 
-- [retroSOX - Brazilian Operating System for MSX 1 made with this SDK](https://humbertocsjr.dev.br/retrosox)
-- [Site e Documentação em Português](https://humbertocsjr.dev.br/hcsdk/pt)
-- [Site and Documentation in English](https://humbertocsjr.dev.br/hcsdk/en)
-- [RetroLang (In Alpha) Documentation](retrolang.md)
-- [Hackaday Article](https://hackaday.com/2026/03/17/from-8086-to-z80-building-a-nasm-inspired-sdk-for-8-bit-retro-computing/)
+## Supported Target CPUs
 
-## TODO List (Pending for 2.0 | Early May/26)
+| CPU | Assembler | B Compiler | Runtime Lib |
+|-----|-----------|------------|-------------|
+| Zilog Z80 | `hcasm-z80` | `hcbcomp-z80` | CP/M, MSX-DOS |
+| Intel 8080 | `hcasm-8080` | `hcbcomp-8080` | CP/M |
+| Intel 8085 | `hcasm-8085` | `hcbcomp-8085` | CP/M |
+| Intel 8086 | `hcasm-8086` | `hcbcomp-8086` | MS-DOS |
 
-- MSX-DOS 1.0 (CP/M 2.2 Compatible) Emulator (In progress) 
-  - Screen/Keyboard I/O to VT110 TTY Mode (In progress)
-  - Screen 40x24 with Debug Mode (In progress)
-  - MSX-BIOS ABI (Planned) 
-    - Screen ABI (Planned)
-  - MSX Hardware Emulation (In progress) 
-    - Screen 40x24 Direct Manipulation (In progress / Testing)
-  - ZEXDOC Z80 Tests: (In progress / Evolving)
-    ![Tests](imgs/zexdoc-2026-04-10.png)
-- HC Builder 
-  - Embbed SDK BIN/Libraries/Include Path on install (Planned for 2.1)
-- HC Assembler 
-  - 65C02 Enhanced Instructions (Planned)
-- Integration on VSCode (Planned for 3.0)
+## Supported Host Platforms
 
-## Supported Targets
+| Platform | Format |
+|----------|--------|
+| macOS (Intel/ARM) | `.pkg` installer, `.tgz` |
+| Windows 64-bit | `.exe` NSIS, `.zip` |
+| Windows 32-bit | `.exe` NSIS, `.zip` |
+| Linux x86\_64 | `.deb` package, `.tgz` |
+| DOS (Pentium+) | `.zip` (DJGPP) |
+| Linux ARM, FreeBSD, OpenBSD | Build from source with `make` |
 
-- **8080**:  Intel 8080 or Compatibles
-- **8085**:  Intel 8085 or Compatibles
-- **8086**:  Intel 8086/8088 or Compatibles (Single segment executable output)
-- **Z80**: Zilog Z80 or Compatibles
-- **6502**: MOS Technology 6502 or Compatibles
+## Build from Source
 
-## Supported Hosts - Pre-compiled distribution
-
-- **macOS - Intel/Apple Silicon**: 
-  - hcsdk-macos-v??.??.??-setup.pkg: macOS Installer
-  - hcsdk-macos-v??.??.??.tgz: macOS Binaries
-- **Windows - Intel 64 bits**: 
-  - hcsdk-win-v??.??.??.zip: Windows Binaries
-  - hcsdk-win-v??.??.??-setup.exe: Windows Installer
-- **Windows - Intel 32 bits**: 
-  - hcsdk-win32-v??.??.??.zip: Windows Binaries
-  - hcsdk-win32-v??.??.??-setup.exe: Windows Installer
-- **Linux - Intel**
-  - hcsdk-linux-v??.??.??.tgz: Linux Binaries
-  - hcsdk-linux-v??.??.??.deb: Debian/Ubuntu-based Package
-- **DOS - Pentium or Compatible**
-  - hcsdk-dos-v??.??.??.zip: DOS Binaries
-
-## Tested Hosts - Build with make
-
-- **Linux - ARM**
-- **FreeBSD - Intel**
-- **OpenBSD - Intel**
+```sh
+make posix         # Native build (macOS/Linux/BSD)
+sudo make install  # Install to /usr/local/bin
+```
 
 ## Install
-
-Installing on /usr/local/bin:
 
 ```sh
 make all
 sudo make install
 ```
 
-## How to use (8086 example)
-
-- Create a example file (example.s):
-
-  ```asm
-  section text
-  global _start
-  _start:
-      int 0x20
-  ```
-- Assemble to object file
-
-  ```sh
-  hcasm-8086 -o example.obj example.s
-  ```
-- Link to .com file
-
-  ```sh
-  hclink-bin -text 0x100 -o example.com example.obj
-  ```
-
-## Development on macOS
-
-Installing the minimum requirements for development:
-
-```sh
-brew tap messense/macos-cross-toolchains
-brew install z80dasm dpkg llvm cmake xwin mingw-w64 x86_64-unknown-linux-gnu msitools nsis
-```
-
-Install last DJGPP version from [GitHub](https://github.com/andrewwutw/build-djgpp/releases) to /usr/local/djgpp
-
-Execute ```sudo xattr -r -d com.apple.quarantine /usr/local/djgpp```
-
-**Generating distribution files:**
-
-```sh
-make distro
-```
-
-# MSX-DOS 1.0 (CP/M 2.2) Emulator
-
-Implement MSX-DOS 1.0 Compatible Emulator with embedded Debugger.
-
-Emulator supports function key shortcuts with modifier keys (ALT and CTRL). \
-For example: F12, CTRL+F12, ALT+F12.
-
-Usage:
-
-```sh
-# Execute cat.com with test.txt as argument
-msxdosemu cat.com test.txt
-# Execute cat.com with test.txt as argument
-# test.txt will be read from new A: path: other/dir/
-msxdosemu -diska other/dir/ cat.com test.txt
-# Run in debug mode cat.com with test.txt as argument
-# will wait next breakpoint (ld b,b) to change to debug step mode
-msxdosemu -debug cat.com test.txt
-# Run in debug step mode cat.com with test.txt as argument
-msxdosemu -step cat.com test.txt
-# Run in debug mode cat.com with test.txt as argument
-# will wait next breakpoint (ld b,b) or IP=0x103 to change to debug step mode
-msxdosemu -skip 0x103 cat.com test.txt
-```
-
-MSX / MSX-DOS Supported Features:
-
-- MSX-DOS CALL 5 ABI
-- MSX-DOS / CP/M FCB File I/O
-- Console I/O
-- Prefilled FCBs at 0x5c and 0x6c with filenames in arguments
-- Z80 CPU
-- MSX-DOS 1.0 BDOS Calls:
-  - 0x00-0x2F: FCB-based file I/O, console, directory, date/time
-  - 0x32: Get MSX-DOS Version
-  - 0x62: Terminate with error code
-  - 0x6F: Get MSX-DOS Version Number
-- MSX-DOS 2.0 BDOS Calls:
-  - 0x40-0x47: File handle API (open/close/read/write/delete/seek/move)
-  - 0x48-0x49: Get/Set default drive
-  - 0x4A-0x4D: Directory operations (mkdir/rmdir/chdir/getdir)
-  - 0x4E-0x4F: Find First/Next (ASCIIZ wildcard)
-  - 0x50-0x53: File date/time, size, truncate (by handle)
-  - 0x54: Get disk free space
-  - 0x56: IOCTL
-  - 0x5A: Rename (ASCIIZ)
-  - 0x5B-0x5C: Get file info, set file attributes
-  - 0x5D-0x5F: Environment variables (get/set/list)
-  - 0x63: Get MSX-DOS 2.0 version
-
-Not implemented but planned features:
-
-- MSX-BIOS Calls
-- I/O Ports
-- Slots and Memory Mapping
-- MegaRAM / Mapper
-- Windows Console Support
-
-Not supported features:
-
-- MSX Sound Output
-- MSX-DOS CALL 5 ABI C=0x2F - Absolute Sector Read
-- MSX-DOS CALL 5 ABI C=0x30 - Absolute Sector Write
-
-# RetroLang for Retro Computing
-
-Low Level Programming Language inspired in Ruby, BASIC, T3X and Pascal.
-
-**Don't use. Pre-alpha Compiler**
-
-# HC Assembler for Retro Computing
-
-Inspired in NASM Source Code Format.
-
-## Intel 8080 / 8085 Support
-
-- Support BC/DE/[BC]/[DE] or B/D/[B]/[D] on 16 bit operations
-
-  ```asm
-  ; all four generate the same opcode
-  stax bc ; modern format
-  stax b ; old school format
-  stax [bc] ; nasm-like format
-  stax [b] ; old school nasm-like format
-  ```
-- Support M/[HL]/[M] on pointer operations
-
-  ```asm
-  ; all tree generate the same opcode
-  mov a, m
-  mov a, [m]
-  mov a, [hl]
-  ```
-
-## Zilog Z80 Support
-
-- Use \[\] as address markers \
-
-  ```asm
-  ld a, [0x1234]
-  ld a, [bc]
-  ```
-
-## MOS Technology 6502 Support
-
-- Use # for immediate values, \[\] for memory references, ,x/,y for indexed modes.
-
-  ```asm
-  ; Implied instructions
-  nop
-  clc
-  tax
-  inx
-
-  ; Immediate (#)
-  lda #0xFF
-  ldx #0x80
-  cpx #0x0A
-
-  ; Zero Page / Absolute (automatically selected by value range)
-  lda 0x12        ; zero page (value < 0x100)
-  lda 0x1234      ; absolute (value >= 0x100)
-
-  ; Indexed X/Y (comma separated)
-  lda 0x12, x     ; zero page X
-  lda 0x1234, x   ; absolute X
-  ldx 0x12, y     ; zero page Y
-  ldx 0x1234, y   ; absolute Y
-
-  ; Indirect X (pre-indexed) — use + inside brackets
-  lda [0x12 + x]  ; LDA ($12,X)
-
-  ; Indirect Y (post-indexed) — brackets + comma Y
-  lda [0x12], y   ; LDA ($12),Y
-
-  ; Indirect Jump
-  jmp [0x1234]    ; JMP ($1234)
-
-  ; Branches
-  bne label
-  beq label
-  ```
-
-## Intel 8086/8088 Support
-
-- Alow command prefixes and some argument prefixes:
-
-  ```asm
-  ; command prefixes
-  cs mov ax, [label]
-  rep movsb
-  ; argument prefixes
-  mov word [0x123], 123
-  mov [0x123], word 123
-  call near label
-  call far label
-  je short label
-  je near label
-  je far label
-  ; NOT SUPPORTED PREFIXES:
-  mov ax, [cs:label] ; DO NOT USE
-  ```
-- Allow jCC near and far (8086/8086 full compatible)
-
-  ```asm
-  je label_with_offset_less_than_128_bytes
-  je near label_with_offset_greater_than_128_bytes
-  je far segment:offset
-  je far label_in_other_segment ; (not supported in all link output formats)
-  ```
-- Allow LOOP/LOOPZ/LOOPE/LOOPNZ/LOOPNE/JCXE/JCXZ/JECXZ/JECXE near and far (8086/8086 full compatible)
-
-  ```asm
-  loop label_with_offset_less_than_128_bytes
-  loop near label_with_offset_greater_than_128_bytes
-  loop far segment:offset
-  loop far label_in_other_segment ; (not supported in all link output formats)
-  ```
-
-## Source Code Format
-
-```asm
-label: mnemonic arg1, arg2 ; comment
-```
-
-### Labels
-
-```asm
-global _start   ; export _start label
-_start:
-.sublabel:
-main:
-.sublabel:
-    mov ax, [.sublabel]
-    mov ax, [main.sublabel]
-    mov ax, [_start.sublabel]
-```
-
-### Constants
-
-```asm
-const_123: equ 123
-const_456 equ 456
-const_math equ 1+2*3
-struct_test: equ 2 ; size
-    .field1: equ 0 ; offset
-    .field2: equ 1 ; offset
-
-section data
-    obj_test: resb struct_test
-
-section text
-
-    mov ax, const_math ; simple example
-    mov al, [obj_test + struct_test.field1]
-    mov si, obj_test
-    mov bl, [si+struct_test.field1]
-```
-
-### Sections
-
-Common section order:
-
-- text section
-- data section
-- bss section
-
-Input code:
-
-```asm
-
-section data
-    db 0x56
-section text
-    db 0x12
-section bss
-    db 0x9a ; Invalid command for bss, used only as an example.
-section data
-    db 0x78
-section text
-    db 0x34
-```
-
-Binary output (Hexadecimal view):
-
-```
-TEXT     | DATA    | BSS
-0x12 0x34 0x56 0x78 0x9a
-```
-
-### Data/Address Reference/Address Access
-
-```asm
-section data
-    var: dw 0x1234
-    structure:
-        .field1: db 0x12
-        .field2: db 0x34
-section text
-    ; data
-    mov ax, 0x1234 ; hexadecimal
-    mov bx, 1234 ; decimal
-    mov cx, 0b10010001 ; binary
-    mov dx, 0o777 ; octal
-    mov si, 0777 ; octal
-    ; address reference
-    mov si, var
-    mov di, structure.field1
-    ; addres access
-    mov al, [structure.field1]
-    mov [structure.field2], bl
-```
-
-# HC Librarian for Retro Computing
-
-Add/Replace objects into library
-
-```sh
-hclib test.lib test1.obj test2.obj test3.obj
-```
-
-# HC Linker for Retro Computing
-
-## Output formats
-
-- **bin**: Flat Binary
-- **rex**: Relocatable Executable
-
-## HC Linker for Flat Binary
-
-**Supported arguments:**
-
-- \-text [OFFSET] \
-  Define start of text section
-- \-data [OFFSET] \
-  Define start of data section
-- \-bss [OFFSET] \
-  Define start of bss section
-- \-align [OFFSET] \
-  Define align of all sections
-
-```sh
-# Generate CP/M .COM file
-hclink-bin -o test.com -text 0x100 test.obj lib.lib
-# Generate Generic .BIN file
-hclink-bin -o test.bin test.obj lib.lib
-# Generate MSX Simple .ROM file
-hclink-bin -o test.rom -text 0x4000 -bss 0xc000 test.obj lib.lib
-```
-
-## HC Linker for Relocatable Executable
-
-**Supported arguments**
-
-- \-align [OFFSET] \
-  Define align of all sections
-
-```sh
-hclink-rex -o test.rex test.obj lib.lib
-```
-
-## HC Builder
-
-Configuration example (.prj file):
-
-```ini
-[config] ; optional section
-dump = yes ; optional (default: no) - dump object dump from assembly
-verbose = yes ; optional (default: no)
-sdk_path = ./ ; optional (default: empty string) - hcsdk tools path
-
-[files:z80] ; use files:ARCH
-main.s ; file list
-
-[libs] ; optional section (allow objects or library)
-runtime.lib
-single.obj
-
-[libs:start] ; optional section (set start object from external runtime)
-start.obj
-
-[link:release] ; use link:CONFIGURATION
-format = bin ; hclink output format: (use lib to generate library using hclib)
-filename = example.com ; optional (default: a.out)
-text = 0x100 ; optional hclink arguments (eg: text, data, bss, align)
-
-[link:debug]
-format = bin
-filename = example.com
-text = 0x100
-symbols = example.sym ; optinal symbols output file name (default: ignore file generation)
-```
-
-### How to make project
-
-```sh
-# make release configuration
-hcbuild project.prj make release # build project in current direcorty
-hcbuild projectdirectory/project.prj make release # build project on another directory
-```
-
-### How to clean project
-
-```sh
-# make release configuration
-hcbuild project.prj clean release
-```
-
-# Relocatable Executable Format
-
-## File Layout (Order)
-
-- Header
-- text section
-- data section
-- bss section
-- relocation table
-
-## Header
-
-| Offset | Size | Description                               |
-|--------|------|-------------------------------------------|
-| 000000 | 0002 | 'HC' String                               |
-| 000002 | 0002 | text size                                 |
-| 000004 | 0002 | data size                                 |
-| 000006 | 0002 | bss size                                  |
-| 000008 | 0002 | \_start offset (use text position as base) |
-| 000010 | 0002 | reloc size (each item has 2 byte offset)  |
-| 000012 | 0003 | reserved                                  |
-| 000012 | 0001 | cpu id                                    |
-
-CPU IDs:
-
-- 0xF0: Intel 8080
-- 0xF1: Intel 8085
-- 0xF2: Zilog Z80
-- 0xF3: Intel 8086
-- 0xF4: Intel 8052
-- 0xF5: MOS Technology 6502
-
-## How to load
-
-- Read first 16 bytes (header)
-- Alloc (text size + data size + bss size) on continuous space on memory
-- Copy text and data segments to memory
-- Process relocation table 
-  - Read relocation item (offset (2 bytes address))
-  - Select word (2 bytes) at offset on application memory
-  - Add offset of start of text section to selected word value
+## Project Structure
+
+| Directory | Contents |
+|-----------|----------|
+| `hcasm/` | Multi-target assembler source |
+| `hclink/` | Linker source |
+| `hclib/` | Librarian source |
+| `hcbuild/` | Project builder source |
+| `hcbcomp/` | B language compiler source |
+| `msxdosemu/` | MSX-DOS / CP/M emulator source |
+| `libs/` | Runtime libraries (assembly + B) |
+| `libs/b/` | B language standard library |
+| `samples/` | Example projects |
+| `tests/` | Test suite |
+| `include/` | Shared headers |
+| `bin/` | Build output |
+
+## Links
+
+- [Site e Documentação em Português](https://humbertocsjr.dev.br/hcsdk/pt)
+- [Documentation in English](https://humbertocsjr.dev.br/hcsdk/en)
+- [Hackaday Article](https://hackaday.com/2026/03/17/from-8086-to-z80-building-a-nasm-inspired-sdk-for-8-bit-retro-computing/)
+- [retroSOX — Brazilian OS for MSX](https://humbertocsjr.dev.br/retrosox)

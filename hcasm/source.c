@@ -8,11 +8,15 @@ static int _sources_current = -1;
 char source_nextc()
 {
     _source->c = fgetc(_source->file);
-    if(_source->c == EOF) _source->c = 0;
+    if (_source->c == EOF)
+        _source->c = 0;
     _source->column++;
-    if(_source->c == '\n') _source->line ++;
-    if(_source->c == '\n' || _source->c == '\r') _source->column = 0;
-    if(_source->c == '\t') _source->column += 3;
+    if (_source->c == '\n')
+        _source->line++;
+    if (_source->c == '\n' || _source->c == '\r')
+        _source->column = 0;
+    if (_source->c == '\t')
+        _source->column += 3;
     return _source->c;
 }
 
@@ -23,26 +27,26 @@ char source_getc()
 
 char source_getescapec()
 {
-    if(_source->c == '\\')
+    if (_source->c == '\\')
     {
         source_nextc();
         switch (_source->c)
         {
-            case 'n': 
-                _source->c = '\n';
-                break;
-            case 'r': 
-                _source->c = '\r';
-                break;
-            case 't': 
-                _source->c = '\t';
-                break;
-            case 'a': 
-                _source->c = '\a';
-                break;
-            case 'b': 
-                _source->c = '\b';
-                break;
+        case 'n':
+            _source->c = '\n';
+            break;
+        case 'r':
+            _source->c = '\r';
+            break;
+        case 't':
+            _source->c = '\t';
+            break;
+        case 'a':
+            _source->c = '\a';
+            break;
+        case 'b':
+            _source->c = '\b';
+            break;
         }
     }
     return _source->c;
@@ -61,9 +65,11 @@ char source_between(char min, char max)
 void source_open(char *filename)
 {
     FILE *file = fopen(filename, "r");
-    if(!file) error("can't open file: %s", filename);
+    if (!file)
+        error("can't open file: %s", filename);
     _sources_current++;
-    if(_sources_current >= SOURCES_MAX) error("source files list overflow");
+    if (_sources_current >= SOURCES_MAX)
+        error("source files list overflow");
     _sources[_sources_current] = malloc(sizeof(source_t) + strlen(filename));
     _source = _sources[_sources_current];
     memset(_source, 0, sizeof(source_t));
@@ -76,9 +82,13 @@ void source_open(char *filename)
 
 void source_close()
 {
-    fclose(_source->file);
-    free(_source);
+    if (_source)
+    {
+        fclose(_source->file);
+        free(_source);
+    }
     _sources_current--;
     _source = NULL;
-    if(_sources_current >= 0) _source = _sources[_sources_current];
+    if (_sources_current >= 0)
+        _source = _sources[_sources_current];
 }

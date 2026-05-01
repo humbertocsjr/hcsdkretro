@@ -1,0 +1,13 @@
+[config]
+sdk_path = ../../bin
+
+[files:8086]
+main.b
+
+[libs]
+../../libs/8086-msdos-b.lib
+
+[link:release]
+format = bin
+text = 0x100
+filename = 86MSDOS.COM

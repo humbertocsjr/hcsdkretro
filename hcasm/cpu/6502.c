@@ -98,11 +98,18 @@ static int detect_alu_mode(int argc, expr_t *argv[])
 {
     if (argc == 1 && is_imm(argv[0]))
         return AM_IMM;
-    if (argc == 1 && argv[0]->token == TOK_VALUE)
+    if (argc == 1)
     {
-        if (is_zp_value(argv[0]->value))
-            return AM_ZP;
-        return AM_ABS;
+        if (argv[0]->token == TOK_VALUE)
+        {
+            if (is_zp_value(argv[0]->value))
+                return AM_ZP;
+            return AM_ABS;
+        }
+        if (argv[0]->token == TOK_SYMBOL || argv[0]->token == TOK_SUB_LABEL ||
+            argv[0]->token == TOK_ADD  || argv[0]->token == TOK_SUB ||
+            argv[0]->token == TOK_LOBYTE || argv[0]->token == TOK_HIBYTE)
+            return AM_ABS;
     }
     if (argc == 2 && is_x(argv[1]))
     {

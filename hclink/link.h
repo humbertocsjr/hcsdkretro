@@ -1,5 +1,5 @@
 // BSD 4-Clause License
-// 
+//
 // Copyright (c) 2025,2026, Humberto Costa dos Santos Junior
 // All rights reserved.
 
@@ -39,7 +39,7 @@ typedef struct section_t
     size_t start_default_pos;
     size_t start_pos;
     size_t position;
-    size_t size; 
+    size_t size;
     size_t align;
     rectype_t section;
     struct section_t *next;
@@ -131,13 +131,14 @@ object_file_t *consts_get_obj(object_file_t *obj, char *name);
 void verbose(char *fmt, ...);
 
 // --== process.c ==--
-
-// Process step
+// Process
 void process(step_t step);
 // Process objects
 size_t process_objs(step_t step, rectype_t section);
 // Emit error on process stages
 void process_error(char *fmt, ...);
+// Reorder objects so _start/_main is first in output
+void reorder_start_first(void);
 
 // --== out.c ==--
 

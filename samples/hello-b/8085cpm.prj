@@ -1,0 +1,13 @@
+[config]
+sdk_path = ../../bin
+
+[files:8085]
+main.b
+
+[libs]
+../../libs/8085-cpm-b.lib
+
+[link:release]
+format = bin
+text = 0x100
+filename = 8085CPM.COM

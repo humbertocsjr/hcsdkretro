@@ -5,7 +5,8 @@ FILE *_out = NULL;
 void out_open(char *name)
 {
     _out = fopen(name, "wb");
-    if(!_out) error("can't create file: %s", name);
+    if (!_out)
+        error("can't create file: %s", name);
 }
 
 void out_close()
@@ -25,6 +26,7 @@ void outw(int value)
 
 void out(void *data, int data_size)
 {
-    if(data_size == 0) return;
+    if (data_size == 0)
+        return;
     fwrite(data, 1, data_size, _out);
 }

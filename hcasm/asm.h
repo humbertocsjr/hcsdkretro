@@ -1,5 +1,5 @@
 // BSD 4-Clause License
-// 
+//
 // Copyright (c) 2025,2026, Humberto Costa dos Santos Junior
 // All rights reserved.
 
@@ -53,7 +53,9 @@ typedef enum token_t
     TOK_PARAMS_OPEN,
     TOK_PARAMS_CLOSE,
     TOK_SUB_LABEL,
-    TOK_HASH
+    TOK_HASH,
+    TOK_LOBYTE,
+    TOK_HIBYTE
 } token_t;
 
 typedef struct reg_t
@@ -112,7 +114,6 @@ void error(char *fmt, ...);
 // Emit Expression Error
 void error_expr(expr_t *e, char *fmt, ...);
 
-
 // --== main.c ==--
 
 // current Sourc Fil
@@ -120,7 +121,7 @@ extern source_t *_source;
 
 // --== obj.c ==--
 
-// Open output file 
+// Open output file
 void out_open(char *name, char *dump_name);
 // Close output file
 void out_close();
@@ -159,7 +160,7 @@ expr_t *scan();
 expr_t *curr();
 // Verify current token
 bool curr_is(token_t token);
-// Verify current token 
+// Verify current token
 bool next_is(token_t token);
 // Clone current token
 expr_t *clone_expr(expr_t *src);
