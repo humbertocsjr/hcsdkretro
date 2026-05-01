@@ -7,9 +7,10 @@ expr_t *parse_expr();
 bool is_prefix(expr_t *e)
 {
     opcode_t *o = _prefix;
-    while(o->mnemonic)
+    while (o->mnemonic)
     {
-        if(is_keyword(o->mnemonic, e->text)) return true;
+        if (is_keyword(o->mnemonic, e->text))
+            return true;
         o++;
     }
     return false;
@@ -18,9 +19,10 @@ bool is_prefix(expr_t *e)
 bool is_mnemonic(expr_t *e)
 {
     opcode_t *o = _opcode;
-    while(o->mnemonic)
+    while (o->mnemonic)
     {
-        if(is_keyword(o->mnemonic, e->text)) return true;
+        if (is_keyword(o->mnemonic, e->text))
+            return true;
         o++;
     }
     return false;
@@ -28,9 +30,10 @@ bool is_mnemonic(expr_t *e)
 opcode_t *parse_prefix(expr_t *e)
 {
     opcode_t *o = _prefix;
-    while(o->mnemonic)
+    while (o->mnemonic)
     {
-        if(is_keyword(o->mnemonic, e->text)) return o;
+        if (is_keyword(o->mnemonic, e->text))
+            return o;
         o++;
     }
     error_expr(e, "prefix unknown: %s", e->text);
@@ -40,9 +43,10 @@ opcode_t *parse_prefix(expr_t *e)
 opcode_t *parse_mnemonic(expr_t *e)
 {
     opcode_t *o = _opcode;
-    while(o->mnemonic)
+    while (o->mnemonic)
     {
-        if(is_keyword(o->mnemonic, e->text)) return o;
+        if (is_keyword(o->mnemonic, e->text))
+            return o;
         o++;
     }
     error_expr(e, "mnemonic unknown: %s", e->text);
@@ -52,7 +56,7 @@ opcode_t *parse_mnemonic(expr_t *e)
 expr_t *parse_expr0()
 {
     expr_t *e = NULL;
-    if(curr_is(TOK_SUB))
+    if (curr_is(TOK_SUB))
     {
         e = clone_expr(curr());
         e->left = clone_expr(curr());
@@ -61,18 +65,18 @@ expr_t *parse_expr0()
         scan();
         e->right = parse_expr0();
     }
-    else if(curr_is(TOK_VALUE) || curr_is(TOK_REGISTER) || curr_is(TOK_SYMBOL) || curr_is(TOK_CURRENT_POS))
+    else if (curr_is(TOK_VALUE) || curr_is(TOK_REGISTER) || curr_is(TOK_SYMBOL) || curr_is(TOK_CURRENT_POS))
     {
         e = clone_expr(curr());
         scan();
     }
-    else if(curr_is(TOK_SUB_LABEL))
+    else if (curr_is(TOK_SUB_LABEL))
     {
         e = clone_expr(curr());
         e->token = TOK_SYMBOL;
         scan();
     }
-    else if(curr_is(TOK_SUB))
+    else if (curr_is(TOK_SUB))
     {
         e = clone_expr(curr());
         e->left = clone_expr(curr());
@@ -81,22 +85,31 @@ expr_t *parse_expr0()
         scan();
         e->right = parse_expr0();
     }
-    else if(curr_is(TOK_INDEX_OPEN))
+    else if (curr_is(TOK_LOBYTE) || curr_is(TOK_HIBYTE))
     {
         e = clone_expr(curr());
         scan();
         e->right = parse_expr();
-        if(!curr_is(TOK_INDEX_CLOSE)) error_expr(curr(), "']' expected [Token: '%s'(#%i)]", curr()->text, curr()->token);
+    }
+    else if (curr_is(TOK_INDEX_OPEN))
+    {
+        e = clone_expr(curr());
+        scan();
+        e->right = parse_expr();
+        if (!curr_is(TOK_INDEX_CLOSE))
+            error_expr(curr(), "']' expected [Token: '%s'(#%i)]", curr()->text, curr()->token);
         scan();
     }
-    else if(curr_is(TOK_PARAMS_OPEN))
+    else if (curr_is(TOK_PARAMS_OPEN))
     {
         scan();
         e = parse_expr();
-        if(!curr_is(TOK_PARAMS_CLOSE)) error_expr(curr(), "')' expected [Token: '%s'(#%i)]", curr()->text, curr()->token);
+        if (!curr_is(TOK_PARAMS_CLOSE))
+            error_expr(curr(), "')' expected [Token: '%s'(#%i)]", curr()->text, curr()->token);
         scan();
     }
-    else error_expr(curr(), "expression expected [Token: '%s'(#%i)]", curr()->text, curr()->token);
+    else
+        error_expr(curr(), "expression expected [Token: '%s'(#%i)]", curr()->text, curr()->token);
     return e;
 }
 
@@ -108,7 +121,7 @@ expr_t *parse_expr1()
 expr_t *parse_expr2()
 {
     expr_t *e = parse_expr1();
-    while(curr_is(TOK_MUL) || curr_is(TOK_DIV) || curr_is(TOK_MOD))
+    while (curr_is(TOK_MUL) || curr_is(TOK_DIV) || curr_is(TOK_MOD))
     {
         expr_t *op = clone_expr(curr());
         scan();
@@ -122,9 +135,9 @@ expr_t *parse_expr2()
 expr_t *parse_expr3()
 {
     expr_t *e = parse_expr2();
-    if(e->token == TOK_REGISTER)
+    if (e->token == TOK_REGISTER)
     {
-        if(curr_is(TOK_ADD) || curr_is(TOK_SUB))
+        if (curr_is(TOK_ADD) || curr_is(TOK_SUB))
         {
             expr_t *op = clone_expr(curr());
             scan();
@@ -133,15 +146,16 @@ expr_t *parse_expr3()
             e = op;
         }
     }
-    else while(curr_is(TOK_ADD) || curr_is(TOK_SUB))
-    {
-        expr_t *op = clone_expr(curr());
-        scan();
-        op->left = e;
-        op->right = parse_expr2();
-        e = op;
-    }
-    while(curr_is(TOK_COLON))
+    else
+        while (curr_is(TOK_ADD) || curr_is(TOK_SUB))
+        {
+            expr_t *op = clone_expr(curr());
+            scan();
+            op->left = e;
+            op->right = parse_expr2();
+            e = op;
+        }
+    while (curr_is(TOK_COLON))
     {
         expr_t *op = clone_expr(curr());
         scan();
@@ -162,56 +176,56 @@ void parse_line()
     expr_t *mnemonic = NULL;
     int argc = 0;
     expr_t *argv[ARGV_MAX];
-    while(is_prefix(curr()))
+    while (is_prefix(curr()))
     {
         opcode_t *op = parse_prefix(curr());
         mnemonic = clone_expr(curr());
         scan();
         op->emit(mnemonic, op, 0, argv);
     }
-    if(is_mnemonic(curr()))
+    if (is_mnemonic(curr()))
     {
         opcode_t *op = parse_mnemonic(curr());
         mnemonic = clone_expr(curr());
         scan();
-        while(!curr_is(TOK_NEWLINE) && !curr_is(TOK_EOF))
+        while (!curr_is(TOK_NEWLINE) && !curr_is(TOK_EOF))
         {
-            if(curr_is_keyword("byte"))
+            if (curr_is_keyword("byte"))
             {
                 mnemonic->force_byte = true;
                 scan();
             }
-            else if(curr_is_keyword("word"))
+            else if (curr_is_keyword("word"))
             {
                 mnemonic->force_word = true;
                 scan();
             }
-            else if(curr_is_keyword("dword"))
+            else if (curr_is_keyword("dword"))
             {
                 mnemonic->force_dword = true;
                 scan();
             }
-            else if(curr_is_keyword("qword"))
+            else if (curr_is_keyword("qword"))
             {
                 mnemonic->force_qword = true;
                 scan();
             }
-            else if(curr_is_keyword("short"))
+            else if (curr_is_keyword("short"))
             {
                 mnemonic->force_short = true;
                 scan();
             }
-            else if(curr_is_keyword("near"))
+            else if (curr_is_keyword("near"))
             {
                 mnemonic->force_near = true;
                 scan();
             }
-            else if(curr_is_keyword("far"))
+            else if (curr_is_keyword("far"))
             {
                 mnemonic->force_far = true;
                 scan();
             }
-            if(curr_is(TOK_HASH))
+            if (curr_is(TOK_HASH))
             {
                 scan();
                 argv[argc] = parse_expr();
@@ -222,116 +236,124 @@ void parse_line()
             {
                 argv[argc++] = parse_expr();
             }
-            if(!curr_is(TOK_COMMA)) break;
+            if (!curr_is(TOK_COMMA))
+                break;
             scan();
         }
         op->emit(mnemonic, op, argc, argv);
-        for(int i = 0; i < argc; i++)
+        for (int i = 0; i < argc; i++)
         {
             free_expr(argv[i]);
         }
     }
-    else if(curr_is(TOK_SYMBOL) || curr_is(TOK_SUB_LABEL))
+    else if (curr_is(TOK_SYMBOL) || curr_is(TOK_SUB_LABEL))
     {
-        if(curr_is_keyword("db"))
+        if (curr_is_keyword("db"))
         {
             scan();
-            while(!curr_is(TOK_NEWLINE) && !curr_is(TOK_EOF))
+            while (!curr_is(TOK_NEWLINE) && !curr_is(TOK_EOF))
             {
-                switch(curr()->token)
+                switch (curr()->token)
                 {
-                    case TOK_VALUE:
-                        out(REC_DATA, 0, 0, &curr()->value, 1);
-                        scan();
-                        break;
-                    case TOK_STRING:
-                        out(REC_DATA, 0, 0, curr()->text, strlen(curr()->text));
-                        scan();
-                        break;
-                    default:;
-                        expr_t *arg = parse_expr();
-                        generate(arg, 0, false);
-                        out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
-                        free_expr(arg);
-                        break;
+                case TOK_VALUE:
+                    out(REC_DATA, 0, 0, &curr()->value, 1);
+                    scan();
+                    break;
+                case TOK_STRING:
+                    out(REC_DATA, 0, 0, curr()->text, strlen(curr()->text));
+                    scan();
+                    break;
+                default:;
+                    expr_t *arg = parse_expr();
+                    generate(arg, 0, false);
+                    out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
+                    free_expr(arg);
+                    break;
                 }
-                if(!curr_is(TOK_COMMA)) break;
+                if (!curr_is(TOK_COMMA))
+                    break;
                 scan();
             }
         }
-        else if(curr_is_keyword("dw"))
+        else if (curr_is_keyword("dw"))
         {
             scan();
-            while(!curr_is(TOK_NEWLINE) && !curr_is(TOK_EOF))
+            while (!curr_is(TOK_NEWLINE) && !curr_is(TOK_EOF))
             {
-                switch(curr()->token)
+                switch (curr()->token)
                 {
-                    case TOK_VALUE:
-                        out(REC_DATA, 0, 0, &curr()->value, 2);
-                        scan();
-                        break;
-                    case TOK_STRING:
-                        out(REC_DATA, 0, 0, curr()->text, strlen(curr()->text));
-                        scan();
-                        break;
-                    default:;
-                        expr_t *arg = parse_expr();
-                        out(generate(arg, 0, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
-                        free_expr(arg);
-                        break;
+                case TOK_VALUE:
+                    out(REC_DATA, 0, 0, &curr()->value, 2);
+                    scan();
+                    break;
+                case TOK_STRING:
+                    out(REC_DATA, 0, 0, curr()->text, strlen(curr()->text));
+                    scan();
+                    break;
+                default:;
+                    expr_t *arg = parse_expr();
+                    out(generate(arg, 0, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+                    free_expr(arg);
+                    break;
                 }
-                if(!curr_is(TOK_COMMA)) break;
+                if (!curr_is(TOK_COMMA))
+                    break;
                 scan();
             }
         }
-        else if(curr_is_keyword("global"))
+        else if (curr_is_keyword("global"))
         {
             scan();
-            if(!curr_is(TOK_SYMBOL)) error_expr(curr(), "name expected.");
+            if (!curr_is(TOK_SYMBOL))
+                error_expr(curr(), "name expected.");
             out(REC_CONST_AS_GLOBAL_LABEL, 0, 0, curr()->text, strlen(curr()->text));
             scan();
         }
-        else if(curr_is_keyword("extern"))
+        else if (curr_is_keyword("extern"))
         {
             scan();
-            if(!curr_is(TOK_SYMBOL)) error_expr(curr(), "name expected.");
+            if (!curr_is(TOK_SYMBOL))
+                error_expr(curr(), "name expected.");
             scan();
         }
-        else if(curr_is_keyword("section"))
+        else if (curr_is_keyword("section"))
         {
             scan();
-            if(curr_is_keyword("text"))
+            if (curr_is_keyword("text"))
             {
                 out(REC_SECTION_TEXT, 0, 0, 0, 0);
             }
-            else if(curr_is_keyword("data"))
+            else if (curr_is_keyword("data"))
             {
                 out(REC_SECTION_DATA, 0, 0, 0, 0);
             }
-            else if(curr_is_keyword("bss"))
+            else if (curr_is_keyword("bss"))
             {
                 out(REC_SECTION_BSS, 0, 0, 0, 0);
             }
-            else error_expr(curr(), "section name expected.");
+            else
+                error_expr(curr(), "section name expected.");
             scan();
         }
-        else if(curr_is_keyword("resb") || curr_is_keyword("rb") || curr_is_keyword("ds"))
+        else if (curr_is_keyword("resb") || curr_is_keyword("rb") || curr_is_keyword("ds"))
         {
             scan();
             argv[0] = parse_expr();
-            if(argv[0]->token != TOK_VALUE) error_expr(argv[0], "constant expression expected.");
+            if (argv[0]->token != TOK_VALUE)
+                error_expr(argv[0], "constant expression expected.");
             out(REC_DATA_RESERVE, argv[0]->value, 0, 0, 0);
             free_expr(argv[0]);
         }
-        else if(curr_is_keyword("resw") || curr_is_keyword("rw"))
+        else if (curr_is_keyword("resw") || curr_is_keyword("rw"))
         {
             scan();
             argv[0] = parse_expr();
-            if(argv[0]->token != TOK_VALUE) error_expr(argv[0], "constant expression expected.");
+            if (argv[0]->token != TOK_VALUE)
+                error_expr(argv[0], "constant expression expected.");
             out(REC_DATA_RESERVE, argv[0]->value * 2, 0, 0, 0);
             free_expr(argv[0]);
         }
-        else if(curr_is_keyword("times"))
+        else if (curr_is_keyword("times"))
         {
             scan();
             argv[0] = parse_expr();
@@ -344,27 +366,29 @@ void parse_line()
         else
         {
             expr_t *name = clone_expr(curr());
-            if(!curr_is(TOK_SUB_LABEL))
+            if (!curr_is(TOK_SUB_LABEL))
             {
-                if(_current_label) free(_current_label);
+                if (_current_label)
+                    free(_current_label);
                 _current_label = malloc(strlen(curr()->text) + 1);
                 strcpy(_current_label, curr()->text);
             }
             scan();
-            if(curr_is(TOK_COLON))
+            if (curr_is(TOK_COLON))
             {
                 scan();
             }
-            if(curr_is_keyword("equ"))
+            if (curr_is_keyword("equ"))
             {
                 scan();
                 expr_t *e = parse_expr();
-                if(e->token != TOK_VALUE) error_expr(e, "invalid constant expression");
+                if (e->token != TOK_VALUE)
+                    error_expr(e, "invalid constant expression");
                 consts_set(name->text, e->value);
                 out(REC_CONST_CUSTOM, e->value, 0, name->text, strlen(name->text));
                 free_expr(name);
             }
-            else 
+            else
             {
                 out(REC_CONST_LABEL, 0, 0, name->text, strlen(name->text));
                 parse_line();
@@ -374,8 +398,10 @@ void parse_line()
         }
     }
     free_expr(mnemonic);
-    if(curr_is(TOK_SYMBOL)) error_expr(curr(), "mnemonic expected. [Found: '%s'(#%i)]", curr()->text, curr()->token);
-    if(!curr_is(TOK_NEWLINE) && !curr_is(TOK_EOF)) error_expr(curr(), "new line expected. [Found: '%s'(#%i)]", curr()->text, curr()->token);
+    if (curr_is(TOK_SYMBOL))
+        error_expr(curr(), "mnemonic expected. [Found: '%s'(#%i)]", curr()->text, curr()->token);
+    if (!curr_is(TOK_NEWLINE) && !curr_is(TOK_EOF))
+        error_expr(curr(), "new line expected. [Found: '%s'(#%i)]", curr()->text, curr()->token);
 }
 
 void parse(char *filename)
@@ -386,12 +412,14 @@ void parse(char *filename)
     out(REC_FILENAME, 0, 0, filename, strlen(filename));
     out(_cpu, 0, 0, 0, 0);
     out(REC_SECTION_TEXT, 0, 0, 0, 0);
-    while(!curr_is(TOK_EOF))
+    while (!curr_is(TOK_EOF))
     {
-        while(curr_is(TOK_NEWLINE)) scan();
+        while (curr_is(TOK_NEWLINE))
+            scan();
         out(REC_POSITION, curr()->line, curr()->column, 0, 0);
         parse_line();
-        while(curr_is(TOK_NEWLINE)) scan();
+        while (curr_is(TOK_NEWLINE))
+            scan();
     }
     out(REC_END_OF_FILE, 0, 0, filename, strlen(filename));
     source_close();

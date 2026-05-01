@@ -22,10 +22,10 @@ void format_help_arguments()
 
 bool format_parse_arg(int argc, int *argi, char **argv)
 {
-    if(!strcmp(argv[*argi], "-align"))
+    if (!strcmp(argv[*argi], "-align"))
     {
         (*argi)++;
-        if(*argi < argc)
+        if (*argi < argc)
         {
             section_set_default_align(toint(argv[*argi]));
         }
@@ -36,13 +36,12 @@ bool format_parse_arg(int argc, int *argi, char **argv)
 
 void format_init()
 {
-
 }
 
 void format_process(step_t step)
 {
     size_t position = 0;
-    if(step == STEP_GENERATE)
+    if (step == STEP_GENERATE)
     {
         outb('H');
         outb('C');
@@ -56,30 +55,33 @@ void format_process(step_t step)
     }
     section_reset_sizes();
     section_t *sec = section_find("text");
-    if(sec->start_default_pos == 0)
+    if (sec->start_default_pos == 0)
     {
         sec->start_pos = (position + sec->align - 1) & (~(sec->align - 1));
     }
-    else sec->start_pos = sec->start_default_pos;
+    else
+        sec->start_pos = sec->start_default_pos;
     position = process_objs(step, REC_SECTION_TEXT);
     sec = section_find("data");
-    if(sec->start_default_pos == 0)
+    if (sec->start_default_pos == 0)
     {
         sec->start_pos = (position + sec->align - 1) & (~(sec->align - 1));
     }
-    else sec->start_pos = sec->start_default_pos;
-    while(step == STEP_GENERATE && position < sec->start_pos)
+    else
+        sec->start_pos = sec->start_default_pos;
+    while (step == STEP_GENERATE && position < sec->start_pos)
     {
         outb(0);
         position++;
     }
     position = process_objs(step, REC_SECTION_DATA);
     sec = section_find("bss");
-    if(sec->start_default_pos == 0)
+    if (sec->start_default_pos == 0)
     {
         sec->start_pos = (position + sec->align - 1) & (~(sec->align - 1));
     }
-    else sec->start_pos = sec->start_default_pos;
+    else
+        sec->start_pos = sec->start_default_pos;
     position = process_objs(step, REC_SECTION_BSS);
     process_objs(step, REC_SECTION_RELOC);
     consts_set(_objs, "__text_start__", section_find("text")->start_pos);

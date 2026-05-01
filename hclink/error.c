@@ -1,6 +1,5 @@
 #include "link.h"
 
-
 void error(char *fmt, ...)
 {
     va_list args;

@@ -27,7 +27,7 @@ static reg_t *tryget_reg8bit(expr_t *arg, bool include_main_ptr)
         return arg->reg;
     if (include_main_ptr && arg->token == TOK_INDEX_OPEN && arg->right->token == TOK_REGISTER && (arg->right->reg->group & REG_MAIN_PTR))
         return arg->right->reg;
-    if (include_main_ptr && arg->token == TOK_INDEX_OPEN && arg->right->token == TOK_ADD && arg->right->left && arg->right->left->token == TOK_REGISTER && (arg->right->left->reg->group & REG_MAIN_PTR))
+    if (include_main_ptr && arg->token == TOK_INDEX_OPEN && (arg->right->token == TOK_ADD || arg->right->token == TOK_SUB) && arg->right->left && arg->right->left->token == TOK_REGISTER && (arg->right->left->reg->group & REG_MAIN_PTR))
         return arg->right->left->reg;
     return NULL;
 }
@@ -38,7 +38,7 @@ static reg_t *tryget_reg(expr_t *arg, int group)
         return arg->reg;
     if (arg->token == TOK_INDEX_OPEN && arg->right->token == TOK_REGISTER && (arg->right->reg->group & group))
         return arg->right->reg;
-    if (arg->token == TOK_INDEX_OPEN && arg->right->token == TOK_ADD && arg->right->left && arg->right->left->token == TOK_REGISTER && (arg->right->left->reg->group & group))
+    if (arg->token == TOK_INDEX_OPEN && (arg->right->token == TOK_ADD || arg->right->token == TOK_SUB) && arg->right->left && arg->right->left->token == TOK_REGISTER && (arg->right->left->reg->group & group))
         return arg->right->left->reg;
     return NULL;
 }
@@ -58,7 +58,7 @@ static bool is_main_pointer(expr_t *e)
         return false;
     if (e->right->token == TOK_REGISTER && (e->right->reg->group & REG_MAIN_PTR))
         return true;
-    if (e->right->token == TOK_ADD && e->right->right->token == TOK_REGISTER && (e->right->right->reg->group & REG_MAIN_PTR))
+    if ((e->right->token == TOK_ADD || e->right->token == TOK_SUB) && e->right->right->token == TOK_REGISTER && (e->right->right->reg->group & REG_MAIN_PTR))
         return true;
     return false;
 }

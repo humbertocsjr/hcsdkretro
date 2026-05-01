@@ -1,0 +1,10 @@
+[config]
+verbose = yes
+
+[files:z80]
+main.b
+
+[link:release]
+format = bin
+text = 0x100
+filename = hello.com

@@ -20,7 +20,7 @@ static uint8_t gen_reg(expr_t *arg, int bits_offset, int group_filter, bool use_
         if (!arg->right || arg->right->token != TOK_REGISTER)
             error_expr(arg, "cpu register expected.");
         if ((arg->right->reg->group & group_filter) == 0)
-            error_expr(arg, "invalid register type [%x !& %x]", arg->reg->group, group_filter);
+            error_expr(arg, "invalid register type [%x !& %x]", arg->right->reg->group, group_filter);
         value = arg->right->reg->value_aux & 0x7;
     }
     else
@@ -128,6 +128,18 @@ static void emit_reg_with_offset___only16bit(expr_t *mnemonic, opcode_t *opcode,
     out(REC_DATA, 0, 0, &op, 1);
 }
 
+static void emit_reg__16bit_value___only16bit(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
+{
+    validate(mnemonic, false, false, false, false);
+    uint8_t op = opcode->op1;
+    if (argc != 2)
+        error_expr(mnemonic, "invalid argument count.");
+    op |= gen_reg(argv[0], opcode->op2, REG_16BIT, true);
+    out(REC_DATA, 0, 0, &op, 1);
+    generate(argv[1], 0, false);
+    out(REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+}
+
 static void emit_reg_with_offset___only16bitaux(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -201,9 +213,10 @@ opcode_t _opcode[] =
         {"xra", 0xa8, 0x00, 0x00, 0x00, 0x00, 0x00, emit_reg_with_offset___only8bit},
         {"ora", 0xb0, 0x00, 0x00, 0x00, 0x00, 0x00, emit_reg_with_offset___only8bit},
         {"cmp", 0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, emit_reg_with_offset___only8bit},
-        {"lxi", 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, emit_reg_with_offset___only16bit},
+        {"lxi", 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, emit_reg__16bit_value___only16bit},
         {"stax", 0x02, 0x04, 0x00, 0x00, 0x00, 0x00, emit_reg_with_offset___only_b_d},
         {"inx", 0x03, 0x04, 0x00, 0x00, 0x00, 0x00, emit_reg_with_offset___only16bit},
+        {"dad", 0x09, 0x04, 0x00, 0x00, 0x00, 0x00, emit_reg_with_offset___only16bit},
         {"dcx", 0x0b, 0x04, 0x00, 0x00, 0x00, 0x00, emit_reg_with_offset___only16bit},
         {"inr", 0x04, 0x03, 0x00, 0x00, 0x00, 0x00, emit_reg_with_offset___only8bit},
         {"dcr", 0x05, 0x03, 0x00, 0x00, 0x00, 0x00, emit_reg_with_offset___only8bit},

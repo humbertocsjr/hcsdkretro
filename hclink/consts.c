@@ -5,15 +5,17 @@ const_t *_consts = NULL;
 bool consts_exists(object_file_t *obj, char *name)
 {
     const_t *c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->obj == obj && !strcmp(c->name, name)) return true;
+        if (c->obj == obj && !strcmp(c->name, name))
+            return true;
         c = c->next;
     }
     c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->is_global && !strcmp(c->name, name)) return true;
+        if (c->is_global && !strcmp(c->name, name))
+            return true;
         c = c->next;
     }
     return false;
@@ -22,33 +24,36 @@ bool consts_exists(object_file_t *obj, char *name)
 bool consts_is_offset(object_file_t *obj, char *name)
 {
     const_t *c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->obj == obj && !strcmp(c->name, name)) return c->is_offset;
+        if (c->obj == obj && !strcmp(c->name, name))
+            return c->is_offset;
         c = c->next;
     }
     c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->is_global && !strcmp(c->name, name)) return c->is_offset;
+        if (c->is_global && !strcmp(c->name, name))
+            return c->is_offset;
         c = c->next;
     }
     return false;
 }
 
-
 object_file_t *consts_get_obj(object_file_t *obj, char *name)
 {
     const_t *c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->obj == obj && !strcmp(c->name, name)) return c->obj;
+        if (c->obj == obj && !strcmp(c->name, name))
+            return c->obj;
         c = c->next;
     }
     c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->is_global && !strcmp(c->name, name)) return c->obj;
+        if (c->is_global && !strcmp(c->name, name))
+            return c->obj;
         c = c->next;
     }
     return 0;
@@ -57,15 +62,17 @@ object_file_t *consts_get_obj(object_file_t *obj, char *name)
 int consts_get(object_file_t *obj, char *name)
 {
     const_t *c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->obj == obj && !strcmp(c->name, name)) return c->value;
+        if (c->obj == obj && !strcmp(c->name, name))
+            return c->value;
         c = c->next;
     }
     c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->is_global && !strcmp(c->name, name)) return c->value;
+        if (c->is_global && !strcmp(c->name, name))
+            return c->value;
         c = c->next;
     }
     return 0;
@@ -74,11 +81,11 @@ int consts_get(object_file_t *obj, char *name)
 void consts_set(object_file_t *obj, char *name, int value)
 {
     const_t *c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->obj == obj && !strcmp(c->name, name))
+        if (c->obj == obj && !strcmp(c->name, name))
         {
-            if(c->value != value) 
+            if (c->value != value)
             {
                 c->changed = true;
             }
@@ -100,9 +107,9 @@ void consts_set(object_file_t *obj, char *name, int value)
 void consts_set_offset(object_file_t *obj, char *name)
 {
     const_t *c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->obj == obj && !strcmp(c->name, name))
+        if (c->obj == obj && !strcmp(c->name, name))
         {
             c->is_offset = true;
             return;
@@ -122,9 +129,9 @@ void consts_set_offset(object_file_t *obj, char *name)
 void consts_set_global(object_file_t *obj, char *name)
 {
     const_t *c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->obj == obj && !strcmp(c->name, name))
+        if (c->obj == obj && !strcmp(c->name, name))
         {
             c->is_global = true;
             return;
@@ -144,7 +151,7 @@ void consts_set_global(object_file_t *obj, char *name)
 void consts_reset_changed()
 {
     const_t *c = _consts;
-    while(c)
+    while (c)
     {
         c->changed = false;
         c = c->next;
@@ -154,9 +161,10 @@ void consts_reset_changed()
 void error_consts_has_changed()
 {
     const_t *c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->changed) break;
+        if (c->changed)
+            break;
         c = c->next;
     }
     error("fail to process files, labels keep changing: %s", c->name);
@@ -165,9 +173,10 @@ void error_consts_has_changed()
 bool consts_is_changed()
 {
     const_t *c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->changed) return true;
+        if (c->changed)
+            return true;
         c = c->next;
     }
     return false;
@@ -175,25 +184,26 @@ bool consts_is_changed()
 
 void consts_print(char *sym_name)
 {
-    if(!sym_name) return;
+    if (!sym_name)
+        return;
     FILE *sym = fopen(sym_name, "w");
-    if(!sym) 
+    if (!sym)
     {
         error("can't open symbol file: %s", sym_name);
     }
     const_t *c = _consts;
-    while(c)
+    while (c)
     {
-        if(c->is_global && c->obj->use_in_link)
+        if (c->is_global && c->obj->use_in_link)
         {
             fprintf(sym, "$%04X %s [GLOBAL %s %s]\n", c->value, c->name, c->is_offset ? "LABEL" : "CONST", c->obj->name);
         }
         c = c->next;
     }
     c = _consts;
-    while(c)
+    while (c)
     {
-        if(!c->is_global && c->obj->use_in_link)
+        if (!c->is_global && c->obj->use_in_link)
         {
             fprintf(sym, "$%04X %s [LOCAL %s %s]\n", c->value, c->name, c->is_offset ? "LABEL" : "CONST", c->obj->name);
         }

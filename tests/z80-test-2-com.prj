@@ -4,11 +4,8 @@ sdk_path = ../bin/
 [files:z80]
 z80-test-2.s
 
-[libs:start]
-../libs/start-cpm-z80.obj
-
 [libs]
-../libs/cpm-z80.lib
+../libs/z80-cpm-b.lib
 
 [link:release]
 format = bin

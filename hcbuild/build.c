@@ -170,7 +170,7 @@ void help(void)
     printf("  --link-path <dir>    Set linker directory\n");
     printf("  --lib-path <dir>     Set librarian directory\n");
     printf("  --output-dir <dir>   Set output directory\n");
-    printf("  -I <dir>             Add include path for RetroLang\n");
+    printf("  -I <dir>             Add include path (RetroLang)\n");
     printf("  --verbose, -v        Enable verbose output\n");
     printf("  --dump               Generate assembly dump files\n");
     printf("  --keep               Keep intermediate files\n");
@@ -247,6 +247,35 @@ void make_files(section_t *section)
                     ikv = ikv->next;
                 }
             }
+            snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -o %s %s", temp_name, source_name);
+
+            if (verbose) printf("%s\n", cmd);
+            st = system(cmd);
+            if (st) exit(-1);
+            strncpy(source_name, temp_name, sizeof(source_name) - 1);
+        }
+
+        if (!strcmp(ext, ".b") || !strcmp(ext, ".B")) {
+            ok = true;
+            snprintf(temp_name, sizeof(temp_name), "%s", source_name);
+            remove_ext(temp_name);
+            strncat(temp_name, ".__s", sizeof(temp_name) - strlen(temp_name) - 1);
+
+            cmd[0] = '\0';
+            cmd_put_base(cmd, sizeof(cmd), asm_dir);
+            #ifdef DOS_HOST
+            cmd_puts(cmd, sizeof(cmd), "bcomp");
+            if (section->subsection[0] == '8' && section->subsection[1] == '0')
+                cmd_puts(cmd, sizeof(cmd), &section->subsection[2]);
+            else
+                cmd_puts(cmd, sizeof(cmd), section->subsection);
+            cmd_put_tool(cmd, sizeof(cmd), "");
+            #else
+            cmd_puts(cmd, sizeof(cmd), "hcbcomp-");
+            cmd_puts(cmd, sizeof(cmd), section->subsection);
+            cmd_put_tool(cmd, sizeof(cmd), "");
+            #endif
+
             snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -o %s %s", temp_name, source_name);
 
             if (verbose) printf("%s\n", cmd);
@@ -546,7 +575,6 @@ int main(int argc, char **argv)
         make_files(get_section("files", "8085"));
         make_files(get_section("files", "8086"));
         make_files(get_section("files", "z80"));
-        make_files(get_section("files", "6502"));
         make_libs(get_section("lib", ""));
         make_libs(get_section("libs", ""));
         make_link(get_section("link", config), config);
@@ -556,7 +584,6 @@ int main(int argc, char **argv)
         clean_files(get_section("files", "8085"));
         clean_files(get_section("files", "8086"));
         clean_files(get_section("files", "z80"));
-        clean_files(get_section("files", "6502"));
         clean_link(get_section("link", config), config);
     }
     else {
