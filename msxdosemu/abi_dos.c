@@ -1,9 +1,5 @@
 #include "emu.h"
 #include <stdio.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <sys/statvfs.h>
 
 char *_disk_default = NULL;
 
@@ -63,10 +59,14 @@ static void parse_asciiz(uint16_t addr, char *out, int *drive) {
         strcpy(out, *drive == 0 ? _disk_a_path : _disk_b_path);
     }
     size_t len = strlen(out);
-    if(len > 0 && out[len-1] != '/') strcat(out, "/");
+    if(len > 0 && out[len-1] != PATHSEP) strcat(out, PATHSEPSTR);
     while(*p) {
         char c = *p++;
-        out[strlen(out)] = (c == '\\') ? '/' : c;
+#ifdef _WIN32
+        out[strlen(out)] = (c == '/') ? PATHSEP : c;
+#else
+        out[strlen(out)] = (c == '\\') ? PATHSEP : c;
+#endif
     }
     out[strlen(out)] = 0;
 }
@@ -264,7 +264,7 @@ void abi_dos_call_5()
                 *p = 0;
                 strcpy(_search.pattern, _search.path);
                 p = _search.path + strlen(_search.path);
-                *p++ = '/'; *p = 0;
+                *p++ = PATHSEP; *p = 0;
                 _search.dir = opendir(_search.path);
                 if(!_search.dir) { _regs_curr.af.a = 0xff; _regs_curr.hl.l = 0xff; break; }
             }
@@ -908,14 +908,14 @@ void abi_dos_call_5()
                 parse_asciiz(_regs_curr.de.word, pattern, &drv);
                 _search2.active = true;
                 // Separate directory from filename pattern
-                char *slash = strrchr(pattern, '/');
+                char *slash = strrchr(pattern, PATHSEP);
                 if(slash) {
                     strcpy(_search2.path, pattern);
                     _search2.path[(slash - pattern) + 1] = 0;
                     strcpy(pattern, slash + 1);
                 } else {
                     strcpy(_search2.path, drv == 0 ? _disk_a_path : _disk_b_path);
-                    strcat(_search2.path, "/");
+                    strcat(_search2.path, PATHSEPSTR);
                 }
                 // Replace ? with * for POSIX
                 for(char *p = pattern; *p; p++) if(*p == '?') *p = '*';
@@ -1008,6 +1008,15 @@ void abi_dos_call_5()
             {
                 char fpath[256]; int drv;
                 parse_asciiz(_regs_curr.de.word, fpath, &drv);
+#ifdef _WIN32
+                ULARGE_INTEGER freeBytes;
+                if(GetDiskFreeSpaceExA(fpath, &freeBytes, NULL, NULL)) {
+                    uint64_t free = (uint64_t)freeBytes.QuadPart;
+                    _regs_curr.de.word = (uint16_t)(free & 0xFFFF);
+                    _regs_curr.hl.word = (uint16_t)((free >> 16) & 0xFFFF);
+                    _regs_curr.af.a = 0x00;
+                } else _regs_curr.af.a = 0xff;
+#else
                 struct statvfs vfs;
                 if(statvfs(fpath, &vfs) == 0) {
                     uint64_t free = (uint64_t)vfs.f_bavail * (uint64_t)vfs.f_bsize;
@@ -1015,6 +1024,7 @@ void abi_dos_call_5()
                     _regs_curr.hl.word = (uint16_t)((free >> 16) & 0xFFFF);
                     _regs_curr.af.a = 0x00;
                 } else _regs_curr.af.a = 0xff;
+#endif
             }
             break;
         case 0x56: // IOCTL get device info

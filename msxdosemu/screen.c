@@ -21,6 +21,18 @@ static uint8_t _vdp_status = 0;
 static uint8_t _vdp_foreground = 7;  // white
 static uint8_t _vdp_background = 4;   // blue (MSX default)
 
+void screen_init()
+{
+#ifdef _WIN32
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut != INVALID_HANDLE_VALUE) {
+        DWORD mode;
+        GetConsoleMode(hOut, &mode);
+        SetConsoleMode(hOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+    }
+#endif
+}
+
 // MSX color to ANSI mapping
 static const char *_vdp_ansi_fg[16] = {
     "\033[30m","\033[34m","\033[31m","\033[35m",

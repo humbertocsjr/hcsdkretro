@@ -20,6 +20,35 @@
 #include <time.h>
 #include "../include/version.h"
 
+/* ── Platform abstraction ─────────────────────────────────────── */
+
+#ifdef _WIN32
+  #include <windows.h>
+  #include <conio.h>
+  #include <io.h>
+  #include <direct.h>
+  #include <sys/stat.h>
+  #include "win32_dirent.h"
+  #define PATHSEP '\\'
+  #define PATHSEPSTR "\\"
+  #define mkdir(p, m) _mkdir(p)
+  #define RMDIR _rmdir
+  #define fileno _fileno
+  #define ftruncate _chsize_s
+  #ifndef STDIN_FILENO
+  #define STDIN_FILENO 0
+  #endif
+#else
+  #include <termios.h>
+  #include <unistd.h>
+  #include <dirent.h>
+  #include <sys/stat.h>
+  #include <sys/statvfs.h>
+  #define PATHSEP '/'
+  #define PATHSEPSTR "/"
+  #define RMDIR rmdir
+#endif
+
 // --== common ==--
 
 #pragma pack(1)
@@ -182,6 +211,7 @@ uint16_t ip_get_word();
 #define VDP_MEMORY_MAX 0x20000
 extern char _vdp_memory[VDP_MEMORY_MAX];
 char printable(char c);
+void screen_init();
 void screen_draw();
 void screen_draw_if_changed();
 void screen_clear();
