@@ -290,15 +290,19 @@ void make_files(section_t *section)
             cmd[0] = '\0';
             cmd_put_base(cmd, sizeof(cmd), asm_dir);
             #ifdef DOS_HOST
-            cmd_puts(cmd, sizeof(cmd), "hcasm");
-            if (section->subsection[0] == '8' && section->subsection[1] == '0')
-                cmd_puts(cmd, sizeof(cmd), &section->subsection[2]);
+            cmd_puts(cmd, sizeof(cmd), "hcasm-");
+            /* 8086exe uses the same assembler as 8086 */
+            if (!strcmp(section->subsection, "8086exe"))
+                cmd_puts(cmd, sizeof(cmd), "8086");
             else
                 cmd_puts(cmd, sizeof(cmd), section->subsection);
             cmd_put_tool(cmd, sizeof(cmd), "");
             #else
             cmd_puts(cmd, sizeof(cmd), "hcasm-");
-            cmd_puts(cmd, sizeof(cmd), section->subsection);
+            if (!strcmp(section->subsection, "8086exe"))
+                cmd_puts(cmd, sizeof(cmd), "8086");
+            else
+                cmd_puts(cmd, sizeof(cmd), section->subsection);
             cmd_put_tool(cmd, sizeof(cmd), "");
             #endif
 
@@ -579,6 +583,7 @@ int main(int argc, char **argv)
         make_files(get_section("files", "8080"));
         make_files(get_section("files", "8085"));
         make_files(get_section("files", "8086"));
+        make_files(get_section("files", "8086exe"));
         make_files(get_section("files", "z80"));
         make_libs(get_section("lib", ""));
         make_libs(get_section("libs", ""));
@@ -588,6 +593,7 @@ int main(int argc, char **argv)
         clean_files(get_section("files", "8080"));
         clean_files(get_section("files", "8085"));
         clean_files(get_section("files", "8086"));
+        clean_files(get_section("files", "8086exe"));
         clean_files(get_section("files", "z80"));
         clean_link(get_section("link", config), config);
     }

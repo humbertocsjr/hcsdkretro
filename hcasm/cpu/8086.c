@@ -596,7 +596,7 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         if (include_value)
             out(generate(argv[1]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
-    else if (is_reg_address(argv[0]) | is_reg_seg(argv[1]))
+    else if (is_reg_address(argv[0]) && is_reg_seg(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
         op = opcode->op5;
@@ -611,6 +611,51 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         out(REC_DATA, 0, 0, &op, 1);
         if (include_value)
             out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+    }
+    else if (is_address(argv[0]) && is_value(argv[1]))
+    {
+        if (mnemonic->force_byte)
+            validate(mnemonic, true, false, false, false);
+        else
+            validate(mnemonic, false, true, false, false);
+        op = opcode->op2 | (mnemonic->force_word || (!mnemonic->force_byte) ? 1 : 0);
+        out(REC_DATA, 0, 0, &op, 1);
+        op = 0b00000110; /* mod=00, reg=000, rm=110 (direct address) */
+        out(REC_DATA, 0, 0, &op, 1);
+        out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+        if (mnemonic->force_word || (!mnemonic->force_byte))
+            out(generate(argv[1], 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+        else
+        {
+            generate(argv[1], 1, false);
+            out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
+        }
+    }
+    else if (is_reg_address(argv[0]) && is_value(argv[1]))
+    {
+        if (mnemonic->force_byte)
+            validate(mnemonic, true, false, false, false);
+        else
+            validate(mnemonic, false, true, false, false);
+        op = opcode->op2 | (mnemonic->force_word || (!mnemonic->force_byte) ? 1 : 0);
+        out(REC_DATA, 0, 0, &op, 1);
+        op = get_mrm(argv[0]);
+        argv[0] = optimize(filter_registers(argv[0]));
+        if (!(argv[0]->right->token == TOK_VALUE && argv[0]->right->value == 0 && (op & 0x7) != 0b110))
+        {
+            op |= 0b10000000;
+            include_value = true;
+        }
+        out(REC_DATA, 0, 0, &op, 1);
+        if (include_value)
+            out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+        if (mnemonic->force_word || (!mnemonic->force_byte))
+            out(generate(argv[1], 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+        else
+        {
+            generate(argv[1], 1, false);
+            out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
+        }
     }
     else
         error_expr(mnemonic, "invalid arguments");

@@ -2,7 +2,7 @@
 sdk_path = ../../bin
 
 [files:8086exe]
-main.b
+main_fmt.b
 
 [libs]
 ../../libs/8086-msdos-exe-b.lib
@@ -10,4 +10,4 @@ main.b
 [link:release]
 format = mz
 stack = 1024
-filename = 86MSDOS.EXE
+filename = test_fmt.exe

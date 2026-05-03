@@ -927,7 +927,12 @@ static int parse_args_rtl(long first_pos)
     count = 1;
     while (tok == TOK_COMMA)
     {
+        {
+            int ch = lex_get_ch();
+            if (ch != EOF) ungetc(ch, fp);
+        }
         starts[count] = ftell(fp);
+        lex_set_ch(' ');
         next();
         assignment();
         count++;
