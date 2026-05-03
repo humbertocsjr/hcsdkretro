@@ -115,4 +115,29 @@ hcbuild calc.prj make release
 
 - Read the [HC B Compiler](bcompiler.md) documentation for the complete B language reference
 - See [HC Assembler](assembler.md) for assembly syntax
+- See [HC Builder](builder.md) for project file format details
 - Check the [samples/](../samples/) directory for example projects
+
+## 8086 MS-DOS EXE Project
+
+For 8086 programs that need far pointers and MZ EXE format, use the `[files:8086exe]` selector:
+
+```ini
+[config]
+sdk_path = ./bin
+
+[files:8086exe]
+main.b
+
+[libs]
+libs/8086-msdos-exe-b.lib
+
+[link:release]
+format = mz
+stack = 1024
+filename = program.exe
+```
+
+```sh
+hcbuild program.prj make release
+```

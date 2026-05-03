@@ -1,9 +1,0 @@
-[config]
-sdk_path = ../bin
-
-[files:8080]
-8080-lib.s
-
-[link:release]
-format = lib
-filename = 8080-lib.lib

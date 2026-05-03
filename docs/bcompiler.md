@@ -531,17 +531,33 @@ source.b
 [Compiler]      →  Generates .s assembly
     │
     ▼
+[Peephole]      →  Target-specific instruction optimization (peep.c)
+    │
+    ▼
 [hcasm]         →  Assembles to .obj
     │
     ▼
-[hclink]        →  Links to .com/.bin/.rex
+[hclink]        →  Links to .com/.bin/.rex/.exe
 ```
+
+### Peephole Optimizer
+
+After code generation, a target-specific peephole optimizer (`hcbcomp/peep.c`) applies sliding-window pattern matching to reduce instruction count. Key optimizations include:
+
+| Target | Pattern | Before | After | Gain |
+|--------|---------|--------|-------|------|
+| Z80 | Local variable load | 9 instr. (address compute + deref) | 2 instr. (`ld r, [ix+N]`) | 7 |
+| Z80 | Local variable store (imm) | 12 instr. | 3 instr. (`ld [ix+N], r`) | 9 |
+| 8086 | Local variable load | 3 instr. (`lea; mov; mov [reg]`) | 1 instr. (`mov ax, [bp+N]`) | 2 |
+| 8086 | Global dereference | 3 instr. (`mov ax,label; mov bx,ax; mov ax,[bx]`) | 1 instr. (`mov ax, [label]`) | 2 |
+| 8086 | Store immediate to local | 5 instr. (`lea; push; mov; pop; mov [bx]`) | 1 instr. (`mov word [bp+N], imm`) | 4 |
 
 ## Calling Convention
 
 | Aspect | Convention |
 |--------|-----------|
 | **Parameter passing** | Stack, right-to-left (C convention) |
+| **Evaluation order** | Right-to-left (two-pass fseek technique, no reversal step) |
 | **Stack cleanup** | Caller cleans (`add sp, n*2` after call) |
 
 ## Library Structure
