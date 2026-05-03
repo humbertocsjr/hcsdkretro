@@ -4,7 +4,7 @@ INCDIR = /usr/local/include
 LIBSDIR = /usr/local/share/hcsdk/libs
 include version.mk
 
-all clean test test_emu posix linux macos win win32 dos samples_zip:
+all clean posix linux macos win win32 dos samples_zip:
 	@make --no-print-directory --silent version_$@
 	$M hcasm
 	$M hclink
@@ -13,8 +13,10 @@ all clean test test_emu posix linux macos win win32 dos samples_zip:
 	$M hcbcomp
 	$M msxdosemu
 	$M libs
-	$M tests
 	@make --no-print-directory --silent distro_$@
+
+test: all
+	$M tests
 
 distro: all linux macos win win32 dos samples_zip
 	@true
