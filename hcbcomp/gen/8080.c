@@ -107,18 +107,19 @@ void gen_load_addr(const char *name) { gen_emitf("lxi h, %s", name); }
 // Locals at BC - 2 - nlocals*2 + offset*2
 void gen_store_local(int offset)
 {
-    int bo = offset * 2 - 2 - _8080_cur_nlocals * 2;
-    gen_emit("xchg");
+    int bo = -(offset * 2 + 4);
     gen_emitf("lxi h, %i", bo);
     gen_emit("dad b");
-    gen_emit("mov m, e");
+    gen_emit("xchg");
+    gen_emit("mov a, e");
+    gen_emit("mov m, a");
     gen_emit("inx h");
     gen_emit("mov m, d");
 }
 
 void gen_load_local(int offset)
 {
-    int bo = offset * 2 - 2 - _8080_cur_nlocals * 2;
+    int bo = -(offset * 2 + 4);
     gen_emitf("lxi h, %i", bo);
     gen_emit("dad b");
     gen_emit("mov a, m");
@@ -129,7 +130,7 @@ void gen_load_local(int offset)
 
 void gen_local_addr(int offset)
 {
-    gen_emitf("lxi h, %i", offset * 2 - 2 - _8080_cur_nlocals * 2);
+    gen_emitf("lxi h, %i", -(offset * 2 + 4));
     gen_emit("dad b");
 }
 
@@ -202,7 +203,6 @@ void gen_double(void) { gen_emit("dad h"); }
 
 void gen_sub(void)
 {
-    gen_emit("xchg");
     gen_emit("mov a, e");
     gen_emit("sub l");
     gen_emit("mov l, a");
@@ -215,6 +215,7 @@ void gen_mul(void)
 {
     int l_loop = gen_label();
     int l_skip = gen_label();
+    gen_emit("push b");    /* save frame pointer */
     gen_emit("xchg");
     gen_emit("push h");
     gen_emit("pop b");
@@ -237,6 +238,7 @@ void gen_mul(void)
     gen_emit("pop psw");
     gen_emit("dcr a");
     gen_emitf("jnz .L%i", l_loop);
+    gen_emit("pop b");    /* restore frame pointer */
 }
 
 void gen_div(void)
@@ -244,6 +246,7 @@ void gen_div(void)
     int l_loop = gen_label();
     int l_sub = gen_label();
     int l_done = gen_label();
+    gen_emit("push b");    /* save frame pointer */
     gen_emit("xchg");
     gen_emit("lxi b, 0");
     gen_emit("mvi a, 16");
@@ -276,6 +279,7 @@ void gen_div(void)
     gen_emit("pop psw");
     gen_emit("dcr a");
     gen_emitf("jnz .L%i", l_loop);
+    gen_emit("pop b");    /* restore frame pointer */
 }
 
 void gen_mod(void)
@@ -283,6 +287,7 @@ void gen_mod(void)
     int l_loop = gen_label();
     int l_sub = gen_label();
     int l_done = gen_label();
+    gen_emit("push b");    /* save frame pointer */
     gen_emit("xchg");
     gen_emit("lxi b, 0");
     gen_emit("mvi a, 16");
@@ -317,6 +322,7 @@ void gen_mod(void)
     gen_emitf("jnz .L%i", l_loop);
     gen_emit("mov l, c");
     gen_emit("mov h, b");
+    gen_emit("pop b");    /* restore frame pointer */
 }
 
 void gen_neg(void)
@@ -433,7 +439,18 @@ void gen_shr(void)
 void gen_cmp_eq(void) { int l0=gen_label(),lm=gen_label(); gen_emit("mov a,l"); gen_emit("sub e"); gen_emitf("jnz .L%i",l0); gen_emit("mov a,h"); gen_emit("sbb d"); gen_emitf("jnz .L%i",l0); gen_emit("lxi h,1"); gen_emitf("jmp .L%i",lm); gen_label_int(l0); gen_emit("lxi h,0"); gen_label_int(lm); }
 void gen_cmp_ne(void) { int l0=gen_label(),lm=gen_label(); gen_emit("mov a,l"); gen_emit("sub e"); gen_emitf("jnz .L%i",l0); gen_emit("mov a,h"); gen_emit("sbb d"); gen_emit("lxi h,1"); gen_emitf("jnz .L%i",lm); gen_emit("lxi h,0"); gen_emitf("jmp .L%i",lm); gen_label_int(l0); gen_emit("lxi h,1"); gen_label_int(lm); }
 void gen_cmp_lt(void) { int lt=gen_label(),lm=gen_label(); gen_emit("xchg"); GEN_CMPCODE; gen_emitf("jc .L%i",lt); gen_emit("lxi h,0"); gen_emitf("jmp .L%i",lm); gen_label_int(lt); gen_emit("lxi h,1"); gen_label_int(lm); }
-void gen_cmp_gt(void) { int lt=gen_label(),lm=gen_label(); gen_emit("xchg"); GEN_CMPCODE; gen_emitf("jc .L%i",lt); gen_emitf("jz .L%i",lt); gen_emit("lxi h,1"); gen_emitf("jmp .L%i",lm); gen_label_int(lt); gen_emit("lxi h,0"); gen_label_int(lm); }
+void gen_cmp_gt(void)
+{
+    int l_true = gen_label();
+    int l_done = gen_label();
+    GEN_CMPCODE;  /* HL = right - left (no xchg: DE=left, HL=right) */
+    gen_emitf("jc .L%i", l_true);  /* carry → right < left → left > right → TRUE */
+    gen_emit("lxi h, 0");          /* otherwise → FALSE */
+    gen_emitf("jmp .L%i", l_done);
+    gen_label_int(l_true);
+    gen_emit("lxi h, 1");          /* TRUE */
+    gen_label_int(l_done);
+}
 void gen_cmp_le(void) { int lt=gen_label(),lm=gen_label(); gen_emit("xchg"); GEN_CMPCODE; gen_emitf("jc .L%i",lt); gen_emitf("jz .L%i",lt); gen_emit("lxi h,0"); gen_emitf("jmp .L%i",lm); gen_label_int(lt); gen_emit("lxi h,1"); gen_label_int(lm); }
 void gen_cmp_ge(void) { int lt=gen_label(),lm=gen_label(); gen_emit("xchg"); GEN_CMPCODE; gen_emitf("jc .L%i",lt); gen_emit("lxi h,1"); gen_emitf("jmp .L%i",lm); gen_label_int(lt); gen_emit("lxi h,0"); gen_label_int(lm); }
 
