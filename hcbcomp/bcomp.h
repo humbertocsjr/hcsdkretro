@@ -121,6 +121,10 @@ extern int tok_value;
 void lex_init(FILE *fp);
 void next(void);
 void next_token(void);
+FILE *lex_get_fp(void);
+void lex_sync(void);
+int lex_get_ch(void);
+void lex_set_ch(int c);
 
 // --== Parser ==--
 
@@ -218,4 +222,5 @@ void gen_jz(int label);
 void gen_jnz(int label);
 
 void gen_call(const char *name, int nargs);
-void gen_reverse_args(int count);
+
+extern FILE *devnull;
