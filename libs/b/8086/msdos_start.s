@@ -4,9 +4,7 @@ extern main
 
 section text
 _start:
-    mov sp, __bss_start__
-    add sp, __bss_size__
-    add sp, 1024          ; reserve stack space
+    mov sp, __stack_top__
 
     ; Clear BSS
     mov cx, __bss_size__

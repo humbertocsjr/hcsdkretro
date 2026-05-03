@@ -4,10 +4,8 @@ extern main
 
 section text
 _start:
-    ; Initial stack at end of BSS
-    ld hl, __bss_start__
-    ld de, __bss_size__
-    add hl, de
+    ; Initial stack at end of BSS + stack reserve (provided by linker)
+    ld hl, __stack_top__
     ld sp, hl
 
     ; Clear BSS
