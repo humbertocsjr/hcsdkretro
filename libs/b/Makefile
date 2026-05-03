@@ -78,9 +78,11 @@ CPU_8086_OBJECTS = \
 	$(CPU_8086)/msdos_start.obj
 
 CPU_8086_EXE_OBJECTS = \
-	$(foreach m,$(B_COMMON),$(CPU_8086)/$(m).obj) \
-	$(foreach m,$(ASM_COMMON),$(CPU_8086)/$(m).obj) \
-	$(CPU_8086)/dos_file.obj \
+	$(foreach m,$(B_COMMON),$(CPU_8086EXE)/$(m).obj) \
+	$(CPU_8086EXE)/io.obj \
+	$(CPU_8086EXE)/mul32.obj \
+	$(CPU_8086EXE)/div32.obj \
+	$(CPU_8086EXE)/sh32.obj \
 	$(CPU_8086)/msdos_start_mz.obj
 
 # --== Generic B source files ==--
@@ -107,15 +109,15 @@ define b_compile_template
 $(1)/$(2).__s: $(2).b Makefile
 	@mkdir -p $(1)
 	@echo [B]   $(1)/$(2).__s
-	@$(BCOM)/hcbcomp-$(patsubst 8085,8080,$(1)) -o $$@ $$< 2>/dev/null
+	@$(BCOM)/hcbcomp-$(patsubst 8086exe,8086exe,$(patsubst 8085,8080,$(1))) -o $$@ $$< 2>/dev/null
 
 $(1)/$(2).obj: $(1)/$(2).__s Makefile
 	@echo [ASM] $(1)/$(2).obj
-	@$(ASM)/hcasm-$(patsubst 8085,8080,$(1)) -o $$@ $$< 2>/dev/null
+	@$(ASM)/hcasm-$(patsubst 8086exe,8086,$(patsubst 8085,8080,$(1))) -o $$@ $$< 2>/dev/null
 endef
 
 # Generate compile rules for each B module for each CPU
-$(foreach cpu,z80 8080 8085 8086,\
+$(foreach cpu,z80 8080 8085 8086 8086exe,\
   $(foreach mod,$(B_COMMON),\
     $(eval $(call b_compile_template,$(cpu),$(mod)))))
 
@@ -163,6 +165,12 @@ $(CPU_8086)/msdos_start_mz.obj: $(CPU_8086)/msdos_start_mz.s Makefile
 	@echo [ASM] $@
 	@$(ASM)/hcasm-8086 -o $@ $< 2>/dev/null
 
+# 8086exe assembly modules (MZ EXE specific: IO + math)
+CPU_8086EXE = 8086exe
+$(CPU_8086EXE)/%.obj: $(CPU_8086EXE)/%.s Makefile
+	@echo [ASM] $@
+	@$(ASM)/hcasm-8086 -o $@ $< 2>/dev/null
+
 # --== Library packaging (output to libs/ root) ==--
 ../z80-cpm-b.lib: $(Z80_OBJECTS)
 	@echo [LIB] $@
@@ -186,8 +194,8 @@ $(CPU_8086)/msdos_start_mz.obj: $(CPU_8086)/msdos_start_mz.s Makefile
 
 # --== Clean: remove generated files only, keep hand-written .s sources ==--
 clean:
-	@rm -f *.obj $(Z80_ARCH)/*.obj $(CPU_8080)/*.obj $(CPU_8085)/*.obj $(CPU_8086)/*.obj
-	@rm -f *.__s $(Z80_ARCH)/*.__s
+	@rm -f *.obj $(Z80_ARCH)/*.obj $(CPU_8080)/*.obj $(CPU_8085)/*.obj $(CPU_8086)/*.obj $(CPU_8086EXE)/*.obj
+	@rm -f *.__s $(Z80_ARCH)/*.__s $(CPU_8086)/*.__s $(CPU_8086EXE)/*.__s
 	@rm -f $(BLIBS)
 	@rm -f ../z80-cpm-start.obj
 	@rm -f $(CPU_8086)/msdos_start_mz.obj
