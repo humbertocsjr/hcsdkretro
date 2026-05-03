@@ -60,6 +60,7 @@ typedef struct const_t
     bool is_global;
     bool is_offset;
     int value;
+    rectype_t section;
     struct const_t *next;
     bool changed;
     object_file_t *obj;
@@ -152,11 +153,23 @@ void outb(int value);
 void outw(int value);
 // Write data
 void out(void *data, int data_size);
+// Seek in output file
+void out_seek(long offset, int whence);
+// Get current position in output file
+long out_tell(void);
+
+// Format hooks (optional, can be NULL)
+extern int (*format_adjust_value)(int value, int position, rectype_t section);
+extern void (*format_record_reloc)(int position, rectype_t section);
 
 // --== consts.c ==--
 
 // Verify if constant exists
 bool consts_exists(object_file_t *obj, char *name);
+// Set constant section
+void consts_set_section(object_file_t *obj, char *name, rectype_t section);
+// Get constant section
+rectype_t consts_get_section(object_file_t *obj, char *name);
 // Get constant value
 int consts_get(object_file_t *obj, char *name);
 // Set constant value

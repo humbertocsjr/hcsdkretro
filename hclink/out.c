@@ -30,3 +30,13 @@ void out(void *data, int data_size)
         return;
     fwrite(data, 1, data_size, _out);
 }
+
+void out_seek(long offset, int whence)
+{
+    fseek(_out, offset, whence);
+}
+
+long out_tell(void)
+{
+    return ftell(_out);
+}

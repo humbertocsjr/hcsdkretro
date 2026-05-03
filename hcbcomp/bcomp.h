@@ -163,6 +163,7 @@ void gen_push_prim(void);
 void gen_pop_sec(void);
 
 void gen_load_imm(int val);
+void gen_load_label(int label);
 void gen_load_var(const char *name);
 void gen_load_addr(const char *name);
 void gen_store_local(int offset);
@@ -207,3 +208,4 @@ void gen_jz(int label);
 void gen_jnz(int label);
 
 void gen_call(const char *name, int nargs);
+void gen_reverse_args(int count);

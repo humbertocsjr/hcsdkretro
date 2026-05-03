@@ -368,6 +368,7 @@ void make_link(section_t *section, char *config)
     char *data_offset = NULL;
     char *bss_offset = NULL;
     char *align = NULL;
+    char *stack_size = NULL;
     char output_path[2048];
     const char *link_dir = cfg_link_path[0] ? cfg_link_path : cfg_sdk_path;
     const char *lib_dir = cfg_lib_path[0] ? cfg_lib_path : cfg_sdk_path;
@@ -385,6 +386,7 @@ void make_link(section_t *section, char *config)
     data_offset = get_value(section->name, section->subsection, "data");
     bss_offset = get_value(section->name, section->subsection, "bss");
     align = get_value(section->name, section->subsection, "align");
+    stack_size = get_value(section->name, section->subsection, "stack");
     if (strlen(format) == 0) format = "bin";
     if (strlen(out_file) == 0) out_file = "a.out";
 
@@ -393,7 +395,7 @@ void make_link(section_t *section, char *config)
     obj_t *obj = _objs;
     size_t cmd_size = 8192;
     cmd_size += strlen(output_path) + strlen(sym_file) + strlen(text_offset)
-              + strlen(data_offset) + strlen(bss_offset) + strlen(align) + 256;
+              + strlen(data_offset) + strlen(bss_offset) + strlen(align) + strlen(stack_size) + 256;
     while (obj) {
         cmd_size += strlen(obj->name) + 4;
         obj = obj->next;
@@ -436,6 +438,9 @@ void make_link(section_t *section, char *config)
         }
         if (strlen(sym_file)) {
             snprintf(cmd + strlen(cmd), cmd_size - strlen(cmd), " -sym %s", sym_file);
+        }
+        if (strlen(stack_size)) {
+            snprintf(cmd + strlen(cmd), cmd_size - strlen(cmd), " -stack %s", stack_size);
         }
     }
 

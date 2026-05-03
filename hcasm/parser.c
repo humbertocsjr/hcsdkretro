@@ -183,6 +183,10 @@ void parse_line()
         scan();
         op->emit(mnemonic, op, 0, argv);
     }
+    if (curr_is(TOK_SYMBOL) && next_is(TOK_COLON))
+    {
+        goto parse_label;
+    }
     if (is_mnemonic(curr()))
     {
         opcode_t *op = parse_mnemonic(curr());
@@ -248,6 +252,7 @@ void parse_line()
     }
     else if (curr_is(TOK_SYMBOL) || curr_is(TOK_SUB_LABEL))
     {
+parse_label:
         if (curr_is_keyword("db"))
         {
             scan();

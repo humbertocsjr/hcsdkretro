@@ -6,6 +6,7 @@ ram.bin
 *.sym
 *.dump
 *.com
+*.exe
 *.bin
 *.rex
 *.lib

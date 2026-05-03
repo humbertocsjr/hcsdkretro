@@ -115,6 +115,7 @@ void gen_load_addr(const char *name)
     gen_emitf("mov ax, %s", name);
 }
 
+void gen_load_label(int label) { fprintf(outfile, "\tmov ax, .L%i\n", label); }
 void gen_store_local(int offset)
 {
     gen_emitf("mov [bp-%i], ax", offset * 2 + 2);
@@ -371,13 +372,13 @@ void gen_jmp(int label)
 void gen_jz(int label)
 {
     gen_emit("or ax, ax");
-    gen_emitf("jz .L%i", label);
+    gen_emitf("jz near .L%i", label);
 }
 
 void gen_jnz(int label)
 {
     gen_emit("or ax, ax");
-    gen_emitf("jnz .L%i", label);
+    gen_emitf("jnz near .L%i", label);
 }
 
 void gen_call(const char *name, int nargs)
@@ -386,6 +387,66 @@ void gen_call(const char *name, int nargs)
     if (nargs > 0)
     {
         gen_emitf("add sp, %i", nargs * 2);
+    }
+}
+
+void gen_reverse_args(int count)
+{
+    if (count <= 1) return;
+    switch (count) {
+    case 2:
+        gen_emit("pop bx");
+        gen_emit("pop ax");
+        gen_emit("push bx");
+        gen_emit("push ax");
+        break;
+    case 3:
+        gen_emit("pop bx");
+        gen_emit("pop cx");
+        gen_emit("pop ax");
+        gen_emit("push bx");
+        gen_emit("push cx");
+        gen_emit("push ax");
+        break;
+    case 4:
+        gen_emit("pop bx");
+        gen_emit("pop cx");
+        gen_emit("pop dx");
+        gen_emit("pop ax");
+        gen_emit("push bx");
+        gen_emit("push cx");
+        gen_emit("push dx");
+        gen_emit("push ax");
+        break;
+    case 5:
+        gen_emit("pop bx");
+        gen_emit("pop cx");
+        gen_emit("pop dx");
+        gen_emit("pop si");
+        gen_emit("pop ax");
+        gen_emit("push bx");
+        gen_emit("push cx");
+        gen_emit("push dx");
+        gen_emit("push si");
+        gen_emit("push ax");
+        break;
+    case 6:
+        gen_emit("pop bx");
+        gen_emit("pop cx");
+        gen_emit("pop dx");
+        gen_emit("pop si");
+        gen_emit("pop di");
+        gen_emit("pop ax");
+        gen_emit("push bx");
+        gen_emit("push cx");
+        gen_emit("push dx");
+        gen_emit("push si");
+        gen_emit("push di");
+        gen_emit("push ax");
+        break;
+    default:
+        gen_emitf("; reverse %i args (unimplemented)", count);
+        break;
     }
 }
 

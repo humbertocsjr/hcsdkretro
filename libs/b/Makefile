@@ -18,7 +18,8 @@ BLIBS = \
 	../z80-cpm-b.lib \
 	../8080-cpm-b.lib \
 	../8085-cpm-b.lib \
-	../8086-msdos-b.lib
+	../8086-msdos-b.lib \
+	../8086-msdos-exe-b.lib
 
 # --== Generic B modules (compiled per CPU) ==--
 B_COMMON = abs atoi gets itoa memcpy memset printf strcat strcmp strcpy strlen
@@ -75,6 +76,12 @@ CPU_8086_OBJECTS = \
 	$(foreach m,$(ASM_COMMON),$(CPU_8086)/$(m).obj) \
 	$(CPU_8086)/dos_file.obj \
 	$(CPU_8086)/msdos_start.obj
+
+CPU_8086_EXE_OBJECTS = \
+	$(foreach m,$(B_COMMON),$(CPU_8086)/$(m).obj) \
+	$(foreach m,$(ASM_COMMON),$(CPU_8086)/$(m).obj) \
+	$(CPU_8086)/dos_file.obj \
+	$(CPU_8086)/msdos_start_mz.obj
 
 # --== Generic B source files ==--
 B_SRCS = $(foreach m,$(B_COMMON),$(m).b)
@@ -152,6 +159,10 @@ $(CPU_8086)/%.obj: $(CPU_8086)/%.s Makefile
 	@echo [ASM] $@
 	@$(ASM)/hcasm-8086 -o $@ $< 2>/dev/null
 
+$(CPU_8086)/msdos_start_mz.obj: $(CPU_8086)/msdos_start_mz.s Makefile
+	@echo [ASM] $@
+	@$(ASM)/hcasm-8086 -o $@ $< 2>/dev/null
+
 # --== Library packaging (output to libs/ root) ==--
 ../z80-cpm-b.lib: $(Z80_OBJECTS)
 	@echo [LIB] $@
@@ -169,9 +180,14 @@ $(CPU_8086)/%.obj: $(CPU_8086)/%.s Makefile
 	@echo [LIB] $@
 	@$(ASM)/hclib $@ $(CPU_8086_OBJECTS) 2>/dev/null
 
+../8086-msdos-exe-b.lib: $(CPU_8086_EXE_OBJECTS)
+	@echo [LIB] $@
+	@$(ASM)/hclib $@ $(CPU_8086_EXE_OBJECTS) 2>/dev/null
+
 # --== Clean: remove generated files only, keep hand-written .s sources ==--
 clean:
 	@rm -f *.obj $(Z80_ARCH)/*.obj $(CPU_8080)/*.obj $(CPU_8085)/*.obj $(CPU_8086)/*.obj
 	@rm -f *.__s $(Z80_ARCH)/*.__s
 	@rm -f $(BLIBS)
 	@rm -f ../z80-cpm-start.obj
+	@rm -f $(CPU_8086)/msdos_start_mz.obj

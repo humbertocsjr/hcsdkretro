@@ -1,8 +1,20 @@
 #include "emu.h"
 
 
+static void trace_step(void)
+{
+    uint8_t op = mem_get_byte(_regs_curr.ip);
+    fprintf(stderr, "%04X: %02X | BC=%04X DE=%04X HL=%04X SP=%04X AF=%04X\n",
+        _regs_curr.ip, op,
+        _regs_curr.bc.word, _regs_curr.de.word,
+        _regs_curr.hl.word, _regs_curr.sp,
+        _regs_curr.af.word);
+}
+
 void exec_step()
 {
+    if (_trace)
+        trace_step();
     memcpy(&_regs_prev, &_regs_curr, sizeof(z80_regs_t));
     _regs_prev.value = 0;
     _regs_curr.value = 0;

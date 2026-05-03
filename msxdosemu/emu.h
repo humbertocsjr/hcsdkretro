@@ -162,6 +162,7 @@ typedef struct z80_regs_t
 
 extern bool _debuggable;
 extern bool _debug;
+extern bool _trace;
 extern uint8_t _memory[0x100ff];
 extern z80_regs_t _regs_curr;
 extern z80_regs_t _regs_prev;

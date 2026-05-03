@@ -45,12 +45,21 @@ bool obj_write(FILE *file, record_t *rec)
     return true;
 }
 
+static const char *obj_basename(const char *path)
+{
+    const char *p = path;
+    while(*p) p++;
+    while(p > path && p[-1] != '/' && p[-1] != '\\') p--;
+    return p;
+}
+
 bool obj_exists(char *name)
 {
+    const char *base = obj_basename(name);
     object_t *obj = _objs;
     while(obj)
     {
-        if(!strcmp(name, obj->name))
+        if(!strcmp(base, obj_basename(obj->name)))
         {
             return true;
         }
@@ -71,33 +80,34 @@ int main(int argc, char **argv)
     {
         FILE *obj = fopen(argv[i], "rb");
         if(!obj) error("can't open object file: %s", argv[i]);
+        bool has_filename = false;
         while(obj_read(obj, &rec))
         {
             switch (rec.header.type)
             {
                 case REC_FILENAME:
-                    if(rec.header.data_size)
+                    has_filename = rec.header.data_size > 0 && !obj_exists((char*)rec.data);
+                    if(has_filename)
                     {
                         obj_write(_tmp, &rec);
-                        if(obj_exists((char*)rec.data)) error("object already exists: %s", (char *)rec.data);
-                        object_t *obj = malloc(sizeof(object_t) + rec.header.data_size);
-                        memset(obj, 0, sizeof(object_t) + rec.header.data_size);
-                        strcpy(obj->name, (char*)rec.data);
+                        object_t *o = malloc(sizeof(object_t) + rec.header.data_size);
+                        memset(o, 0, sizeof(object_t) + rec.header.data_size);
+                        strcpy(o->name, (char*)rec.data);
                         if(_last_obj)
                         {
-                            _last_obj->next = obj;
-                            _last_obj = obj;
+                            _last_obj->next = o;
+                            _last_obj = o;
                         }
                         else
                         {
-                            obj->next = _objs;
-                            _objs = obj;
-                            _last_obj = obj;
+                            o->next = _objs;
+                            _objs = o;
+                            _last_obj = o;
                         }
                     }
                     break;
                 default:
-                    obj_write(_tmp, &rec);
+                    if(has_filename) obj_write(_tmp, &rec);
                     break;
             }
         }

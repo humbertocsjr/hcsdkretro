@@ -148,6 +148,48 @@ void consts_set_global(object_file_t *obj, char *name)
     _consts = c;
 }
 
+void consts_set_section(object_file_t *obj, char *name, rectype_t section)
+{
+    const_t *c = _consts;
+    while (c)
+    {
+        if (c->obj == obj && !strcmp(c->name, name))
+        {
+            c->section = section;
+            return;
+        }
+        c = c->next;
+    }
+    c = malloc(sizeof(const_t) + strlen(name));
+    c->next = _consts;
+    c->section = section;
+    c->is_global = false;
+    c->value = 0;
+    c->obj = obj;
+    c->changed = true;
+    strcpy(c->name, name);
+    _consts = c;
+}
+
+rectype_t consts_get_section(object_file_t *obj, char *name)
+{
+    const_t *c = _consts;
+    while (c)
+    {
+        if (c->obj == obj && !strcmp(c->name, name))
+            return c->section;
+        c = c->next;
+    }
+    c = _consts;
+    while (c)
+    {
+        if (c->is_global && !strcmp(c->name, name))
+            return c->section;
+        c = c->next;
+    }
+    return 0;
+}
+
 void consts_reset_changed()
 {
     const_t *c = _consts;
