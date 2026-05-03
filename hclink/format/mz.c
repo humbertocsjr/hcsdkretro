@@ -4,6 +4,7 @@
 #define MZ_HEADER_PARAS 2
 
 static int _stack_size = 0x400;
+static int _max_mem = 0x10000;
 static int _mz_data_start = 0;
 static int _mz_text_size = 0;
 static int _mz_data_size = 0;
@@ -78,6 +79,13 @@ bool format_parse_arg(int argc, int *argi, char **argv)
             _stack_size = toint(argv[*argi]);
         return true;
     }
+    if (!strcmp(argv[*argi], "-max-mem"))
+    {
+        (*argi)++;
+        if (*argi < argc)
+            _max_mem = toint(argv[*argi]);
+        return true;
+    }
     if (!strcmp(argv[*argi], "-text") || !strcmp(argv[*argi], "-data") ||
         !strcmp(argv[*argi], "-bss") || !strcmp(argv[*argi], "-align"))
     {
@@ -142,6 +150,13 @@ void format_process(step_t step)
         int data_para = text_para + (_mz_text_size + 15) / 16;
         int bss_offset = ((_mz_data_size + 15) & ~15);
         int stack_top = bss_offset + _mz_bss_size + _stack_size;
+
+        if (step == STEP_GENERATE && stack_top > _max_mem)
+        {
+            fprintf(stderr, "error: stack top (0x%X) exceeds max memory (0x%X)\n", stack_top, _max_mem);
+            exit(1);
+        }
+
         consts_set(_objs, "__cs_seg__", text_para);
         consts_set(_objs, "__data_seg_delta__", data_para - text_para);
         consts_set(_objs, "__stack_size__", _stack_size);

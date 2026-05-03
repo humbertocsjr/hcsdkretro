@@ -5,13 +5,8 @@ extern main
 
 section text
 _start:
-    ; Initial stack at end of BSS + stack reserve (0x400 bytes)
-    lxi h, __bss_start__
-    xchg
-    lxi h, __bss_size__
-    dad d
-    lxi d, 1024
-    dad d
+    ; Initial stack at end of BSS + stack reserve (provided by linker)
+    lxi h, __stack_top__
     sphl
 
     ; Clear BSS
