@@ -1,0 +1,13 @@
+[config]
+sdk_path = ../../bin
+
+[files:z80]
+main_test.b
+
+[libs]
+../../libs/z80-cpm-b.lib
+
+[link:release]
+format = bin
+text = 0x100
+filename = test.com

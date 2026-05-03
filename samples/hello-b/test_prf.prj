@@ -1,8 +1,8 @@
 [config]
 sdk_path = ../../bin
 
-[files:8086exe]
-main.b
+[files:8086]
+main_printf.b
 
 [libs]
 ../../libs/8086-msdos-exe-b.lib
@@ -10,4 +10,4 @@ main.b
 [link:release]
 format = mz
 stack = 1024
-filename = 86MSDOS.EXE
+filename = test_prf.exe
