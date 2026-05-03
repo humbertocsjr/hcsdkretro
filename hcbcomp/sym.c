@@ -14,7 +14,7 @@ symbol_t *lookup(const char *name)
     return NULL;
 }
 
-symbol_t *install(const char *name, symkind_t kind, int size)
+symbol_t *install(const char *name, symkind_t kind, int size, segkind_t seg)
 {
     symbol_t *s = malloc(sizeof(symbol_t));
     s->name = malloc(strlen(name) + 1);
@@ -22,6 +22,7 @@ symbol_t *install(const char *name, symkind_t kind, int size)
     s->kind = kind;
     s->offset = 0;
     s->size = size;
+    s->segment = seg;
     s->next = symtab;
     symtab = s;
     return s;

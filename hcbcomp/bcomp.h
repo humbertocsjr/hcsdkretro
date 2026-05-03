@@ -82,12 +82,20 @@ typedef enum symkind_t
     SYM_FUNCTION
 } symkind_t;
 
+typedef enum segkind_t
+{
+    SEG_DATA = 0,
+    SEG_BSS = 1,
+    SEG_STACK = 2
+} segkind_t;
+
 typedef struct symbol_t
 {
     char *name;
     symkind_t kind;
     int offset; // stack offset (for locals/params) or address (for globals)
     int size;   // array size (0 for scalars)
+    segkind_t segment; // which segment this symbol lives in (DATA, BSS, STACK)
     struct symbol_t *next;
 } symbol_t;
 
@@ -127,7 +135,7 @@ int conditional(void);
 // --== Symbol table ==--
 
 symbol_t *lookup(const char *name);
-symbol_t *install(const char *name, symkind_t kind, int size);
+symbol_t *install(const char *name, symkind_t kind, int size, segkind_t seg);
 
 // --== Preprocessor ==--
 
@@ -144,11 +152,13 @@ void error(const char *fmt, ...);
 int gen_label(void);
 void gen_text(void);
 void gen_data(void);
+void gen_bss(void);
 void gen_global(const char *name);
 void gen_extern(const char *name);
 void gen_label_str(const char *name);
 void gen_label_int(int label);
 void gen_word(int val);
+void gen_dword(int val);
 void gen_bytes(const char *str);
 void gen_reserve(int n);
 void gen_comment(const char *fmt, ...);

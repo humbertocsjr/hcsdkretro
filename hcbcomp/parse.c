@@ -34,7 +34,7 @@ static void parse_params(void)
         {
             if (tok != TOK_IDENT)
                 error("parameter name expected");
-            symbol_t *s = install(tok_text, SYM_PARAM, 0);
+            symbol_t *s = install(tok_text, SYM_PARAM, 0, SEG_STACK);
             s->offset = func_nparams++;
             next();
             if (tok != TOK_COMMA)
@@ -74,12 +74,12 @@ static void parse_declaration(void)
 
         if (is_extrn)
         {
-            install(name, SYM_EXTERN, arr_size);
+            install(name, SYM_EXTERN, arr_size, SEG_DATA);
             gen_extern(name);
         }
         else if (is_auto)
         {
-            symbol_t *sym = install(name, SYM_LOCAL, arr_size);
+            symbol_t *sym = install(name, SYM_LOCAL, arr_size, SEG_STACK);
             if (arr_size > 0)
                 sym->offset = func_nlocals++;
             else
@@ -132,38 +132,14 @@ static int primary(void)
         gen_data();
         gen_label_int(l);
         gen_bytes(tok_text);
-        gen_word(0);
+        if (!strcmp(target_cpu, "8086mz"))
+            gen_dword(0);
+        else
+            gen_word(0);
         gen_text();
         gen_load_label(l);
         next();
         kind = VAL_RVALUE;
-    }
-    else if (tok == TOK_IDENT)
-    {
-        symbol_t *sym = lookup(tok_text);
-        if (!sym)
-        {
-            // Implicit declaration as external
-            sym = install(tok_text, SYM_EXTERN, 0);
-            gen_extern(tok_text);
-        }
-        next();
-
-        if (sym->kind == SYM_LOCAL)
-        {
-            gen_load_local(sym->offset);
-            kind = VAL_LVALUE;
-        }
-        else if (sym->kind == SYM_PARAM)
-        {
-            gen_load_param(sym->offset);
-            kind = VAL_LVALUE;
-        }
-        else
-        {
-            gen_load_addr(sym->name);
-            kind = VAL_LVALUE;
-        }
     }
     else if (tok == TOK_LPAREN)
     {
@@ -297,7 +273,10 @@ static int primary_func(void)
         gen_data();
         gen_label_int(l);
         gen_bytes(tok_text);
-        gen_word(0);
+        if (!strcmp(target_cpu, "8086mz"))
+            gen_dword(0);
+        else
+            gen_word(0);
         gen_text();
         gen_load_label(l);
         next();
@@ -314,7 +293,7 @@ static int primary_func(void)
             if (!strcmp(tok_text, "peekb") || !strcmp(tok_text, "pokeb") ||
                 !strcmp(tok_text, "peekw") || !strcmp(tok_text, "pokew"))
                 sk = SYM_FUNCTION;
-            sym = install(tok_text, sk, 0);
+            sym = install(tok_text, sk, 0, SEG_DATA);
             if (sk == SYM_EXTERN)
                 gen_extern(tok_text);
         }
@@ -1203,22 +1182,29 @@ void compile_unit(void)
             if (tok == TOK_LPAREN) {
                 function_definition(name);
             } else if (tok == TOK_SEMICOLON || tok == TOK_COMMA || tok == TOK_LBRACKET) {
-                symbol_t *sym = install(name, SYM_GLOBAL, 0);
-                gen_data();
-                gen_global(name);
-                
                 if (tok == TOK_LBRACKET) {
+                    /* Array → BSS */
                     next();
                     int size = tok_value;
                     if (tok != TOK_NUMBER) error("array size expected");
                     next();
                     expect(TOK_RBRACKET);
-                    sym->size = size;
+                    symbol_t *sym = install(name, SYM_GLOBAL, size, SEG_BSS);
+                    gen_data();
+                    gen_global(name);
+                    gen_bss();
                     gen_label_str(name);
                     gen_reserve(size * 2);
                 } else {
+                    /* Scalar → DATA */
+                    symbol_t *sym = install(name, SYM_GLOBAL, 0, SEG_DATA);
+                    gen_data();
+                    gen_global(name);
                     gen_label_str(name);
-                    gen_word(0);
+                    if (!strcmp(target_cpu, "8086mz"))
+                        gen_dword(0);
+                    else
+                        gen_word(0);
                 }
                 gen_text();
                 expect(TOK_SEMICOLON);

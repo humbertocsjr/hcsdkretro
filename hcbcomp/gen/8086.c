@@ -11,11 +11,13 @@ int gen_label(void)
 
 void gen_text(void) { fprintf(out, "\nsection text\n"); }
 void gen_data(void) { fprintf(out, "\nsection data\n"); }
+void gen_bss(void) { fprintf(out, "\nsection data\n"); }
 void gen_global(const char *name) { fprintf(out, "global %s\n", name); }
 void gen_extern(const char *name) { fprintf(out, "extern %s\n", name); }
 void gen_label_str(const char *name) { fprintf(out, "%s:\n", name); }
 void gen_label_int(int label) { fprintf(out, ".L%i:\n", label); }
 void gen_word(int val) { fprintf(out, "\tdw %i\n", val); }
+void gen_dword(int val) { fprintf(out, "\tdw %i, 0\n", val & 0xFFFF); }
 void gen_bytes(const char *str)
 {
     fprintf(out, "\tdb \"");
@@ -258,7 +260,6 @@ void gen_shl(void)
 {
     int l1 = gen_label();
     int l2 = gen_label();
-    gen_emit("xchg ax, bx");
     gen_emit("mov cx, ax");
     gen_emit("or cx, cx");
     gen_emitf("jz .L%i", l2);
@@ -274,7 +275,6 @@ void gen_shr(void)
 {
     int l1 = gen_label();
     int l2 = gen_label();
-    gen_emit("xchg ax, bx");
     gen_emit("mov cx, ax");
     gen_emit("or cx, cx");
     gen_emitf("jz .L%i", l2);

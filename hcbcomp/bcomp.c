@@ -8,7 +8,9 @@ static void detect_cpu(const char *argv0)
     const char *p = strrchr(argv0, '-');
     if (p)
     {
-        if (!strcmp(p, "-8086"))
+        if (!strcmp(p, "-8086exe"))
+            target_cpu = "8086mz";
+        else if (!strcmp(p, "-8086"))
             target_cpu = "8086";
         else if (!strcmp(p, "-8080"))
             target_cpu = "8080";

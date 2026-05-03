@@ -8,11 +8,13 @@ int gen_label(void) { return label_counter++; }
 
 void gen_text(void) { fprintf(out, "\nsection text\n"); }
 void gen_data(void) { fprintf(out, "\nsection data\n"); }
+void gen_bss(void) { fprintf(out, "\nsection data\n"); }
 void gen_global(const char *name) { fprintf(out, "global %s\n", name); }
 void gen_extern(const char *name) { fprintf(out, "extern %s\n", name); }
 void gen_label_str(const char *name) { fprintf(out, "%s:\n", name); }
 void gen_label_int(int label) { fprintf(out, ".L%i:\n", label); }
 void gen_word(int val) { fprintf(out, "\tdw %i\n", val); }
+void gen_dword(int val) { fprintf(out, "\tdw %i, 0\n", val & 0xFFFF); }
 void gen_reserve(int n) { fprintf(out, "\tds %i\n", n); }
 
 void gen_bytes(const char *str)

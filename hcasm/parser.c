@@ -176,6 +176,20 @@ void parse_line()
     expr_t *mnemonic = NULL;
     int argc = 0;
     expr_t *argv[ARGV_MAX];
+    
+    /* Check for data directives FIRST, before the prefix loop.
+     * This handles the ambiguity of 'ds' which is both a segment
+     * register prefix and a data reserve directive. */
+    if ((curr_is(TOK_SYMBOL) || curr_is(TOK_SUB_LABEL) || curr_is(TOK_REGISTER)) &&
+        (curr_is_keyword("db") || curr_is_keyword("dw") || curr_is_keyword("dd") ||
+         curr_is_keyword("ds") || curr_is_keyword("rb") || curr_is_keyword("resb") ||
+         curr_is_keyword("rw") || curr_is_keyword("resw") ||
+         curr_is_keyword("global") || curr_is_keyword("extern") ||
+         curr_is_keyword("section") || curr_is_keyword("times")))
+    {
+        goto parse_label;
+    }
+    
     while (is_prefix(curr()))
     {
         opcode_t *op = parse_prefix(curr());
@@ -250,7 +264,7 @@ void parse_line()
             free_expr(argv[i]);
         }
     }
-    else if (curr_is(TOK_SYMBOL) || curr_is(TOK_SUB_LABEL))
+    else if (curr_is(TOK_SYMBOL) || curr_is(TOK_SUB_LABEL) || curr_is(TOK_REGISTER))
     {
 parse_label:
         if (curr_is_keyword("db"))
@@ -298,6 +312,38 @@ parse_label:
                 default:;
                     expr_t *arg = parse_expr();
                     out(generate(arg, 0, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+                    free_expr(arg);
+                    break;
+                }
+                if (!curr_is(TOK_COMMA))
+                    break;
+                scan();
+            }
+        }
+        else if (curr_is_keyword("dd"))
+        {
+            scan();
+            int v = 0;
+            while (!curr_is(TOK_NEWLINE) && !curr_is(TOK_EOF))
+            {
+                switch (curr()->token)
+                {
+                case TOK_VALUE:
+                    v = curr()->value;
+                    out(REC_DATA, 0, 0, &v, 2);
+                    v = curr()->value >> 16;
+                    out(REC_DATA, 0, 0, &v, 2);
+                    scan();
+                    break;
+                case TOK_STRING:
+                    out(REC_DATA, 0, 0, curr()->text, strlen(curr()->text));
+                    scan();
+                    break;
+                default:;
+                    expr_t *arg = parse_expr();
+                    out(generate(arg, 0, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+                    v = 0;
+                    out(REC_DATA, 0, 0, &v, 2);
                     free_expr(arg);
                     break;
                 }
