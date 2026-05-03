@@ -1,0 +1,13 @@
+[config]
+sdk_path = ../../bin
+
+[files:8086]
+main.b
+
+[libs]
+../../libs/8086-msdos-exe-b.lib
+
+[link:release]
+format = mz
+stack = 1024
+filename = 86MSDOS.EXE

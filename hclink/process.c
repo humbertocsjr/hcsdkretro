@@ -5,6 +5,9 @@ static int _line = 0;
 static int _column = 0;
 static section_t *_curr_section = NULL;
 
+int (*format_adjust_value)(int value, int position, rectype_t section) = NULL;
+void (*format_record_reloc)(int position, rectype_t section) = NULL;
+
 void process_error(char *fmt, ...)
 {
     va_list args;
@@ -75,6 +78,17 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
                 stack_push(consts_get(obj, "__text_end__"));
             }
             else
+            {
+                val1 = consts_get(obj, (char *)rec.data);
+                const_is_offset = consts_is_offset(obj, (char *)rec.data);
+                stack_push(val1);
+                if (step == STEP_GENERATE && !consts_exists(obj, (char *)rec.data))
+                {
+                    process_error("constant not found: %s", (char *)rec.data);
+                }
+            }
+            break;
+        case REC_EXPR_PUSH_SEGMENT:
             {
                 val1 = consts_get(obj, (char *)rec.data);
                 const_is_offset = consts_is_offset(obj, (char *)rec.data);
@@ -166,6 +180,8 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
             {
                 if (section == REC_SECTION_BSS)
                     process_error("invalid bss content.");
+                if (format_adjust_value)
+                    val1 = format_adjust_value(val1, _curr_section->position, section);
                 outw(val1);
             }
             _curr_section->position += 2;
@@ -178,7 +194,11 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
             {
                 if (section == REC_SECTION_BSS)
                     process_error("invalid bss content.");
+                if (format_adjust_value)
+                    val1 = format_adjust_value(val1, _curr_section->position, section);
                 outw(val1);
+                if (format_record_reloc)
+                    format_record_reloc(_curr_section->position, section);
             }
             if (step == STEP_GENERATE && section == REC_SECTION_RELOC)
             {
@@ -201,6 +221,7 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
         case REC_CONST_LABEL:
             consts_set(obj, (char *)rec.data, _curr_section->position);
             consts_set_offset(obj, (char *)rec.data);
+            consts_set_section(obj, (char *)rec.data, _curr_section->section);
             break;
         case REC_CONST_CUSTOM:
             consts_set(obj, (char *)rec.data, rec.header.value);
@@ -275,6 +296,15 @@ size_t process_objs(step_t step, rectype_t section)
     consts_set_offset(_objs, "_etext");
     consts_set_offset(_objs, "_edata");
     consts_set_offset(_objs, "_ebss");
+    consts_set_section(_objs, "__text_start__", REC_SECTION_TEXT);
+    consts_set_section(_objs, "__data_start__", REC_SECTION_DATA);
+    consts_set_section(_objs, "__bss_start__", REC_SECTION_DATA);
+    consts_set_section(_objs, "__text_end__", REC_SECTION_TEXT);
+    consts_set_section(_objs, "__data_end__", REC_SECTION_DATA);
+    consts_set_section(_objs, "__bss_end__", REC_SECTION_DATA);
+    consts_set_section(_objs, "_etext", REC_SECTION_TEXT);
+    consts_set_section(_objs, "_edata", REC_SECTION_DATA);
+    consts_set_section(_objs, "_ebss", REC_SECTION_DATA);
     switch (section)
     {
     case REC_SECTION_TEXT:
@@ -313,6 +343,7 @@ void process_filter(object_file_t *obj)
         switch (rec.header.type)
         {
         case REC_EXPR_PUSH_CONST:
+        case REC_EXPR_PUSH_SEGMENT:
         case REC_EXPR_POP_TO_CONST:
             ref = consts_get_obj(obj, (char *)rec.data);
             if (ref != NULL && ref != obj)
@@ -327,6 +358,29 @@ void process_filter(object_file_t *obj)
         default:
             break;
         }
+    }
+}
+
+static void process_keep_start(void)
+{
+    object_file_t *obj = _objs;
+    while (obj)
+    {
+        record_t rec;
+        obj_reset(obj);
+        while (obj_read(obj, &rec))
+        {
+            if (rec.header.type == REC_CONST_AS_GLOBAL_LABEL)
+            {
+                if (!strcmp((char *)rec.data, "_start"))
+                {
+                    obj->use_in_link = true;
+                    verbose("Keep _start Object File: %s\n", obj->name);
+                    return;
+                }
+            }
+        }
+        obj = obj->next;
     }
 }
 
@@ -354,6 +408,7 @@ void process(step_t step)
         if (step == STEP_FILTER)
         {
             process_filter(_objs);
+            process_keep_start();
             process_remove_filtered(_objs);
         }
         else

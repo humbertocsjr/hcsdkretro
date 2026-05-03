@@ -1,35 +1,35 @@
 ; CP/M 8080 _start — clears BSS, parses command line, calls main(argc, argv)
+; Based on Z80 version
 global _start
 extern main
 
 section text
 _start:
-    ; Initial stack at end of BSS
-    lhld __bss_start__
+    ; Initial stack at end of BSS + stack reserve (0x400 bytes)
+    lxi h, __bss_start__
     xchg
-    lhld __bss_size__
-    xchg
+    lxi h, __bss_size__
+    dad d
+    lxi d, 1024
     dad d
     sphl
 
     ; Clear BSS
-    lhld __bss_start__
-    xchg
-    lhld __bss_size__
-    mov a, d
-    ora e
+    lxi h, __bss_start__
+    lxi b, __bss_size__
+    mov a, b
+    ora c
     jz .bss_done
 .bss_loop:
-    xchg
     mvi m, 0
-    xchg
-    dcx d
-    mov a, d
-    ora e
+    inx h
+    dcx b
+    mov a, b
+    ora c
     jnz .bss_loop
 .bss_done:
 
-    ; Parse command line
+    ; Parse command line at 0080h: byte 0 = length
     lxi h, _argv_buf
     shld _buf_ptr
     lxi h, _argv
@@ -56,6 +56,7 @@ _start:
     lhld _argv_ptr
     xchg
     pop h
+    xchg
     mov m, e
     inx h
     mov m, d
@@ -65,7 +66,9 @@ _start:
 
     lhld _buf_ptr
 .cp:
-    mov a, d
+    xchg
+    mov a, m
+    xchg
     cpi ' '
     jz .endtok
     ora a

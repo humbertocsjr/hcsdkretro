@@ -34,8 +34,8 @@ static void parse_params(void)
         {
             if (tok != TOK_IDENT)
                 error("parameter name expected");
-            install(tok_text, SYM_PARAM, 0);
-            func_nparams++;
+            symbol_t *s = install(tok_text, SYM_PARAM, 0);
+            s->offset = func_nparams++;
             next();
             if (tok != TOK_COMMA)
                 break;
@@ -134,10 +134,9 @@ static int primary(void)
         gen_bytes(tok_text);
         gen_word(0);
         gen_text();
-        gen_load_imm(l);
+        gen_load_label(l);
         next();
-        // Strings evaluate to their address
-        kind = VAL_LVALUE; // address is in HL, can dereference
+        kind = VAL_RVALUE;
     }
     else if (tok == TOK_IDENT)
     {
@@ -300,9 +299,9 @@ static int primary_func(void)
         gen_bytes(tok_text);
         gen_word(0);
         gen_text();
-        gen_load_imm(l);
+        gen_load_label(l);
         next();
-        kind = VAL_LVALUE;
+        kind = VAL_RVALUE;
     }
     else if (tok == TOK_IDENT)
     {
@@ -311,8 +310,13 @@ static int primary_func(void)
         symbol_t *sym = lookup(tok_text);
         if (!sym)
         {
-            sym = install(tok_text, SYM_EXTERN, 0);
-            gen_extern(tok_text);
+            symkind_t sk = SYM_EXTERN;
+            if (!strcmp(tok_text, "peekb") || !strcmp(tok_text, "pokeb") ||
+                !strcmp(tok_text, "peekw") || !strcmp(tok_text, "pokew"))
+                sk = SYM_FUNCTION;
+            sym = install(tok_text, sk, 0);
+            if (sk == SYM_EXTERN)
+                gen_extern(tok_text);
         }
         next();
 
@@ -328,7 +332,9 @@ static int primary_func(void)
         }
         else
         {
-            gen_load_addr(sym->name);
+            if (!(!strcmp(sym->name, "peekb") || !strcmp(sym->name, "pokeb") ||
+                  !strcmp(sym->name, "peekw") || !strcmp(sym->name, "pokew")))
+                gen_load_addr(sym->name);
             kind = VAL_LVALUE;
         }
     }
@@ -848,6 +854,7 @@ int assignment(void)
         gen_push_prim();
         next();
         int right_kind = assignment();
+        convert_rvalue(&right_kind);
         gen_pop_sec();
         gen_store_to_addr();
         return VAL_RVALUE;
@@ -921,15 +928,19 @@ int expression(void)
 
 static int parse_args_reverse(void)
 {
-    int k = assignment();
+    int kind = assignment();
+    convert_rvalue(&kind);
+    gen_push_prim();
     int count = 1;
-    if (tok == TOK_COMMA)
+    while (tok == TOK_COMMA)
     {
         next();
-        count += parse_args_reverse();
+        kind = assignment();
+        convert_rvalue(&kind);
+        gen_push_prim();
+        count++;
     }
-    convert_rvalue(&k);
-    gen_push_prim();
+    gen_reverse_args(count);
     return count;
 }
 

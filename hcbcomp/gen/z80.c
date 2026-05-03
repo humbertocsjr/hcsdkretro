@@ -120,6 +120,8 @@ void gen_load_addr(const char *name)
     gen_emitf("ld hl, %s", name);
 }
 
+void gen_load_label(int label) { fprintf(outfile, "\tld hl, .L%i\n", label); }
+
 void gen_store_global(const char *name)
 {
     gen_emitf("ld [%s], hl", name);
@@ -145,9 +147,11 @@ void gen_load_local(int offset)
 void gen_local_addr(int offset)
 {
     gen_emitf("ld hl, %i", -(offset * 2 + 2));
-    gen_emit("add hl, ix");
+    gen_emit("ex de, hl");
+    gen_emit("push ix");
+    gen_emit("pop hl");
+    gen_emit("add hl, de");
 }
-
 void gen_store_param(int offset)
 {
     gen_emitf("ld [ix+%i], l", offset * 2 + 4);
@@ -163,7 +167,10 @@ void gen_load_param(int offset)
 void gen_param_addr(int offset)
 {
     gen_emitf("ld hl, %i", offset * 2 + 4);
-    gen_emit("add hl, ix");
+    gen_emit("ex de, hl");
+    gen_emit("push ix");
+    gen_emit("pop hl");
+    gen_emit("add hl, de");
 }
 
 void gen_deref(void)
@@ -501,4 +508,16 @@ void gen_call(const char *name, int nargs)
 }
 
 void gen_data_final(void) {}
+void gen_reverse_args(int count)
+{
+    if (count <= 1) return;
+    if (count == 2) {
+        gen_emit("pop de");
+        gen_emit("pop hl");
+        gen_emit("push de");
+        gen_emit("push hl");
+    } else {
+        gen_emitf("; reverse %i args (unimplemented)", count);
+    }
+}
 

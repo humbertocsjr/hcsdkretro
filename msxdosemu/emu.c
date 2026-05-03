@@ -2,6 +2,7 @@
 
 bool _debuggable = false;
 bool _debug = false;
+bool _trace = false;
 
 uint8_t _memory[0x100ff];
 z80_regs_t _regs_curr;
@@ -69,6 +70,10 @@ int main(int argc, char **argv)
         {
             i++;
             if(i < argc) _disk_b_path = argv[i];
+        }
+        else if(!strcmp(argv[i], "-trace"))
+        {
+            _trace = true;
         }
         else if(!strcmp(argv[i], "-debug"))
         {

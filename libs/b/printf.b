@@ -11,9 +11,10 @@ _print_u(n) {
     while (i > 0) { i = i - 1; putchar(buf[i]); }
 }
 _print_s(s) {
-    auto i;
+    auto i, ch;
     i = 0;
-    while (s[i] != 0) { putchar(s[i]); i = i + 1; }
+    ch = peekb(s + i);
+    while (ch != 0) { putchar(ch); i = i + 1; ch = peekb(s + i); }
 }
 _print_x(n) {
     auto i, sh, nb;
@@ -27,11 +28,10 @@ _print_x(n) {
 printf(fmt, a, b, c, d, e, f, g, h) {
     auto i, ch, arg;
     i = 0; arg = a;
-    while (1) {
-        ch = fmt[i];
-        if (ch == 0) return;
+    ch = peekb(fmt + i);
+    while (ch != 0) {
         if (ch == '%') {
-            i = i + 1; ch = fmt[i];
+            i = i + 1; ch = peekb(fmt + i);
             if (ch == 'd') {
                 if (arg & 0x8000) { putchar('-'); _print_u(0 - arg); }
                 else _print_u(arg);
@@ -43,5 +43,6 @@ printf(fmt, a, b, c, d, e, f, g, h) {
             else if (ch == '%') putchar('%');
             i = i + 1;
         } else { putchar(ch); i = i + 1; }
+        ch = peekb(fmt + i);
     }
 }

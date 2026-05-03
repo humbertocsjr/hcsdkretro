@@ -1,11 +1,6 @@
 /* Hello World in B — simple variant */
-extrn putchar;
+extrn printf;
 
 main() {
-    putchar('H');
-    putchar('e');
-    putchar('l');
-    putchar('l');
-    putchar('o');
-    putchar('!');
+    printf("Hello world!");
 }
