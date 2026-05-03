@@ -503,9 +503,11 @@ void gen_call(const char *name, int nargs)
     gen_emitf("call %s", name);
     if (nargs > 0)
     {
+        gen_emit("ex de, hl");
         gen_emitf("ld hl, %i", nargs * 2);
         gen_emit("add hl, sp");
         gen_emit("ld sp, hl");
+        gen_emit("ex de, hl");
     }
 }
 
@@ -513,13 +515,43 @@ void gen_data_final(void) {}
 void gen_reverse_args(int count)
 {
     if (count <= 1) return;
-    if (count == 2) {
+    switch (count) {
+    case 2:
         gen_emit("pop de");
         gen_emit("pop hl");
         gen_emit("push de");
         gen_emit("push hl");
-    } else {
+        break;
+    case 3:
+        gen_emit("pop hl");
+        gen_emit("pop de");
+        gen_emit("ex (sp), hl");
+        gen_emit("push de");
+        gen_emit("push hl");
+        break;
+    case 4:
+        gen_emit("pop hl");
+        gen_emit("pop de");
+        gen_emit("pop bc");
+        gen_emit("ex (sp), hl");
+        gen_emit("push de");
+        gen_emit("push bc");
+        gen_emit("push hl");
+        break;
+    case 5:
+        gen_emit("pop hl");
+        gen_emit("pop de");
+        gen_emit("pop bc");
+        gen_emit("ex (sp), hl");
+        gen_emit("push bc");
+        gen_emit("push de");
+        gen_emit("ex (sp), hl");
+        gen_emit("push de");
+        gen_emit("push hl");
+        break;
+    default:
         gen_emitf("; reverse %i args (unimplemented)", count);
+        break;
     }
 }
 

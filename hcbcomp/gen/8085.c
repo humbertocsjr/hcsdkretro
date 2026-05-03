@@ -443,7 +443,13 @@ void gen_jnz(int label) { gen_emit("mov a, h"); gen_emit("ora l"); gen_emitf("jn
 void gen_call(const char *name, int nargs)
 {
     gen_emitf("call %s", name);
-    if (nargs > 0) { gen_emitf("lxi h, %i", nargs * 2); gen_emit("dad sp"); gen_emit("sphl"); }
+    if (nargs > 0) {
+        gen_emit("xchg");
+        gen_emitf("lxi h, %i", nargs * 2);
+        gen_emit("dad sp");
+        gen_emit("sphl");
+        gen_emit("xchg");
+    }
 }
 
 void gen_reverse_args(int count)
