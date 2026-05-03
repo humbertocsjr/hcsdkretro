@@ -110,7 +110,7 @@ static int bitwise_xor(void);
 static int bitwise_or(void);
 static int logical_and(void);
 static int logical_or(void);
-static int parse_args_reverse(void);
+static int parse_args_rtl(long first_pos);
 
 static int primary(void)
 {
@@ -434,12 +434,19 @@ static int postfix_func(void)
                 break;
             }
 
+            long args_start;
+            {
+                int ch = lex_get_ch();
+                if (ch != EOF) ungetc(ch, lex_get_fp());
+            }
+            args_start = ftell(lex_get_fp());
+            lex_set_ch(' ');
             next();
             gen_comment("call %s", funcname);
             int nargs = 0;
             if (tok != TOK_RPAREN)
             {
-                nargs = parse_args_reverse();
+                nargs = parse_args_rtl(args_start);
             }
             expect(TOK_RPAREN);
 
@@ -903,23 +910,63 @@ int expression(void)
     return kind;
 }
 
-// --== Function call args (right-to-left push for C convention) ==--
+// --== Function call args (right-to-left evaluation) ==--
 
-static int parse_args_reverse(void)
+static int parse_args_rtl(long first_pos)
 {
-    int kind = assignment();
-    convert_rvalue(&kind);
-    gen_push_prim();
-    int count = 1;
+    FILE *fp = lex_get_fp();
+    long starts[256];
+    int count = 0;
+    FILE *saved_out = outfile;
+
+    /* Phase 1: muted parse, record argument file positions */
+    outfile = devnull;
+
+    starts[0] = first_pos;
+    assignment();
+    count = 1;
     while (tok == TOK_COMMA)
     {
+        starts[count] = ftell(fp);
         next();
-        kind = assignment();
-        convert_rvalue(&kind);
-        gen_push_prim();
+        assignment();
         count++;
     }
-    gen_reverse_args(count);
+    /* tok is TOK_RPAREN; save lookahead character and file position */
+    int saved_ch = lex_get_ch();
+    long end_pos = ftell(fp);
+
+    /* Phase 2: replay in right-to-left order with real codegen */
+    outfile = saved_out;
+    for (int i = count - 1; i >= 0; i--)
+    {
+        fseek(fp, starts[i], SEEK_SET);
+        lex_sync();
+        next();
+        int kind = assignment();
+        convert_rvalue(&kind);
+        gen_push_prim();
+    }
+
+    /* Advance past remaining argument tokens to reach the outer RPAREN */
+    {
+        int depth = 0;
+        for (;;)
+        {
+            if (tok == TOK_LPAREN) depth++;
+            else if (tok == TOK_RPAREN)
+            {
+                if (--depth < 0) break;
+            }
+            next();
+        }
+    }
+    /* tok is now the outer RPAREN */
+
+    /* Restore lexer state so expect(TOK_RPAREN) reads the token after ) */
+    fseek(fp, end_pos, SEEK_SET);
+    lex_set_ch(saved_ch);
+
     return count;
 }
 

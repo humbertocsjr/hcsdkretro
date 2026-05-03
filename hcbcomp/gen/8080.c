@@ -452,17 +452,4 @@ void gen_call(const char *name, int nargs)
     }
 }
 
-void gen_reverse_args(int count)
-{
-    if (count <= 1) return;
-    if (count == 2) {
-        gen_emit("pop d");
-        gen_emit("pop h");
-        gen_emit("push d");
-        gen_emit("push h");
-    } else {
-        gen_emitf("; reverse %i args (unimplemented)", count);
-    }
-}
-
 void gen_data_final(void) {}

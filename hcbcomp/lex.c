@@ -20,6 +20,28 @@ void lex_init(FILE *fp)
     col_num = 1;
 }
 
+FILE *lex_get_fp(void)
+{
+    return src_fp;
+}
+
+void lex_sync(void)
+{
+    ch = ' ';
+    peek = 0;
+}
+
+int lex_get_ch(void)
+{
+    return ch;
+}
+
+void lex_set_ch(int c)
+{
+    ch = c;
+    peek = 0;
+}
+
 static int next_char(void)
 {
     int c;
