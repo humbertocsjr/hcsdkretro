@@ -436,6 +436,7 @@ void gen_cmp_ne(void)
 void gen_cmp_lt(void)
 {
     int l1 = gen_label();
+    gen_emit("ex de, hl");
     gen_emit("or a");
     gen_emit("sbc hl, de");
     gen_emit("ld hl, 0");
@@ -447,6 +448,7 @@ void gen_cmp_lt(void)
 void gen_cmp_gt(void)
 {
     int l1 = gen_label();
+    gen_emit("ex de, hl");
     gen_emit("or a");
     gen_emit("sbc hl, de");
     gen_emit("ld hl, 0");
@@ -459,11 +461,15 @@ void gen_cmp_gt(void)
 void gen_cmp_le(void)
 {
     int l1 = gen_label();
+    int l2 = gen_label();
+    gen_emit("ex de, hl");
     gen_emit("or a");
     gen_emit("sbc hl, de");
     gen_emit("ld hl, 0");
-    gen_emitf("jr c, .L%i", l1);
-    gen_emitf("jr z, .L%i", l1);
+    gen_emitf("jr c, .L%i", l2);
+    gen_emitf("jr z, .L%i", l2);
+    gen_emitf("jr .L%i", l1);
+    gen_label_int(l2);
     gen_emit("inc hl");
     gen_label_int(l1);
 }
@@ -471,6 +477,7 @@ void gen_cmp_le(void)
 void gen_cmp_ge(void)
 {
     int l1 = gen_label();
+    gen_emit("ex de, hl");
     gen_emit("or a");
     gen_emit("sbc hl, de");
     gen_emit("ld hl, 0");

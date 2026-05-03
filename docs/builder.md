@@ -68,10 +68,13 @@ symbols = program.sym  ; optional symbol table output
 
 ```ini
 [files:z80]         ; Z80 source files
-[files:8086]        ; 8086 source files
+[files:8086]        ; 8086 source files (near pointers, COM format)
+[files:8086exe]     ; 8086 source files (far pointers, EXE format)
 [files:8080]        ; 8080 source files
 [files:8085]        ; 8085 source files
 ```
+
+> **Note:** `[files:8086exe]` compiles with `hcbcomp-8086exe` and assembles with `hcasm-8086`. Use this when linking with the EXE runtime library (`8086-msdos-exe-b.lib`) for MZ-format executables with independent segments.
 
 ## Examples
 
@@ -124,4 +127,22 @@ format = bin
 text = 0x100
 filename = app.com
 symbols = app.sym
+```
+
+### 8086 MS-DOS EXE Project
+
+```ini
+[config]
+sdk_path = ./bin
+
+[files:8086exe]
+main.b
+
+[libs]
+libs/8086-msdos-exe-b.lib
+
+[link:release]
+format = mz
+stack = 1024
+filename = program.exe
 ```

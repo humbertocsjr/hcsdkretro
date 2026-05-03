@@ -1,17 +1,18 @@
 # HC Linker — `hclink`
 
-Multi-format linker for object files. Supports flat binary and relocatable executable output.
+Multi-format linker for object files. Supports flat binary, MZ EXE, and relocatable executable output.
 
 ```sh
-hclink-{bin|rex} [options] <object files...>
+hclink-{bin|mz|rex} [options] <object files...>
 
 Options:
-  -o <file>          Output file (default: a.bin / a.rex)
+  -o <file>          Output file (default: a.bin / a.exe / a.rex)
   -sym <file>        Symbol table output
   -text <offset>     Text section start address
   -data <offset>     Data section start address
   -bss <offset>      BSS section start address
   -align <offset>    Section alignment
+  -stack <size>      Stack size in bytes (MZ format, default: 4096)
   -multicpu          Allow mixed CPU object files
   -v                 Verbose
   --help, -h         Help
@@ -33,6 +34,20 @@ hclink-bin -o firmware.bin code.obj data.obj
 # ROM image
 hclink-bin -text 0x4000 -bss 0xC000 -o game.rom game.obj
 ```
+
+### MS-DOS MZ EXE (`hclink-mz`)
+
+Produces an MS-DOS MZ-format executable with independent segments (TEXT, DATA, BSS). Far pointers are used for inter-segment references.
+
+```sh
+# MS-DOS .EXE file
+hclink-mz -stack 1024 -o program.exe start.obj main.obj lib.lib
+```
+
+Segment deltas are automatically computed and exposed as constants:
+- `__data_seg_delta__` — paragraphs from TEXT to DATA
+- `__bss_seg_delta__` — paragraphs from TEXT to BSS
+- `__stack_top__` — top of stack (BSS + stack size)
 
 ### Relocatable Executable (`hclink-rex`)
 

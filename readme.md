@@ -11,8 +11,9 @@
 |----------|-------------|
 | [Quick Start Guide](docs/quickstart.md) | Get started in 5 minutes |
 | [HC Assembler](docs/assembler.md) | hcasm — multi-target assembler |
-| [HC B Compiler](docs/bcompiler.md) | hcbcomp — B language compiler with full reference |
-| [HC Linker](docs/linker.md) | hclink — linker with bin/rex output |
+| [HC B Compiler](docs/bcompiler.md) | hcbcomp — B language compiler with full reference and peephole optimizer |
+| [HC Assembler](docs/assembler.md) | hcasm — multi-target assembler |
+| [HC Linker](docs/linker.md) | hclink — linker with bin/rex/mz output |
 | [HC Librarian](docs/librarian.md) | hclib — object/library manager |
 | [HC Builder](docs/builder.md) | hcbuild — project build system |
 | [MSX-DOS Emulator](docs/emulator.md) | msxdosemu — CP/M 2.2 emulator |
@@ -20,12 +21,13 @@
 
 ## Supported Target CPUs
 
-| CPU | Assembler | B Compiler | Runtime Lib |
-|-----|-----------|------------|-------------|
-| Zilog Z80 | `hcasm-z80` | `hcbcomp-z80` | CP/M, MSX-DOS |
-| Intel 8080 | `hcasm-8080` | `hcbcomp-8080` | CP/M |
-| Intel 8085 | `hcasm-8085` | `hcbcomp-8085` | CP/M |
-| Intel 8086 | `hcasm-8086` | `hcbcomp-8086` | MS-DOS |
+| CPU | Assembler | B Compiler | Runtime Lib | Output Format |
+|-----|-----------|------------|-------------|---------------|
+| Zilog Z80 | `hcasm-z80` | `hcbcomp-z80` | CP/M, MSX-DOS | COM (binary) |
+| Intel 8080 | `hcasm-8080` | `hcbcomp-8080` | CP/M | COM (binary) |
+| Intel 8085 | `hcasm-8085` | `hcbcomp-8085` | CP/M | COM (binary) |
+| Intel 8086 | `hcasm-8086` | `hcbcomp-8086` | MS-DOS | COM (binary) |
+| Intel 8086 | `hcasm-8086` | `hcbcomp-8086exe` | MS-DOS EXE | MZ (segmented) |
 
 ## Supported Host Platforms
 
@@ -60,7 +62,7 @@ sudo make install
 | `hclink/` | Linker source |
 | `hclib/` | Librarian source |
 | `hcbuild/` | Project builder source |
-| `hcbcomp/` | B language compiler source |
+| `hcbcomp/` | B language compiler source + peephole optimizer (`peep.c`) |
 | `msxdosemu/` | MSX-DOS / CP/M emulator source |
 | `libs/` | Runtime libraries (assembly + B) |
 | `libs/b/` | B language standard library |

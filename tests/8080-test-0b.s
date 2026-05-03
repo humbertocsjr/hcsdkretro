@@ -1,3 +1,0 @@
-global testb
-testb:
-    ret
