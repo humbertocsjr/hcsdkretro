@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>Samples - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Sample Programs</B></FONT></TD></TR>
+</TABLE>
+
+<H3>hello-b</H3>
+<P>Hello World in B, built for all 5 target platforms:</P>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Project</TH><TH>Target</TH><TH>Output</TH><TH>Build</TH></TR>
+<TR><TD><TT>z80cpm.prj</TT></TD><TD>Z80</TD><TD><TT>Z80CPM.COM</TT></TD><TD><TT>hcbuild z80cpm.prj make release</TT></TD></TR>
+<TR><TD><TT>8080cpm.prj</TT></TD><TD>8080</TD><TD><TT>8080CPM.COM</TT></TD><TD><TT>hcbuild 8080cpm.prj make release</TT></TD></TR>
+<TR><TD><TT>8085cpm.prj</TT></TD><TD>8085</TD><TD><TT>8085CPM.COM</TT></TD><TD><TT>hcbuild 8085cpm.prj make release</TT></TD></TR>
+<TR><TD><TT>86msdos.prj</TT></TD><TD>8086 COM</TD><TD><TT>86MSDOS.COM</TT></TD><TD><TT>hcbuild 86msdos.prj make release</TT></TD></TR>
+<TR><TD><TT>86msdos-exe.prj</TT></TD><TD>8086 EXE</TD><TD><TT>86MSDOS.EXE</TT></TD><TD><TT>hcbuild 86msdos-exe.prj make release</TT></TD></TR>
+</TABLE>
+
+<PRE><FONT COLOR="#0000CC"><B>/* main.b */</B>
+extrn printf;
+
+main() {
+    printf("Hello world!");
+}</FONT></PRE>
+
+<H3>calc-z80</H3>
+<P>Simple calculator for Z80/CP/M.</P>
+<PRE><FONT COLOR="#0000CC">cd samples/calc-z80
+hcbuild calc.prj make release
+msxdosemu calc.com</FONT></PRE>
+
+<H3>cat-z80</H3>
+<P>File concatenation utility for Z80/CP/M.</P>
+<PRE><FONT COLOR="#0000CC">cd samples/cat-z80
+hcbuild cat.prj make release
+msxdosemu cat.com TEST.TXT</FONT></PRE>
+
+</BODY></HTML>

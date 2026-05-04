@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>Changelog - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Changelog</B></FONT></TD></TR>
+</TABLE>
+
+<H3>v2.1 R2 &mdash; May 2026</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="20%">Area</TH><TH>Changes</TH></TR>
+
+<TR><TD VALIGN="TOP"><B>8080/8085 Fixes</B></TD>
+<TD>
+<TT>gen_cmp_gt</TT>: removed <TT>xchg</TT> (operand swap caused <TT>&gt;</TT> to compute reverse).<BR>
+<TT>gen_mul/div/mod</TT>: added <TT>push b</TT>/<TT>pop b</TT> to preserve frame pointer.<BR>
+Local offset formula fixed: <TT>-(offset*2+4)</TT> instead of <TT>offset*2-2-nlocals*2</TT>.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Builder</B></TD>
+<TD>
+Removed RetroLang references: <TT>retrolang-</TT> &rarr; <TT>hcbcomp-</TT>, <TT>[retrolang:include_path]</TT> &rarr; <TT>[blang:include_path]</TT>.<BR>
+Removed <TT>.rl</TT> extension. Added <TT>-I</TT> include path support for <TT>.b</TT> files.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Test Suite</B></TD>
+<TD><B>42/42 tests passing</B> across 5 platforms (Z80 11/11, 8080 10/10, 8085 1/1, 8086 11/11, 8086exe 9/9). 8086 tests now run on emu2.</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Documentation</B></TD>
+<TD>
+New HTML3 website (<TT>site/</TT>) with frameset, sidebar, 20+ pages. Landing page (<TT>site-principal/</TT>).<BR>
+Expanded builder <TT>.prj</TT> reference (all 6 sections, every key). Expanded B language reference (13 sections, 7 examples).<BR>
+REX format specification. Librarian docs corrected. macOS prerequisites added.<BR>
+Downloads page with <TT>/hcsdk/distrosite/</TT> links. GitHub links updated.
+</TD></TR>
+</TABLE>
+
+<H3>v2.1 R1 &mdash; May 2026</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="20%">Area</TH><TH>Changes</TH></TR>
+
+<TR><TD VALIGN="TOP"><B>RTL Args</B></TD>
+<TD>Right-to-left evaluation via two-pass <TT>fseek</TT>. <TT>gen_reverse_args()</TT> removed (~180 lines). Unlimited arguments, nested calls. No ABI change.</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Peephole</B></TD>
+<TD>New <TT>peep.c</TT> module. Z80: local load 9&rarr;2 instr, store imm 12&rarr;3. 8086: LEA+deref 3&rarr;1, global deref 3&rarr;1, store imm 5&rarr;1. ~30% reduction.</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Z80 Fixes</B></TD>
+<TD><TT>gen_cmp_gt/lt/le/ge</TT>: added missing <TT>ex de,hl</TT>. <TT>gen_cmp_le</TT>: fixed inverted branch.</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>8080/8085 Fixes</B></TD>
+<TD><TT>gen_sub</TT>: removed erroneous <TT>xchg</TT> that swapped operands.</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Assembler</B></TD>
+<TD>Fixed 8086 segfault (<TT>|</TT>&rarr;<TT>&amp;&amp;</TT>). Added <TT>mov word [mem], imm</TT> encoding.</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Builder</B></TD>
+<TD>Added <TT>[files:8086exe]</TT> platform selector. MZ EXE linker format.</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Hello-B</B></TD>
+<TD>Fixed 8086 EXE project (<TT>[files:8086]</TT> &rarr; <TT>[files:8086exe]</TT>) for far-pointer library compatibility.</TD></TR>
+</TABLE>
+
+<H3>v2.0 R0 &mdash; April 2026</H3>
+
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="20%">Area</TH><TH>Changes</TH></TR>
+<TR><TD VALIGN="TOP"><B>Initial Release</B></TD>
+<TD>Multi-target B compiler (Z80, 8080, 8085, 8086). Assembler, linker, librarian, builder, CP/M emulator. Full B language with preprocessor. Runtime libraries for CP/M and MS-DOS.</TD></TR>
+</TABLE>
+
+</BODY></HTML>

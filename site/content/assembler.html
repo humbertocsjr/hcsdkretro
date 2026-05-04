@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>Assembler - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Assembler (hcasm)</B></FONT></TD></TR>
+</TABLE>
+
+<P>Multi-target assembler supporting <B>Z80</B>, <B>8080/8085</B>, and <B>8086</B> instruction sets. Produces relocatable object files (.obj) for linking.</P>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Binary</TH><TH>Target</TH></TR>
+<TR><TD><TT>hcasm-z80</TT></TD><TD>Zilog Z80</TD></TR>
+<TR><TD><TT>hcasm-8086</TT></TD><TD>Intel 8086 (also used for 8086exe)</TD></TR>
+<TR><TD><TT>hcasm-8080</TT></TD><TD>Intel 8080</TD></TR>
+<TR><TD><TT>hcasm-8085</TT></TD><TD>Intel 8085</TD></TR>
+</TABLE>
+
+<H3>Usage</H3>
+<PRE><FONT COLOR="#0000CC">hcasm-{target} [options] &lt;input.s&gt;
+
+Options:
+  -o &lt;file&gt;       Output object file (default: a.obj)
+  -dump &lt;file&gt;    Generate assembly dump
+  --help, -h      Show help</FONT></PRE>
+
+<H3>Source Format</H3>
+<PRE><FONT COLOR="#0000CC">; comments start with semicolon
+section text            ; code section
+section data            ; initialized data
+section bss             ; uninitialized data
+
+global my_func          ; export symbol
+extern other_func       ; import symbol
+
+my_label:               ; label definition
+    instruction operands</FONT></PRE>
+
+<H3>Z80 Example</H3>
+<PRE><FONT COLOR="#0000CC">section text
+global _start
+_start:
+    ld hl, msg
+    ld c, 9
+    call 5          ; BDOS print
+    ret
+
+section data
+msg: db "Hello!$"</FONT></PRE>
+
+<H3>8086 Example</H3>
+<PRE><FONT COLOR="#0000CC">section text
+global _start
+_start:
+    mov ah, 9
+    mov dx, msg
+    int 0x21
+    mov ah, 0x4C
+    int 0x21
+
+section data
+msg: db "Hello!$"</FONT></PRE>
+
+<H3>Data Directives</H3>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Directive</TH><TH>Description</TH><TH>Example</TH></TR>
+<TR><TD><TT>db</TT></TD><TD>Define byte(s)</TD><TD><TT>db "hello", 0</TT></TD></TR>
+<TR><TD><TT>dw</TT></TD><TD>Define word(s)</TD><TD><TT>dw 0x1234, 42</TT></TD></TR>
+<TR><TD><TT>dd</TT></TD><TD>Define dword(s)</TD><TD><TT>dd 0x12345678</TT></TD></TR>
+<TR><TD><TT>ds / rb / resb</TT></TD><TD>Reserve bytes</TD><TD><TT>ds 256</TT></TD></TR>
+<TR><TD><TT>rw / resw</TT></TD><TD>Reserve words</TD><TD><TT>rw 128</TT></TD></TR>
+<TR><TD><TT>equ</TT></TD><TD>Constant definition</TD><TD><TT>BUFSIZ equ 512</TT></TD></TR>
+</TABLE>
+
+<H3>8086-Specific Features</H3>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Feature</TH><TH>Example</TH></TR>
+<TR><TD>Size prefixes</TD><TD><TT>mov word [bx], 1  ;  mov byte [bx], 0</TT></TD></TR>
+<TR><TD>Distance prefixes</TD><TD><TT>call near label  ;  jmp far seg:off</TT></TD></TR>
+<TR><TD>Segment overrides</TD><TD><TT>es mov ax, [bx]</TT></TD></TR>
+<TR><TD>Repeat prefixes</TD><TD><TT>rep movsb</TT></TD></TR>
+</TABLE>
+
+</BODY></HTML>

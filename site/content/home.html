@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD><TITLE>HC SDK for Retro Computing</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099" ALINK="#FF0000">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080">
+<FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;HC SDK for Retro Computing</B></FONT>
+</TD></TR>
+</TABLE>
+
+<P><FONT SIZE="-1"><I>A complete cross-development toolkit for vintage microprocessors. Write B language programs, assemble, link, and run on Z80, 8080, 8085, and 8086 targets — all from your modern machine.</I></FONT></P>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0" BGCOLOR="#FFFFF0" WIDTH="100%">
+<TR><TH BGCOLOR="#E0E0FF" COLSPAN="3"><B>Quick Facts</B></TH></TR>
+<TR>
+<TD><B>Version</B></TD><TD>2.1 R0</TD>
+<TD ROWSPAN="5" ALIGN="CENTER" VALIGN="MIDDLE">
+<FONT SIZE="-1"><B>Supported Hosts</B><BR>macOS (ARM/x86_64)<BR>Linux x86_64<BR>Windows 64-bit<BR>Windows 32-bit<BR>DOS (DJGPP)<BR>FreeBSD / OpenBSD</FONT>
+</TD>
+</TR>
+<TR><TD><B>License</B></TD><TD>BSD 4-Clause</TD></TR>
+<TR><TD><B>Language</B></TD><TD>B (typeless, predecessor of C)</TD></TR>
+<TR><TD><B>Target CPUs</B></TD><TD>Z80, 8080, 8085, 8086</TD></TR>
+<TR><TD><B>Runtime</B></TD><TD>CP/M 2.2, MSX-DOS, MS-DOS</TD></TR>
+</TABLE>
+
+<H3>What's Included</H3>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF">
+<TH WIDTH="30%">Tool</TH><TH>Description</TH><TH WIDTH="20%">Binary</TH>
+</TR>
+<TR>
+<TD><A HREF="bcompiler.html" TARGET="main"><B>B Compiler</B></A></TD>
+<TD>Compiles B language to assembly with peephole optimization. Supports right-to-left argument passing, inline functions, and a full preprocessor.</TD>
+<TD><FONT SIZE="-2"><TT>hcbcomp-{z80,8086,8086exe,8080,8085}</TT></FONT></TD>
+</TR>
+<TR BGCOLOR="#F8F8FF">
+<TD><A HREF="assembler.html" TARGET="main"><B>Assembler</B></A></TD>
+<TD>Multi-target assembler for Z80, 8080, 8085, and 8086. Supports macros, expressions, sections, and all standard instruction sets.</TD>
+<TD><FONT SIZE="-2"><TT>hcasm-{z80,8086,8080,8085}</TT></FONT></TD>
+</TR>
+<TR>
+<TD><A HREF="linker.html" TARGET="main"><B>Linker</B></A></TD>
+<TD>Multi-format linker producing <A HREF="linker.html" TARGET="main">flat binaries</A> (COM), <A HREF="linker.html" TARGET="main">MZ executables</A> (EXE), and <A HREF="rex.html" TARGET="main">relocatable REX</A> format. Dead code elimination included.</TD>
+<TD><FONT SIZE="-2"><TT>hclink-{bin,mz,rex}</TT></FONT></TD>
+</TR>
+<TR BGCOLOR="#F8F8FF">
+<TD><A HREF="librarian.html" TARGET="main"><B>Librarian</B></A></TD>
+<TD>Object file library manager. Create, extract, list, and replace objects in .lib archives.</TD>
+<TD><FONT SIZE="-2"><TT>hclib</TT></FONT></TD>
+</TR>
+<TR>
+<TD><A HREF="builder.html" TARGET="main"><B>Builder</B></A></TD>
+<TD>Project build system using .prj configuration files. Orchestrates compilation, assembly, and linking in one command.</TD>
+<TD><FONT SIZE="-2"><TT>hcbuild</TT></FONT></TD>
+</TR>
+<TR BGCOLOR="#F8F8FF">
+<TD><A HREF="emulator.html" TARGET="main"><B>Emulator</B></A></TD>
+<TD>MSX-DOS / CP/M 2.2 emulator. Run Z80 and 8080/8085 CP/M binaries natively.</TD>
+<TD><FONT SIZE="-2"><TT>msxdosemu</TT></FONT></TD>
+</TR>
+</TABLE>
+
+<H3>Pipeline</H3>
+
+<PRE>
+<FONT COLOR="#0000CC"><B>source.b</B></FONT>
+    <FONT COLOR="#666666">|</FONT>
+    <FONT COLOR="#666666">v</FONT>
+<FONT COLOR="#CC0000"><B>[Preprocessor]</B></FONT>  &rarr;  #define, #ifdef, #include expansion
+    <FONT COLOR="#666666">|</FONT>
+    <FONT COLOR="#666666">v</FONT>
+<FONT COLOR="#CC0000"><B>[B Compiler]</B></FONT>   &rarr;  Generates assembly (.s)
+    <FONT COLOR="#666666">|</FONT>
+    <FONT COLOR="#666666">v</FONT>
+<FONT COLOR="#CC0000"><B>[Peephole]</B></FONT>     &rarr;  Instruction-level optimization
+    <FONT COLOR="#666666">|</FONT>
+    <FONT COLOR="#666666">v</FONT>
+<FONT COLOR="#CC0000"><B>[Assembler]</B></FONT>   &rarr;  Produces object file (.obj)
+    <FONT COLOR="#666666">|</FONT>
+    <FONT COLOR="#666666">v</FONT>
+<FONT COLOR="#CC0000"><B>[Linker]</B></FONT>      &rarr;  Links to .com / .exe / .rex
+</PRE>
+
+<H3>Hello World in 5 Minutes</H3>
+
+<FONT SIZE="-1">Create <TT>hello.b</TT>:</FONT>
+<PRE><FONT COLOR="#0000CC">extrn putchar;
+
+main() {
+    putchar('H');
+    putchar('e');
+    putchar('l');
+    putchar('l');
+    putchar('o');
+    putchar('!');
+}</FONT></PRE>
+
+<FONT SIZE="-1">Compile and run for Z80/CP/M:</FONT>
+<PRE><FONT COLOR="#0000CC">hcbcomp-z80 -o hello.s hello.b
+hcasm-z80 -o hello.obj hello.s
+hclink-bin -text 0x100 -o hello.com hello.obj libs/z80-cpm-b.lib
+msxdosemu hello.com</FONT></PRE>
+
+<P ALIGN="CENTER">
+<FONT SIZE="-2" COLOR="#666666">
+<A HREF="quickstart.html" TARGET="main">[Read the full Quick Start Guide]</A> &middot;
+<A HREF="bcompiler.html" TARGET="main">[B Compiler Reference]</A> &middot;
+<A HREF="samples.html" TARGET="main">[Sample Programs]</A>
+</FONT>
+</P>
+
+<HR SIZE="1" NOSHADE>
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR>
+<TD><FONT SIZE="-2" COLOR="#666666">HC SDK for Retro Computing v2.1 R0 &mdash; &copy; 2025-2026 Humberto Costa dos Santos Junior</FONT></TD>
+<TD ALIGN="RIGHT"><FONT SIZE="-2" COLOR="#666666"><A HREF="changelog.html" TARGET="main">Changelog</A></FONT></TD>
+</TR>
+</TABLE>
+
+</BODY>
+</HTML>

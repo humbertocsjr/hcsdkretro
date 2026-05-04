@@ -1,0 +1,33 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>Emulator - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Emulator (msxdosemu)</B></FONT></TD></TR>
+</TABLE>
+
+<P>MSX-DOS / CP/M 2.2 emulator. Runs Z80 CP/M binaries natively on your host machine. Also supports 8080 and 8085 CP/M binaries.</P>
+
+<H3>Usage</H3>
+<PRE><FONT COLOR="#0000CC">msxdosemu [options] &lt;program.com&gt; [args...]
+
+Options:
+  -diska &lt;dir&gt;      Mount directory as disk A:
+  -diskb &lt;dir&gt;      Mount directory as disk B:
+  -step &lt;file&gt;      Feed file as console input
+  --help, -h        Show help</FONT></PRE>
+
+<H3>Examples</H3>
+<P>Run a CP/M program:</P>
+<PRE><FONT COLOR="#0000CC">msxdosemu hello.com
+echo "input text" | msxdosemu program.com
+msxdosemu -diska ./mydisk program.com arg1 arg2</FONT></PRE>
+
+<H3>Running Test Suite</H3>
+<PRE><FONT COLOR="#0000CC">echo "" | msxdosemu test.com</FONT></PRE>
+
+<P>For 8086 DOS programs, use <B>emu2</B> (external):</P>
+<PRE><FONT COLOR="#0000CC">emu2 program.com       ; 8086 .COM
+emu2 program.exe       ; 8086 .EXE</FONT></PRE>
+
+</BODY></HTML>

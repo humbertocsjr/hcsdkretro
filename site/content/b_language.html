@@ -1,0 +1,546 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>B Language Reference - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080">
+<FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;B Language Reference</B></FONT>
+</TD></TR>
+</TABLE>
+
+<P><B>B</B> is a typeless systems programming language created by <B>Ken Thompson</B> and <B>Dennis Ritchie</B> at Bell Labs around 1969. It is the direct predecessor of <B>C</B>. In B, all data is a <B>16-bit machine word</B> &mdash; there are no type declarations. A value can be an integer, a character, a memory address, or a boolean, all in the same variable.</P>
+
+<H3>Table of Contents</H3>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0" WIDTH="60%">
+<TR><TD><A HREF="#philosophy">1. Philosophy</A></TD><TD><A HREF="#memory">2. Memory Model</A></TD></TR>
+<TR><TD><A HREF="#variables">3. Variables</A></TD><TD><A HREF="#expressions">4. Expressions &amp; Operators</A></TD></TR>
+<TR><TD><A HREF="#control">5. Control Flow</A></TD><TD><A HREF="#functions">6. Functions</A></TD></TR>
+<TR><TD><A HREF="#arrays">7. Arrays &amp; Strings</A></TD><TD><A HREF="#preprocessor">8. Preprocessor</A></TD></TR>
+<TR><TD><A HREF="#inline">9. Inline Functions</A></TD><TD><A HREF="#calling">10. Calling Convention</A></TD></TR>
+<TR><TD><A HREF="#vs-c">11. B vs C</A></TD><TD><A HREF="#examples">12. Complete Examples</A></TD></TR>
+</TABLE>
+
+<HR>
+
+<A NAME="philosophy"></A>
+<H3>1. Philosophy</H3>
+
+<P>B was designed for systems programming on the PDP-11, a 16-bit minicomputer. Its core principles are:</P>
+
+<UL>
+<LI><B>Word-oriented:</B> Everything is a 16-bit word. Characters are 8 bits stored in the low byte of a word.</LI>
+<LI><B>Typeless:</B> No <TT>int</TT>, <TT>char</TT>, <TT>float</TT>, or <TT>pointer</TT> types. A variable holds a word; its meaning depends on context.</LI>
+<LI><B>Pointer = integer:</B> Memory addresses are just numbers. Pointer arithmetic is ordinary integer arithmetic.</LI>
+<LI><B>Stack-based:</B> Local variables and parameters live on a hardware stack frame, accessed via a frame pointer register.</LI>
+<LI><B>Caller cleans:</B> The calling function removes arguments from the stack after the call returns.</LI>
+</UL>
+
+<A NAME="memory"></A>
+<H3>2. Memory Model</H3>
+
+<P>All values in B are <B>16-bit words</B> (2 bytes). There is no concept of <TT>char</TT> or <TT>byte</TT> as a first-class type &mdash; characters are simply small integers (0-255) stored in a word.</P>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Concept</TH><TH>B Representation</TH><TH>Example</TH></TR>
+<TR><TD>Integer</TD><TD>16-bit signed word (-32768 to 32767)</TD><TD><TT>42, -1, 0xFFFF</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Character</TD><TD>8-bit value in low byte of a word</TD><TD><TT>'A' = 65, '\n' = 10</TT></TD></TR>
+<TR><TD>Memory address</TD><TD>16-bit unsigned word</TD><TD><TT>0x0100, buf</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Boolean</TD><TD>0 = false, non-zero = true</TD><TD>Conditional expressions</TD></TR>
+<TR><TD>Array</TD><TD>Consecutive words in memory</TD><TD><TT>arr[10]</TT> = 20 bytes</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>String</TD><TD>Array of character values, null-terminated</TD><TD><TT>"hello"</TT></TD></TR>
+</TABLE>
+
+<P><B>Word addressing:</B> Array indices are word-based. <TT>arr[1]</TT> accesses the second word, which is 2 bytes after <TT>arr[0]</TT>.</P>
+
+<A NAME="variables"></A>
+<H3>3. Variables</H3>
+
+<H4>3.1 Global Variables</H4>
+<P>Declared at the top level (outside any function). Placed in the <B>DATA</B> or <B>BSS</B> section. Initialized to zero. Visible to all functions in the same file.</P>
+<PRE><FONT COLOR="#0000CC">counter;           /* single word, initialized to 0 */
+buffer[256];        /* array of 256 words (512 bytes) */
+flag, index;        /* multiple globals */</FONT></PRE>
+
+<H4>3.2 Local Variables</H4>
+<P>Declared with <TT>auto</TT> inside a function. Allocated on the <B>stack frame</B> when the function is called. <FONT COLOR="#CC0000"><B>Not preserved</B></FONT> between calls (no recursion-safe locals in the original B, but this compiler does support reentrant functions via stack allocation). Initial value is <B>undefined</B> &mdash; always initialize before use.</P>
+<PRE><FONT COLOR="#0000CC">auto i, j, k;       /* three local words */
+auto buf[10];        /* local array of 10 words (20 bytes) */
+auto x = 42;         /* initialization (compiler extension) */</FONT></PRE>
+
+<H4>3.3 External Symbols</H4>
+<P>Declared with <TT>extrn</TT>. Used for functions or variables defined in other modules or libraries. <FONT COLOR="#CC0000"><B>Must</B></FONT> appear before the first use.</P>
+<PRE><FONT COLOR="#0000CC">extrn printf;        /* external function */
+extrn putchar;       /* external function */
+extrn global_var;    /* external variable */</FONT></PRE>
+
+<H4>3.4 Parameters</H4>
+<P>Function parameters are declared in the function definition header. They behave like local variables initialized by the caller. The compiler accesses them via the frame pointer at positive offsets (<TT>ix+N</TT> on Z80, <TT>bp+N</TT> on 8086).</P>
+<PRE><FONT COLOR="#0000CC">add(a, b) {
+    return a + b;    /* a and b are parameters */
+}</FONT></PRE>
+
+<A NAME="expressions"></A>
+<H3>4. Expressions &amp; Operators</H3>
+
+<H4>4.1 Operator Precedence Table</H4>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Prec</TH><TH>Assoc</TH><TH>Operators</TH><TH>Description</TH></TR>
+<TR><TD ALIGN="CENTER">1</TD><TD ALIGN="CENTER">L&rarr;R</TD><TD><TT>() [] .</TT></TD><TD>Function call, array index, member access</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD ALIGN="CENTER">2</TD><TD ALIGN="CENTER">R&rarr;L</TD><TD><TT>! ~ - ++ --</TT></TD><TD>Logical NOT, bitwise NOT, unary minus, increment, decrement</TD></TR>
+<TR><TD ALIGN="CENTER">3</TD><TD ALIGN="CENTER">L&rarr;R</TD><TD><TT>* / %</TT></TD><TD>Multiply, divide, modulo</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD ALIGN="CENTER">4</TD><TD ALIGN="CENTER">L&rarr;R</TD><TD><TT>+ -</TT></TD><TD>Add, subtract</TD></TR>
+<TR><TD ALIGN="CENTER">5</TD><TD ALIGN="CENTER">L&rarr;R</TD><TD><TT>&lt;&lt; &gt;&gt;</TT></TD><TD>Left shift, right shift</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD ALIGN="CENTER">6</TD><TD ALIGN="CENTER">L&rarr;R</TD><TD><TT>&lt; &gt; &lt;= &gt;=</TT></TD><TD>Relational comparison</TD></TR>
+<TR><TD ALIGN="CENTER">7</TD><TD ALIGN="CENTER">L&rarr;R</TD><TD><TT>== !=</TT></TD><TD>Equality, inequality</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD ALIGN="CENTER">8</TD><TD ALIGN="CENTER">L&rarr;R</TD><TD><TT>&amp;</TT></TD><TD>Bitwise AND</TD></TR>
+<TR><TD ALIGN="CENTER">9</TD><TD ALIGN="CENTER">L&rarr;R</TD><TD><TT>^</TT></TD><TD>Bitwise XOR</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD ALIGN="CENTER">10</TD><TD ALIGN="CENTER">L&rarr;R</TD><TD><TT>|</TT></TD><TD>Bitwise OR</TD></TR>
+<TR><TD ALIGN="CENTER">11</TD><TD ALIGN="CENTER">L&rarr;R</TD><TD><TT>&amp;&amp;</TT></TD><TD>Logical AND (short-circuit)</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD ALIGN="CENTER">12</TD><TD ALIGN="CENTER">L&rarr;R</TD><TD><TT>||</TT></TD><TD>Logical OR (short-circuit)</TD></TR>
+<TR><TD ALIGN="CENTER">13</TD><TD ALIGN="CENTER">R&rarr;L</TD><TD><TT>= += -= *= /= %= &amp;= |= ^=</TT></TD><TD>Assignment and compound assignment</TD></TR>
+</TABLE>
+
+<H4>4.2 Arithmetic</H4>
+<PRE><FONT COLOR="#0000CC">auto a, b, c;
+a = 10;
+b = 3;
+c = a + b;      /* 13 */
+c = a - b;      /* 7  */
+c = a * b;      /* 30 */
+c = a / b;      /* 3  (integer division, truncates toward 0) */
+c = a % b;      /* 1  (remainder)   */
+c = -a;         /* -10 (unary minus) */
+c = a + b * 2;  /* 16 (operator precedence) */</FONT></PRE>
+
+<H4>4.3 Bitwise Operations</H4>
+<PRE><FONT COLOR="#0000CC">auto a, b;
+a = 0xFF;       /* 11111111 */
+b = 0x0F;       /* 00001111 */
+
+a &amp; b;           /* 0x0F = 00001111  (AND) */
+a | b;           /* 0xFF = 11111111  (OR)  */
+a ^ b;           /* 0xF0 = 11110000  (XOR) */
+~a;              /* 0xFF00             (NOT, 16-bit) */
+a &lt;&lt; 2;         /* 0x03FC             (shift left) */
+b &gt;&gt; 1;         /* 0x0007             (shift right) */</FONT></PRE>
+
+<H4>4.4 Comparison Operators</H4>
+<PRE><FONT COLOR="#0000CC">auto x, y;
+x = 10; y = 3;
+
+x &lt; y;     /* 0 (false) */
+x &gt; y;     /* 1 (true)  */
+x &lt;= 10;   /* 1 (true)  */
+y &gt;= 3;    /* 1 (true)  */
+x == 10;   /* 1 (true)  */
+x != y;    /* 1 (true)  */</FONT></PRE>
+
+<P>Comparisons return <B>1</B> for true and <B>0</B> for false. These are ordinary integer values that can be used in arithmetic.</P>
+
+<H4>4.5 Logical Operators (Short-Circuit)</H4>
+<PRE><FONT COLOR="#0000CC">auto a, b;
+a = 10; b = 0;
+
+a &amp;&amp; b;    /* 0: a is true, b is false, result false */
+a || b;    /* 1: a is true, short-circuits, result true  */
+!a;        /* 0: logical NOT of non-zero is 0           */
+!b;        /* 1: logical NOT of zero is 1               */</FONT></PRE>
+
+<P><B>Short-circuit:</B> In <TT>a &amp;&amp; b</TT>, if <TT>a</TT> is 0, <TT>b</TT> is never evaluated. In <TT>a || b</TT>, if <TT>a</TT> is non-zero, <TT>b</TT> is never evaluated.</P>
+
+<H4>4.6 Increment and Decrement</H4>
+<PRE><FONT COLOR="#0000CC">auto i, j;
+i = 5;
+j = ++i;    /* i=6, j=6 (pre-increment) */
+j = i++;    /* j=6, i=7 (post-increment) */
+j = --i;    /* i=6, j=6 (pre-decrement) */
+j = i--;    /* j=6, i=5 (post-decrement) */</FONT></PRE>
+
+<P><FONT COLOR="#CC0000"><B>Note:</B></FONT> Prefix and postfix operators return values (rvalues), not lvalues. The increment/decrement applies to the storage location.</P>
+
+<A NAME="control"></A>
+<H3>5. Control Flow</H3>
+
+<H4>5.1 if / else</H4>
+<PRE><FONT COLOR="#0000CC">if (x &gt; 0)
+    putchar('+');
+else if (x &lt; 0)
+    putchar('-');
+else
+    putchar('0');
+
+/* Multi-statement blocks require braces */
+if (x) {
+    putchar('T');
+    x = 0;
+} else {
+    putchar('F');
+    x = 1;
+}</FONT></PRE>
+
+<H4>5.2 while Loop</H4>
+<PRE><FONT COLOR="#0000CC">auto i;
+i = 0;
+while (i &lt; 10) {
+    putchar('0' + i);
+    i = i + 1;
+}</FONT></PRE>
+
+<H4>5.3 for Loop</H4>
+<PRE><FONT COLOR="#0000CC">auto i;
+for (i = 0; i &lt; 10; i = i + 1)
+    putchar('0' + i);
+
+/* Multiple expressions in for */
+auto i, j;
+for (i = 0, j = 9; i &lt; j; i = i + 1, j = j - 1)
+    putchar('.');</FONT></PRE>
+
+<H4>5.4 do / while</H4>
+<PRE><FONT COLOR="#0000CC">auto n;
+n = 0;
+do {
+    putchar('0' + n);
+    n = n + 1;
+} while (n &lt; 5);</FONT></PRE>
+
+<H4>5.5 break</H4>
+<P><TT>break</TT> exits the innermost <TT>while</TT>, <TT>for</TT>, or <TT>do</TT> loop immediately:</P>
+<PRE><FONT COLOR="#0000CC">auto i;
+i = 0;
+while (1) {
+    if (i &gt;= 10) break;
+    putchar('0' + i);
+    i = i + 1;
+}</FONT></PRE>
+
+<H4>5.6 return</H4>
+<P><TT>return expr;</TT> exits the current function and provides the return value to the caller. The return value is placed in <B>HL</B> (Z80/8080/8085) or <B>AX</B> (8086).</P>
+<PRE><FONT COLOR="#0000CC">abs(n) {
+    if (n &lt; 0) return -n;
+    return n;
+}</FONT></PRE>
+
+<A NAME="functions"></A>
+<H3>6. Functions</H3>
+
+<H4>6.1 Definition</H4>
+<PRE><FONT COLOR="#0000CC"><I>name</I>(<I>param1</I>, <I>param2</I>, ...) {
+    <I>declarations</I>
+    <I>statements</I>
+}</FONT></PRE>
+
+<UL>
+<LI>Parameters are passed on the stack, <B>right-to-left</B></LI>
+<LI>The caller cleans the stack after the call</LI>
+<LI>Return value in HL (Z80/8080/8085) or AX (8086)</LI>
+<LI>If no <TT>return</TT> statement, the function returns the last expression evaluated</LI>
+</UL>
+
+<H4>6.2 Calling Functions</H4>
+<PRE><FONT COLOR="#0000CC">result = add(10, 20);
+putchar('A');
+printf("value = %d", 42);    /* printf from runtime library */</FONT></PRE>
+
+<H4>6.3 Nested Calls</H4>
+<PRE><FONT COLOR="#0000CC">auto r;
+r = add(mul(2, 3), div(10, 2));  /* r = 6 + 5 = 11 */
+printf("deep = %d", foo(bar(baz(1, 2), 3), 4));</FONT></PRE>
+
+<H4>6.4 Recursion</H4>
+<PRE><FONT COLOR="#0000CC">fib(n) {
+    if (n &lt; 2) return n;
+    return fib(n - 1) + fib(n - 2);
+}</FONT></PRE>
+
+<P>B functions are fully reentrant and support recursion. Each call allocates a new stack frame.</P>
+
+<H4>6.5 Variable Arguments</H4>
+<P>B allows calling a function with <B>fewer arguments</B> than declared. Extra parameters will contain garbage values. This is used by <TT>printf</TT>:</P>
+<PRE><FONT COLOR="#0000CC">printf(fmt, a, b, c, d, e, f, g, h) { ... }
+
+printf("Hello");             /* only 1 arg used */
+printf("%d %d", 10, 20);    /* 3 args used */</FONT></PRE>
+
+<P><B>Stack layout for printf("x=%d y=%d", 42, 99):</B></P>
+<PRE>
+Higher addresses:
+    [param 8: h]     (garbage &mdash; not passed)
+    [param 7: g]     (garbage)
+    [param 6: f]     (garbage)
+    [param 5: e]     (garbage)
+    [param 4: d]     (garbage)
+    [param 3: c]     (garbage)
+    [param 2: b]     99   &larr; pushed 3rd
+    [param 1: a]     42   &larr; pushed 2nd
+    [param 0: fmt]   ptr  &larr; pushed 1st
+    [return addr]
+    [saved frame ptr]      &larr; frame pointer (ix/bp/bc)
+Lower addresses (SP):</PRE>
+
+<A NAME="arrays"></A>
+<H3>7. Arrays &amp; Strings</H3>
+
+<H4>7.1 Global Arrays</H4>
+<PRE><FONT COLOR="#0000CC">buf[256];           /* 256 words (512 bytes) in BSS */
+arr[10];            /* 10 words */
+
+main() {
+    buf[0] = 65;    /* 'A' */
+    buf[1] = 66;    /* 'B' */
+    putchar(buf[0]); /* prints 'A' */
+}</FONT></PRE>
+
+<H4>7.2 Local Arrays</H4>
+<PRE><FONT COLOR="#0000CC">main() {
+    auto arr[10];   /* 10 words on stack frame */
+    auto i;
+
+    i = 0;
+    while (i &lt; 10) {
+        arr[i] = i * 2;
+        i = i + 1;
+    }
+}</FONT></PRE>
+
+<H4>7.3 Array Indexing</H4>
+<P>Arrays are word-indexed. <TT>arr[i]</TT> accesses the word at address <TT>arr + i * 2</TT> (since each word is 2 bytes). The compiler multiplies the index by 2 automatically.</P>
+<PRE><FONT COLOR="#0000CC">arr[0]    /* first word,  at address arr + 0 */
+arr[1]    /* second word, at address arr + 2 */
+arr[2]    /* third word,  at address arr + 4 */</FONT></PRE>
+
+<H4>7.4 Strings</H4>
+<P>B has a <B>string literal</B> type. String literals are stored in the DATA section as a sequence of bytes (one per character) followed by a null word (<TT>dw 0</TT>). Strings are accessed via <TT>peekb()</TT> for byte-by-byte reading.</P>
+<PRE><FONT COLOR="#0000CC">extrn printf;
+main() {
+    printf("Hello world!");    /* string passed by address */
+}
+
+/* String storage (generated by compiler):
+   .L1:  db "Hello world!"
+         dw 0
+*/</FONT></PRE>
+
+<P><B>Manual string processing with peekb:</B></P>
+<PRE><FONT COLOR="#0000CC">print_str(s) {
+    auto i, ch;
+    i = 0;
+    ch = peekb(s + i);          /* read byte at s[i] */
+    while (ch != 0) {
+        putchar(ch);
+        i = i + 1;
+        ch = peekb(s + i);
+    }
+}</FONT></PRE>
+
+<A NAME="preprocessor"></A>
+<H3>8. Preprocessor</H3>
+
+<P>The B compiler includes a C-compatible preprocessor that runs before lexing. Directives start with <TT>#</TT> at the beginning of a line.</P>
+
+<H4>8.1 #define</H4>
+<PRE><FONT COLOR="#0000CC">#define BUFSIZE 256
+#define MAX(a, b) ((a) &gt; (b) ? (a) : (b))
+
+buf[BUFSIZE];
+x = MAX(10, 20);</FONT></PRE>
+
+<H4>8.2 Conditional Compilation</H4>
+<PRE><FONT COLOR="#0000CC">#define DEBUG 1
+
+#ifdef DEBUG
+    printf("Debug mode\n");
+#endif
+
+#ifndef RELEASE
+    printf("Development build\n");
+#endif</FONT></PRE>
+
+<H4>8.3 #include</H4>
+<PRE><FONT COLOR="#0000CC">#include "myheader.h"    /* local file */
+#include &lt;stdlib.b&gt;       /* include path */</FONT></PRE>
+
+<A NAME="inline"></A>
+<H3>9. Inline Functions (peek/poke)</H3>
+
+<P>The compiler recognizes four special function names and generates <B>inline code</B> instead of a function call. These provide direct memory access without the overhead of a call/return.</P>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="25%">Function</TH><TH WIDTH="25%">Operation</TH><TH>Z80 Code</TH><TH>8086 Code</TH></TR>
+<TR>
+<TD><TT>peekb(addr)</TT></TD>
+<TD>Read byte from memory</TD>
+<TD><PRE><FONT SIZE="-2">ld a, [hl]  ; or equivalent</FONT></PRE></TD>
+<TD><PRE><FONT SIZE="-2">mov bx, ax
+xor ah, ah
+mov al, [bx]</FONT></PRE></TD>
+</TR>
+<TR BGCOLOR="#F8F8FF">
+<TD><TT>pokeb(addr, val)</TT></TD>
+<TD>Write byte to memory</TD>
+<TD><PRE><FONT SIZE="-2">ld [hl], e  ; or equivalent</FONT></PRE></TD>
+<TD><PRE><FONT SIZE="-2">mov [bx], al</FONT></PRE></TD>
+</TR>
+<TR>
+<TD><TT>peekw(addr)</TT></TD>
+<TD>Read 16-bit word from memory</TD>
+<TD COLSPAN="2" ALIGN="CENTER"><FONT SIZE="-1">Implemented as <TT>*(addr)</TT> dereference</FONT></TD>
+</TR>
+<TR BGCOLOR="#F8F8FF">
+<TD><TT>pokew(addr, val)</TT></TD>
+<TD>Write 16-bit word to memory</TD>
+<TD COLSPAN="2" ALIGN="CENTER"><FONT SIZE="-1">Implemented as <TT>*(addr) = val</TT> store</FONT></TD>
+</TR>
+</TABLE>
+
+<PRE><FONT COLOR="#0000CC">auto ch, addr;
+addr = 0x8000;
+pokeb(addr, 0x41);      /* write 'A' to memory location 0x8000 */
+ch = peekb(addr);       /* read back &rarr; ch = 0x41 */</FONT></PRE>
+
+<H3>10. Inline Assembly</H3>
+
+<P>The <TT>asm()</TT> statement allows embedding raw assembly instructions directly in B code:</P>
+<PRE><FONT COLOR="#0000CC">asm("ld a, 0");      /* Z80 */
+asm("mov ax, 0");    /* 8086 */
+asm("hlt");          /* halt CPU */</FONT></PRE>
+
+<A NAME="calling"></A>
+<H3>11. Calling Convention</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Aspect</TH><TH>Convention</TH></TR>
+<TR><TD>Parameter passing</TD><TD>Stack, <B>right-to-left</B>. Rightmost argument pushed first, at lowest address.</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Evaluation order</TD><TD><B>Right-to-left</B> (two-pass technique, no reversal step needed)</TD></TR>
+<TR><TD>Stack cleanup</TD><TD><B>Caller</B> cleans. After call: <TT>add sp, N*2</TT> where N is the argument count.</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Return value</TD><TD><B>HL</B> register pair (Z80/8080/8085), <B>AX</B> register (8086)</TD></TR>
+<TR><TD>Frame pointer</TD><TD><B>IX</B> (Z80), <B>BP</B> (8086), <B>BC</B> (8080/8085)</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Scratch registers</TD><TD>All registers except frame pointer and stack pointer may be modified by callee</TD></TR>
+</TABLE>
+
+<P>For a detailed explanation of stack frames and register usage, see the <A HREF="calling.html" TARGET="main">Calling Convention</A> page.</P>
+
+<A NAME="vs-c"></A>
+<H3>12. B vs C</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Feature</TH><TH>B</TH><TH>C</TH></TR>
+<TR><TD>Type system</TD><TD>Typeless (one word type)</TD><TD>Static types (<TT>int, char, long, struct</TT>)</TD></TR>
+<TR><TD>Variable declaration</TD><TD><TT>auto x;</TT> (inside functions)</TD><TD><TT>int x;</TT> (anywhere)</TD></TR>
+<TR><TD>Storage classes</TD><TD><TT>auto, extrn</TT></TD><TD><TT>auto, static, extern, register</TT></TD></TR>
+<TR><TD>Structures</TD><TD>Not supported</TD><TD><TT>struct { ... }</TT></TD></TR>
+<TR><TD>Pointers</TD><TD>Implicit (word = address)</TD><TD>Explicit (<TT>int *p</TT>)</TD></TR>
+<TR><TD>Array/pointer equivalence</TD><TD>Limited</TD><TD>Full decay semantics</TD></TR>
+<TR><TD>Ternary operator</TD><TD><TT>?:</TT> not available</TD><TD><TT>a ? b : c</TT></TD></TR>
+<TR><TD>switch/case</TD><TD>Not available</TD><TD>Full support</TD></TR>
+<TR><TD>Function prototypes</TD><TD>Not needed</TD><TD>Recommended</TD></TR>
+<TR><TD>Standard library</TD><TD>Minimal (printf, putchar, string fns)</TD><TD>Full stdlib</TD></TR>
+</TABLE>
+
+<A NAME="examples"></A>
+<H3>13. Complete Examples</H3>
+
+<H4>13.1 Hello World</H4>
+<PRE><FONT COLOR="#0000CC">extrn printf;
+
+main() {
+    printf("Hello, World!");
+}</FONT></PRE>
+
+<H4>13.2 Character Output with putchar</H4>
+<PRE><FONT COLOR="#0000CC">extrn putchar;
+
+main() {
+    auto i;
+    i = 65;              /* 'A' */
+    while (i &lt;= 90) {     /* 'A' through 'Z' */
+        putchar(i);
+        i = i + 1;
+    }
+    putchar('\n');
+}</FONT></PRE>
+
+<H4>13.3 Factorial (Recursive)</H4>
+<PRE><FONT COLOR="#0000CC">fact(n) {
+    if (n &lt;= 1) return 1;
+    return n * fact(n - 1);
+}</FONT></PRE>
+
+<H4>13.4 String Length</H4>
+<PRE><FONT COLOR="#0000CC">strlen(s) {
+    auto i;
+    i = 0;
+    while (peekb(s + i) != 0)
+        i = i + 1;
+    return i;
+}</FONT></PRE>
+
+<H4>13.5 Simple Calculator</H4>
+<PRE><FONT COLOR="#0000CC">extrn putchar;
+extrn printf;
+
+calc(a, b, op) {
+    if (op == '+') return a + b;
+    if (op == '-') return a - b;
+    if (op == '*') return a * b;
+    if (op == '/') return a / b;
+    return 0;
+}
+
+main() {
+    auto r;
+    r = calc(10, 3, '+');
+    printf("10 + 3 = %d\n", r);
+    r = calc(10, 3, '*');
+    printf("10 * 3 = %d\n", r);
+}</FONT></PRE>
+
+<H4>13.6 Array Fill and Sum</H4>
+<PRE><FONT COLOR="#0000CC">extrn printf;
+arr[20];
+
+main() {
+    auto i, sum;
+    i = 0;
+    while (i &lt; 20) {
+        arr[i] = i * 3;
+        i = i + 1;
+    }
+
+    sum = 0;
+    i = 0;
+    while (i &lt; 20) {
+        sum = sum + arr[i];
+        i = i + 1;
+    }
+    printf("Sum of 0..19 * 3 = %d\n", sum);
+}</FONT></PRE>
+
+<H4>13.7 Bitwise Flags</H4>
+<PRE><FONT COLOR="#0000CC">extrn printf;
+
+#define FLAG_READ   1
+#define FLAG_WRITE  2
+#define FLAG_EXEC   4
+
+main() {
+    auto flags;
+    flags = FLAG_READ | FLAG_WRITE;   /* 3 */
+
+    if (flags &amp; FLAG_READ)  printf("Readable\n");
+    if (flags &amp; FLAG_WRITE) printf("Writable\n");
+    if (flags &amp; FLAG_EXEC)  printf("Executable\n");
+
+    flags = flags | FLAG_EXEC;        /* add exec */
+    printf("New flags = %d\n", flags); /* 7 */
+}</FONT></PRE>
+
+<HR SIZE="1" NOSHADE>
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR>
+<TD><FONT SIZE="-2" COLOR="#666666"><A HREF="bcompiler.html" TARGET="main">[B Compiler]</A> &middot; <A HREF="calling.html" TARGET="main">[Calling Convention]</A> &middot; <A HREF="samples.html" TARGET="main">[Samples]</A></FONT></TD>
+<TD ALIGN="RIGHT"><FONT SIZE="-2" COLOR="#666666">&copy; 2025-2026 HC SDK</FONT></TD>
+</TR>
+</TABLE>
+
+</BODY></HTML>

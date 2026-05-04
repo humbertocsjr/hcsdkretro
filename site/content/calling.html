@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>Calling Convention - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Calling Convention</B></FONT></TD></TR>
+</TABLE>
+
+<H3>Overview</H3>
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Aspect</TH><TH>Convention</TH></TR>
+<TR><TD><B>Parameter passing</B></TD><TD>Stack, right-to-left (C convention)</TD></TR>
+<TR><TD><B>Evaluation order</B></TD><TD>Right-to-left (two-pass fseek, no reversal step)</TD></TR>
+<TR><TD><B>Stack cleanup</B></TD><TD>Caller cleans</TD></TR>
+<TR><TD><B>Return value</B></TD><TD>HL (Z80/8080/8085) / AX (8086)</TD></TR>
+</TABLE>
+
+<H3>Z80 Stack Frame</H3>
+<PRE>
+Higher addresses:
+    [param N]        &larr; ix+4+N*2 (rightmost on stack)
+    ...
+    [param 0]        &larr; ix+4  (leftmost in source)
+    [return addr]    &larr; ix+2
+    [saved ix]       &larr; ix+0  (IX points here)
+    [local 0]        &larr; ix-2
+    [local 1]        &larr; ix-4
+    ...
+Lower addresses (SP):
+</PRE>
+
+<H3>8086 Stack Frame</H3>
+<PRE>
+Higher addresses:
+    [param N]        &larr; bp+4+N*2 (or +4+N*4 for far)
+    ...
+    [param 0]        &larr; bp+4
+    [return addr]    &larr; bp+2
+    [saved bp]       &larr; bp+0  (BP points here)
+    [local 0]        &larr; bp-2
+    [local 1]        &larr; bp-4
+Lower addresses (SP):
+</PRE>
+
+<H3>Caller Cleanup</H3>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Target</TH><TH>Cleanup Code</TH></TR>
+<TR><TD>Z80</TD><TD><TT>ex de,hl; ld hl,N*2; add hl,sp; ld sp,hl; ex de,hl</TT></TD></TR>
+<TR><TD>8086</TD><TD><TT>add sp, N*2</TT> (near) / <TT>add sp, N*4</TT> (far)</TD></TR>
+<TR><TD>8080</TD><TD><TT>xchg; lxi h,N*2; dad sp; sphl; xchg</TT></TD></TR>
+</TABLE>
+
+</BODY></HTML>

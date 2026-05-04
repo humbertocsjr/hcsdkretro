@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>Librarian - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Librarian (hclib)</B></FONT></TD></TR>
+</TABLE>
+
+<P>Simple object file library manager. Adds or replaces object files in a <TT>.lib</TT> archive. If an object with the same base filename already exists in the library, it is <B>replaced</B>; otherwise, the object is <B>appended</B>.</P>
+
+<H3>Usage</H3>
+<PRE><FONT COLOR="#0000CC">hclib &lt;library.lib&gt; &lt;object files...&gt;</FONT></PRE>
+
+<H3>Examples</H3>
+<PRE><FONT COLOR="#0000CC">hclib mylib.lib newobj.obj                    # add one object
+hclib mylib.lib obj1.obj obj2.obj obj3.obj    # add multiple objects
+hclib mylib.lib updated.obj                   # replace existing object</FONT></PRE>
+
+<P>If the library does not exist, it is created. A temporary file <TT>hclib.$$$</TT> is created during the operation and renamed to the target library on success.</P>
+
+<H3>Runtime Libraries</H3>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Library</TH><TH>Target</TH><TH>Includes</TH></TR>
+<TR><TD><TT>z80-cpm-b.lib</TT></TD><TD>Z80 / CP/M</TD><TD>printf, putchar, strlen, strcmp, atoi, ...</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>8080-cpm-b.lib</TT></TD><TD>8080 / CP/M</TD><TD>printf, putchar, strlen, ...</TD></TR>
+<TR><TD><TT>8085-cpm-b.lib</TT></TD><TD>8085 / CP/M</TD><TD>printf, putchar, strlen, ...</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>8086-msdos-b.lib</TT></TD><TD>8086 / MS-DOS COM</TD><TD>printf, putchar, strlen, ...</TD></TR>
+<TR><TD><TT>8086-msdos-exe-b.lib</TT></TD><TD>8086 / MS-DOS EXE</TD><TD>Same, with far pointers</TD></TR>
+</TABLE>
+
+</BODY></HTML>

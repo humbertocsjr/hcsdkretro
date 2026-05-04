@@ -1,0 +1,245 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD><TITLE>REX Format - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080">
+<FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;REX &mdash; Relocatable Executable Format</B></FONT>
+</TD></TR>
+</TABLE>
+
+<P>The <B>REX</B> (Relocatable Executable) format is a compact binary format with a built-in relocation table, allowing programs to be loaded at any memory address. Unlike flat binaries (which are fixed to a specific address), REX executables can be relocated by the loader at runtime.</P>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="25%">Property</TH><TH>Value</TH></TR>
+<TR><TD>Magic bytes</TD><TD><TT>"HC"</TT> (0x48, 0x43)</TD></TR>
+<TR><TD>Header size</TD><TD>18 bytes</TD></TR>
+<TR><TD>Relocation granularity</TD><TD>16-bit words (2 bytes per entry)</TD></TR>
+<TR><TD>Supported CPUs</TD><TD>Z80, 8080, 8085, 8086</TD></TR>
+<TR><TD>Produced by</TD><TD><TT>hclink-rex</TT></TD></TR>
+</TABLE>
+
+<H3>File Layout</H3>
+
+<PRE>
++-----------------------+  offset 0x0000
+|     Header            |  18 bytes
+|   (magic, sizes,      |
+|    entry, CPU ID)     |
++-----------------------+
+|                       |
+|     Text Section      |  <TT>text_size</TT> bytes
+|    (executable code)  |
+|                       |
++-----------------------+
+|                       |
+|     Data Section      |  <TT>data_size</TT> bytes
+|  (initialized data)   |
+|                       |
++-----------------------+
+|                       |
+|     BSS Section       |  <TT>bss_size</TT> bytes (zero-filled at load)
+|  (uninitialized data) |
+|                       |
++-----------------------+
+|                       |
+|   Relocation Table    |  <TT>reloc_count</TT> entries &times; 2 bytes
+|                       |
++-----------------------+</PRE>
+
+<H3>Header Format (18 bytes)</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Offset</TH><TH>Size</TH><TH>Field</TH><TH>Description</TH></TR>
+<TR><TD ALIGN="CENTER"><TT>0x00</TT></TD><TD ALIGN="CENTER">2</TD><TD><B>Magic</B></TD><TD>Signature bytes: <TT>'H' 'C'</TT> (0x48, 0x43)</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD ALIGN="CENTER"><TT>0x02</TT></TD><TD ALIGN="CENTER">2</TD><TD><B>Text size</B></TD><TD>Size of executable code section in bytes</TD></TR>
+<TR><TD ALIGN="CENTER"><TT>0x04</TT></TD><TD ALIGN="CENTER">2</TD><TD><B>Data size</B></TD><TD>Size of initialized data section in bytes</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD ALIGN="CENTER"><TT>0x06</TT></TD><TD ALIGN="CENTER">2</TD><TD><B>BSS size</B></TD><TD>Size of uninitialized data section in bytes (allocated and zeroed at load time)</TD></TR>
+<TR><TD ALIGN="CENTER"><TT>0x08</TT></TD><TD ALIGN="CENTER">2</TD><TD><B>Entry offset</B></TD><TD>Offset of <TT>_start</TT> label relative to text section base</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD ALIGN="CENTER"><TT>0x0A</TT></TD><TD ALIGN="CENTER">2</TD><TD><B>Reloc count</B></TD><TD>Number of entries in relocation table</TD></TR>
+<TR><TD ALIGN="CENTER"><TT>0x0C</TT></TD><TD ALIGN="CENTER">3</TD><TD><B>Reserved</B></TD><TD>Padding bytes (must be zero)</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD ALIGN="CENTER"><TT>0x0F</TT></TD><TD ALIGN="CENTER">1</TD><TD><B>CPU ID</B></TD><TD>Target processor identifier</TD></TR>
+</TABLE>
+
+<H3>CPU Identifiers</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>CPU ID</TH><TH>Processor</TH><TH>Assembler</TH><TH>Compiler</TH></TR>
+<TR><TD ALIGN="CENTER"><TT>0xF0</TT></TD><TD>Intel 8080</TD><TD><TT>hcasm-8080</TT></TD><TD><TT>hcbcomp-8080</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD ALIGN="CENTER"><TT>0xF1</TT></TD><TD>Intel 8085</TD><TD><TT>hcasm-8085</TT></TD><TD><TT>hcbcomp-8085</TT></TD></TR>
+<TR><TD ALIGN="CENTER"><TT>0xF2</TT></TD><TD>Zilog Z80</TD><TD><TT>hcasm-z80</TT></TD><TD><TT>hcbcomp-z80</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD ALIGN="CENTER"><TT>0xF3</TT></TD><TD>Intel 8086</TD><TD><TT>hcasm-8086</TT></TD><TD><TT>hcbcomp-8086</TT></TD></TR>
+</TABLE>
+
+<H3>Relocation Table</H3>
+
+<P>The relocation table follows the BSS section. Each entry is a <B>2-byte offset</B> relative to the text section base. The total size of the table is <TT>reloc_count &times; 2</TT> bytes.</P>
+
+<H4>How Relocation Works</H4>
+
+<P>During compilation, instructions that reference absolute addresses (e.g., <TT>ld hl, label</TT> on Z80 or <TT>mov ax, label</TT> on 8086) are emitted with placeholder values. The linker records the offset of each such reference in the relocation table.</P>
+
+<P>At load time, the loader:</P>
+
+<OL>
+<LI>Allocates a memory block of <TT>text_size + data_size + bss_size</TT> bytes at <B>base address</B> <TT>B</TT></LI>
+<LI>Copies the text and data sections into the block</LI>
+<LI>Zero-fills the BSS section</LI>
+<LI>For each relocation entry <TT>E</TT>:
+    <UL>
+    <LI>Reads the 2-byte word <TT>W</TT> at offset <TT>B + E</TT></LI>
+    <LI>Adds the base address: <TT>W = W + B</TT></LI>
+    <LI>Writes <TT>W</TT> back to offset <TT>B + E</TT></LI>
+    </UL>
+</LI>
+<LI>Jumps to <TT>B + entry_offset</TT> to begin execution</LI>
+</OL>
+
+<H4>Example: Z80 Relocation</H4>
+
+<P>Consider this Z80 code:</P>
+<PRE><FONT COLOR="#0000CC">section text
+global _start
+_start:
+    ld hl, message      ; This absolute address must be relocated
+    ld c, 9
+    call 5
+    ret
+
+section data
+message: db "Hello!$"</FONT></PRE>
+
+<P>The <TT>ld hl, message</TT> instruction is encoded as <TT>21 XX XX</TT> where <TT>XX XX</TT> is the address of <TT>message</TT>. The linker records the offset of the <TT>XX XX</TT> bytes (offset 1 from <TT>_start</TT>) in the relocation table.</P>
+
+<P>If the loader places the program at base address <TT>0x4000</TT>:</P>
+<PRE><FONT COLOR="#0000CC">; Before relocation:
+0x4000: 21 00 10    ; ld hl, 0x1000 (placeholder)
+
+; Relocation entry: offset 1
+; Word at B+1 = 0x1000 (original offset)
+; New value = 0x1000 + 0x4000 = 0x5000
+
+; After relocation:
+0x4000: 21 00 50    ; ld hl, 0x5000 (actual message address)
+0x5000: "Hello!$"</FONT></PRE>
+
+<H4>Example: 8086 Relocation</H4>
+
+<PRE><FONT COLOR="#0000CC">section text
+global _start
+_start:
+    mov ax, message     ; B8 XX XX &mdash; immediate to AX
+    ; ...
+
+section data
+message: db "Hello!$"</FONT></PRE>
+
+<P>Same principle as Z80, but the instruction is <TT>B8 XX XX</TT>. The relocation entry points to the <TT>XX XX</TT> bytes (offset 1).</P>
+
+<H3>Loading Algorithm (C pseudocode)</H3>
+
+<PRE><FONT COLOR="#0000CC">struct rex_header {
+    uint16_t magic;        // 'HC'
+    uint16_t text_size;
+    uint16_t data_size;
+    uint16_t bss_size;
+    uint16_t entry_offset;
+    uint16_t reloc_count;
+    uint8_t  reserved[3];
+    uint8_t  cpu_id;
+};
+
+void load_rex(FILE *f, uint16_t base_addr) {
+    struct rex_header hdr;
+    fread(&amp;hdr, 18, 1, f);
+
+    if (hdr.magic != 0x4348) error("bad magic");
+
+    uint16_t total = hdr.text_size + hdr.data_size + hdr.bss_size;
+    uint8_t *mem = malloc(total);
+    memset(mem, 0, total);
+
+    // Copy sections
+    fread(mem, hdr.text_size, 1, f);              // text
+    fread(mem + hdr.text_size, hdr.data_size, 1, f); // data
+    // BSS already zeroed by memset
+
+    // Apply relocations
+    for (int i = 0; i &lt; hdr.reloc_count; i++) {
+        uint16_t offset;
+        fread(&amp;offset, 2, 1, f);
+        uint16_t *word = (uint16_t *)(mem + offset);
+        *word += base_addr;
+    }
+
+    // Execute
+    void (*entry)(void) = (void (*)(void))(mem + hdr.entry_offset);
+    entry();
+}</FONT></PRE>
+
+<H3>Creating REX Executables</H3>
+
+<P>Use <TT>hclink-rex</TT>:</P>
+<PRE><FONT COLOR="#0000CC">hclink-rex -o program.rex main.obj lib.obj
+hclink-rex -sym symbols.txt -o program.rex main.obj</FONT></PRE>
+
+<P>Or via the project builder with <TT>format = rex</TT>:</P>
+<PRE><FONT COLOR="#0000CC">[link:release]
+format = rex
+filename = program.rex</FONT></PRE>
+
+<H3>Comparison with Other Formats</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Feature</TH><TH>Flat Binary (COM)</TH><TH>MZ EXE</TH><TH>REX</TH></TR>
+<TR><TD>Relocatable</TD><TD ALIGN="CENTER">No</TD><TD ALIGN="CENTER">Yes (segment-based)</TD><TD ALIGN="CENTER">Yes (word-based)</TD></TR>
+<TR><TD>Header size</TD><TD ALIGN="CENTER">0 bytes</TD><TD ALIGN="CENTER">28+ bytes</TD><TD ALIGN="CENTER">18 bytes</TD></TR>
+<TR><TD>Segments</TD><TD ALIGN="CENTER">Single flat</TD><TD ALIGN="CENTER">Independent (TEXT/DATA/BSS)</TD><TD ALIGN="CENTER">Contiguous</TD></TR>
+<TR><TD>Loader complexity</TD><TD ALIGN="CENTER">Trivial</TD><TD ALIGN="CENTER">Moderate (MZ header parsing)</TD><TD ALIGN="CENTER">Simple (add base)</TD></TR>
+<TR><TD>Use case</TD><TD>CP/M .COM, ROMs</TD><TD>MS-DOS .EXE</TD><TD>Custom OS, embedded</TD></TR>
+<TR><TD>Produced by</TD><TD><TT>hclink-bin</TT></TD><TD><TT>hclink-mz</TT></TD><TD><TT>hclink-rex</TT></TD></TR>
+</TABLE>
+
+<H3>REX File Dump Example</H3>
+
+<P>Here's how a simple "Hello World" Z80 program looks as a REX file (hex dump):</P>
+
+<PRE><FONT COLOR="#0000CC">00000000: 48 43 0E 00 0C 00 00 00 00 00 01 00 00 00 00 F2  HC..............
+00000010: 00 00 21 0E 00 0E 0E CD 05 00 C9 48 65 6C 6C  ..!........Hell
+00000020: 6F 21 24 00 00 00 00 00 00 00 01 00              o!$.........
+
+Header breakdown:
+  48 43       = Magic "HC"
+  0E 00       = Text size: 14 bytes (code)
+  0C 00       = Data size: 12 bytes ("Hello!$\0\0\0\0\0\0")
+  00 00       = BSS size: 0 bytes
+  00 00       = Entry offset: 0 (execution starts at text base)
+  01 00       = Reloc count: 1 entry
+  00 00 00    = Reserved
+  F2          = CPU ID: Z80
+
+  00 00       = Text section (14 bytes of Z80 code)
+  ...
+  48 65 ...   = Data section ("Hello!$")
+
+  01 00       = Reloc entry: offset 1 (patch the address in ld hl, XXXX)</FONT></PRE>
+
+<P ALIGN="CENTER">
+<FONT SIZE="-2" COLOR="#666666">
+<A HREF="linker.html" TARGET="main">[Linker Documentation]</A> &middot;
+<A HREF="assembler.html" TARGET="main">[Assembler Documentation]</A> &middot;
+<A HREF="targets.html" TARGET="main">[Target CPUs]</A>
+</FONT>
+</P>
+
+<HR SIZE="1" NOSHADE>
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR>
+<TD><FONT SIZE="-2" COLOR="#666666">HC SDK for Retro Computing v2.1 R0</FONT></TD>
+<TD ALIGN="RIGHT"><FONT SIZE="-2" COLOR="#666666"><A HREF="changelog.html" TARGET="main">Changelog</A></FONT></TD>
+</TR>
+</TABLE>
+
+</BODY>
+</HTML>

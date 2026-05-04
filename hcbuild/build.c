@@ -170,7 +170,7 @@ void help(void)
     printf("  --link-path <dir>    Set linker directory\n");
     printf("  --lib-path <dir>     Set librarian directory\n");
     printf("  --output-dir <dir>   Set output directory\n");
-    printf("  -I <dir>             Add include path (RetroLang)\n");
+    printf("  -I <dir>             Add include path (B compiler)\n");
     printf("  --verbose, -v        Enable verbose output\n");
     printf("  --dump               Generate assembly dump files\n");
     printf("  --keep               Keep intermediate files\n");
@@ -215,46 +215,6 @@ void make_files(section_t *section)
             exit(1);
         }
 
-        if (!strcmp(ext, ".rl") || !strcmp(ext, ".RL")) {
-            ok = true;
-            snprintf(temp_name, sizeof(temp_name), "%s", source_name);
-            remove_ext(temp_name);
-            strncat(temp_name, ".__s", sizeof(temp_name) - strlen(temp_name) - 1);
-
-            cmd[0] = '\0';
-            cmd_put_base(cmd, sizeof(cmd), cfg_sdk_path);
-            #ifdef DOS_HOST
-            cmd_puts(cmd, sizeof(cmd), "rlang");
-            if (section->subsection[0] == '8' && section->subsection[1] == '0')
-                cmd_puts(cmd, sizeof(cmd), &section->subsection[2]);
-            else
-                cmd_puts(cmd, sizeof(cmd), section->subsection);
-            cmd_put_tool(cmd, sizeof(cmd), "");
-            #else
-            cmd_puts(cmd, sizeof(cmd), "retrolang-");
-            cmd_puts(cmd, sizeof(cmd), section->subsection);
-            cmd_put_tool(cmd, sizeof(cmd), "");
-            #endif
-
-            for (include_path_t *inc = cfg_cli_include_paths; inc; inc = inc->next) {
-                snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -I %s", inc->path);
-            }
-            section_t *rl_include_path = get_section("retrolang", "include_path");
-            if (rl_include_path) {
-                keyvalue_t *ikv = rl_include_path->keys;
-                while (ikv) {
-                    snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -I %s", ikv->key);
-                    ikv = ikv->next;
-                }
-            }
-            snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -o %s %s", temp_name, source_name);
-
-            if (verbose) printf("%s\n", cmd);
-            st = system(cmd);
-            if (st) exit(-1);
-            strncpy(source_name, temp_name, sizeof(source_name) - 1);
-        }
-
         if (!strcmp(ext, ".b") || !strcmp(ext, ".B")) {
             ok = true;
             snprintf(temp_name, sizeof(temp_name), "%s", source_name);
@@ -276,6 +236,17 @@ void make_files(section_t *section)
             cmd_put_tool(cmd, sizeof(cmd), "");
             #endif
 
+            for (include_path_t *inc = cfg_cli_include_paths; inc; inc = inc->next) {
+                snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -I %s", inc->path);
+            }
+            section_t *blang_inc = get_section("blang", "include_path");
+            if (blang_inc) {
+                keyvalue_t *ikv = blang_inc->keys;
+                while (ikv) {
+                    snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -I %s", ikv->key);
+                    ikv = ikv->next;
+                }
+            }
             snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -o %s %s", temp_name, source_name);
 
             if (verbose) printf("%s\n", cmd);

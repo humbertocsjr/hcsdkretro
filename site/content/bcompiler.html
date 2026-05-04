@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>B Compiler - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;B Compiler (hcbcomp)</B></FONT></TD></TR>
+</TABLE>
+
+<P>Translates the <B>B programming language</B> into assembly for Z80, 8086, 8080, and 8085 targets. B is a typeless systems programming language &mdash; the predecessor of C &mdash; where all data is a 16-bit machine word.</P>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Binary</TH><TH>Target CPU</TH><TH>Runtime</TH><TH>Pointer Size</TH></TR>
+<TR><TD><TT>hcbcomp-z80</TT></TD><TD>Zilog Z80</TD><TD>CP/M, MSX-DOS</TD><TD>16-bit</TD></TR>
+<TR><TD><TT>hcbcomp-8086</TT></TD><TD>Intel 8086</TD><TD>MS-DOS (.COM)</TD><TD>16-bit</TD></TR>
+<TR><TD><TT>hcbcomp-8086exe</TT></TD><TD>Intel 8086</TD><TD>MS-DOS (.EXE)</TD><TD>32-bit (far)</TD></TR>
+<TR><TD><TT>hcbcomp-8080</TT></TD><TD>Intel 8080</TD><TD>CP/M</TD><TD>16-bit</TD></TR>
+<TR><TD><TT>hcbcomp-8085</TT></TD><TD>Intel 8085</TD><TD>CP/M</TD><TD>16-bit</TD></TR>
+</TABLE>
+
+<H3>Usage</H3>
+<PRE><FONT COLOR="#0000CC">hcbcomp-{target} [options] &lt;input.b&gt;
+
+Options:
+  -o &lt;file&gt;       Output assembly file (default: a.s)
+  -I &lt;dir&gt;        Add include directory
+  --help, -h      Show help</FONT></PRE>
+
+<H3>Compilation Pipeline</H3>
+<PRE>
+<FONT COLOR="#0000CC">source.b</FONT>
+    &darr;
+<FONT COLOR="#CC0000">[Preprocessor]</FONT>  &rarr;  #define, #ifdef, #include
+    &darr;
+<FONT COLOR="#CC0000">[Compiler]</FONT>      &rarr;  Lexer &rarr; Parser &rarr; Code Generator
+    &darr;
+<FONT COLOR="#CC0000">[Peephole]</FONT>     &rarr;  Instruction-level optimization
+    &darr;
+<FONT COLOR="#CC0000">[Output]</FONT>       &rarr;  Assembly (.s) file</PRE>
+
+<H3>Calling Convention</H3>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Aspect</TH><TH>Convention</TH></TR>
+<TR><TD>Parameter passing</TD><TD>Stack, right-to-left (C convention)</TD></TR>
+<TR><TD>Evaluation order</TD><TD>Right-to-left (two-pass fseek, no reversal step)</TD></TR>
+<TR><TD>Stack cleanup</TD><TD>Caller cleans (<TT>add sp, n*2</TT>)</TD></TR>
+<TR><TD>Return value</TD><TD>HL (Z80) / AX (8086)</TD></TR>
+<TR><TD>Frame pointer</TD><TD>IX (Z80) / BP (8086) / BC (8080/8085)</TD></TR>
+</TABLE>
+
+<H3>Peephole Optimizer</H3>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Target</TH><TH>Pattern</TH><TH>Before</TH><TH>After</TH><TH>Gain</TH></TR>
+<TR><TD>Z80</TD><TD>Local load</TD><TD>9 instr</TD><TD>2 instr (<TT>ld r,[ix+N]</TT>)</TD><TD>-7</TD></TR>
+<TR><TD>Z80</TD><TD>Local store (imm)</TD><TD>12 instr</TD><TD>3 instr</TD><TD>-9</TD></TR>
+<TR><TD>8086</TD><TD>LEA+deref</TD><TD>3 instr</TD><TD>1 instr (<TT>mov ax,[bp+N]</TT>)</TD><TD>-2</TD></TR>
+<TR><TD>8086</TD><TD>Global deref</TD><TD>3 instr</TD><TD>1 instr (<TT>mov ax,[label]</TT>)</TD><TD>-2</TD></TR>
+<TR><TD>8086</TD><TD>Store imm to local</TD><TD>5 instr</TD><TD>1 instr (<TT>mov word [bp+N],imm</TT>)</TD><TD>-4</TD></TR>
+<TR><TD>8086</TD><TD>Push/Pop copy</TD><TD>2 instr</TD><TD>1 instr (<TT>mov reg,reg</TT>)</TD><TD>-1</TD></TR>
+</TABLE>
+
+<H3>B Language Quick Reference</H3>
+
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Feature</TH><TH>Syntax</TH></TR>
+<TR><TD>Comments</TD><TD><TT>/* block */  // line</TT></TD></TR>
+<TR><TD>Global variable</TD><TD><TT>var;  arr[256];</TT></TD></TR>
+<TR><TD>Local variable</TD><TD><TT>auto x, y;</TT></TD></TR>
+<TR><TD>External symbol</TD><TD><TT>extrn printf;</TT></TD></TR>
+<TR><TD>Function</TD><TD><TT>name(p1, p2) { ... }</TT></TD></TR>
+<TR><TD>if/else</TD><TD><TT>if (x) stmt; else stmt;</TT></TD></TR>
+<TR><TD>while</TD><TD><TT>while (x) stmt;</TT></TD></TR>
+<TR><TD>for</TD><TD><TT>for (init; cond; incr) stmt;</TT></TD></TR>
+<TR><TD>return</TD><TD><TT>return expr;</TT></TD></TR>
+<TR><TD>break</TD><TD><TT>break;</TT></TD></TR>
+<TR><TD>Arithmetic</TD><TD><TT>+  -  *  /  %  ++  --</TT></TD></TR>
+<TR><TD>Comparison</TD><TD><TT>&lt;  &gt;  &lt;=  &gt;=  ==  !=</TT></TD></TR>
+<TR><TD>Logical</TD><TD><TT>&amp;&amp;  ||  !</TT></TD></TR>
+<TR><TD>Bitwise</TD><TD><TT>&amp;  |  ^  ~  &lt;&lt;  &gt;&gt;</TT></TD></TR>
+<TR><TD>Assignment</TD><TD><TT>=  +=  -=  *=  /=  %=  &amp;=  |=  ^=</TT></TD></TR>
+<TR><TD>Preprocessor</TD><TD><TT>#define  #ifdef  #ifndef  #include</TT></TD></TR>
+<TR><TD>Inline assembly</TD><TD><TT>asm("ld a, 0");</TT></TD></TR>
+</TABLE>
+
+<P ALIGN="CENTER"><FONT SIZE="-2" COLOR="#666666">
+<A HREF="b_language.html" TARGET="main">[Full B Language Reference]</A> &middot;
+<A HREF="peephole.html" TARGET="main">[Peephole Details]</A> &middot;
+<A HREF="calling.html" TARGET="main">[Calling Convention]</A>
+</FONT></P>
+
+</BODY></HTML>
