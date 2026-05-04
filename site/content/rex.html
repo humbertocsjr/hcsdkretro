@@ -14,7 +14,7 @@
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
 <TR BGCOLOR="#E0E0FF"><TH WIDTH="25%">Property</TH><TH>Value</TH></TR>
 <TR><TD>Magic bytes</TD><TD><TT>"HC"</TT> (0x48, 0x43)</TD></TR>
-<TR><TD>Header size</TD><TD>18 bytes</TD></TR>
+<TR><TD>Header size</TD><TD>16 bytes</TD></TR>
 <TR><TD>Relocation granularity</TD><TD>16-bit words (2 bytes per entry)</TD></TR>
 <TR><TD>Supported CPUs</TD><TD>Z80, 8080, 8085, 8086</TD></TR>
 <TR><TD>Produced by</TD><TD><TT>hclink-rex</TT></TD></TR>
@@ -24,7 +24,7 @@
 
 <PRE>
 +-----------------------+  offset 0x0000
-|     Header            |  18 bytes
+|     Header            |  16 bytes
 |   (magic, sizes,      |
 |    entry, CPU ID)     |
 +-----------------------+
@@ -48,7 +48,7 @@
 |                       |
 +-----------------------+</PRE>
 
-<H3>Header Format (18 bytes)</H3>
+<H3>Header Format (16 bytes)</H3>
 
 <TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
 <TR BGCOLOR="#E0E0FF"><TH>Offset</TH><TH>Size</TH><TH>Field</TH><TH>Description</TH></TR>
@@ -194,7 +194,7 @@ filename = program.rex</FONT></PRE>
 <TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
 <TR BGCOLOR="#E0E0FF"><TH>Feature</TH><TH>Flat Binary (COM)</TH><TH>MZ EXE</TH><TH>REX</TH></TR>
 <TR><TD>Relocatable</TD><TD ALIGN="CENTER">No</TD><TD ALIGN="CENTER">Yes (segment-based)</TD><TD ALIGN="CENTER">Yes (word-based)</TD></TR>
-<TR><TD>Header size</TD><TD ALIGN="CENTER">0 bytes</TD><TD ALIGN="CENTER">28+ bytes</TD><TD ALIGN="CENTER">18 bytes</TD></TR>
+<TR><TD>Header size</TD><TD ALIGN="CENTER">0 bytes</TD><TD ALIGN="CENTER">28+ bytes</TD><TD ALIGN="CENTER">16 bytes</TD></TR>
 <TR><TD>Segments</TD><TD ALIGN="CENTER">Single flat</TD><TD ALIGN="CENTER">Independent (TEXT/DATA/BSS)</TD><TD ALIGN="CENTER">Contiguous</TD></TR>
 <TR><TD>Loader complexity</TD><TD ALIGN="CENTER">Trivial</TD><TD ALIGN="CENTER">Moderate (MZ header parsing)</TD><TD ALIGN="CENTER">Simple (add base)</TD></TR>
 <TR><TD>Use case</TD><TD>CP/M .COM, ROMs</TD><TD>MS-DOS .EXE</TD><TD>Custom OS, embedded</TD></TR>

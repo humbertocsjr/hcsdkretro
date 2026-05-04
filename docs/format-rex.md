@@ -6,7 +6,7 @@ The REX format is a relocatable executable format with relocation table support.
 
 ```
 +-------------------+
-| Header (18 bytes) |
+| Header (16 bytes) |
 +-------------------+
 | Text section      |
 +-------------------+
@@ -51,7 +51,7 @@ Each entry is a 2-byte offset relative to the text section base. During loading:
 ## Loading Process
 
 ```c
-// 1. Read header (18 bytes)
+// 1. Read header (16 bytes)
 // 2. Allocate text_size + data_size + bss_size bytes
 // 3. Copy text and data segments
 // 4. Zero-fill BSS
