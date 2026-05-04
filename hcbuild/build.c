@@ -224,7 +224,7 @@ void make_files(section_t *section)
             cmd[0] = '\0';
             cmd_put_base(cmd, sizeof(cmd), asm_dir);
             #ifdef DOS_HOST
-            cmd_puts(cmd, sizeof(cmd), "bcomp");
+            cmd_puts(cmd, sizeof(cmd), "hcb");
             if (section->subsection[0] == '8' && section->subsection[1] == '0')
                 cmd_puts(cmd, sizeof(cmd), &section->subsection[2]);
             else

@@ -70,6 +70,7 @@ distro_dos:
 	@mv bin/dos/hclink-rex.exe bin/dos/hclnkrex.exe
 	@#mv bin/dos/msxdosemu.exe bin/dos/msxdos.exe
 	@mv bin/dos/hcbcomp-8086.exe bin/dos/hcb86.exe
+	@mv bin/dos/hcbcomp-8086exe.exe bin/dos/hcb86exe.exe
 	@mv bin/dos/hcbcomp-z80.exe bin/dos/hcbz80.exe
 	@mv bin/dos/hcbcomp-8080.exe bin/dos/hcb80.exe
 	@mv bin/dos/hcbcomp-8085.exe bin/dos/hcb85.exe
