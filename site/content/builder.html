@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>Builder - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Builder (hcbuild)</B></FONT></TD></TR>
+</TABLE>
+
+<P>Project build system that reads <TT>.prj</TT> configuration files and orchestrates compilation, assembly, and linking in one command. The project file path is used as the <B>base directory</B> for all relative source file paths.</P>
+
+<H3>Command Line</H3>
+<PRE><FONT COLOR="#0000CC">hcbuild [options] &lt;project.prj&gt; &lt;command&gt; [config]</FONT></PRE>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="25%">Argument</TH><TH>Description</TH></TR>
+<TR><TD><TT>&lt;project.prj&gt;</TT></TD><TD>Path to the project configuration file (required)</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>&lt;command&gt;</TT></TD><TD><TT>make</TT> to build, <TT>clean</TT> to remove output files (required)</TD></TR>
+<TR><TD><TT>[config]</TT></TD><TD>Link configuration name. Default: <TT>release</TT>. Allows multiple <TT>[link:NAME]</TT> sections.</TD></TR>
+</TABLE>
+
+<H3>Command-Line Options</H3>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="30%">Option</TH><TH>Description</TH></TR>
+<TR><TD><TT>--sdk-path &lt;dir&gt;</TT></TD><TD>Base directory for all tools (compiler, assembler, linker, librarian). Overrides <TT>HC_SDK_PATH</TT> and <TT>sdk_path</TT> in <TT>[config]</TT>.</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>--asm-path &lt;dir&gt;</TT></TD><TD>Assembler directory (defaults to <TT>sdk_path</TT>).</TD></TR>
+<TR><TD><TT>--link-path &lt;dir&gt;</TT></TD><TD>Linker directory (defaults to <TT>sdk_path</TT>).</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>--lib-path &lt;dir&gt;</TT></TD><TD>Librarian directory (defaults to <TT>sdk_path</TT>).</TD></TR>
+<TR><TD><TT>--output-dir &lt;dir&gt;</TT></TD><TD>Output directory for all generated files. Overrides <TT>HC_OUTPUT_DIR</TT> and <TT>output_dir</TT> in <TT>[config]</TT>.</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>-I &lt;dir&gt;</TT></TD><TD>Add include path (for B language <TT>#include</TT>). Repeatable.</TD></TR>
+<TR><TD><TT>--verbose, -v</TT></TD><TD>Print each tool invocation before executing.</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>--dump</TT></TD><TD>Generate <TT>.dump</TT> assembly listing files alongside <TT>.obj</TT> files.</TD></TR>
+<TR><TD><TT>--keep</TT></TD><TD>Keep intermediate <TT>.__s</TT> files (normally deleted after assembly).</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>--help, -h</TT></TD><TD>Show help message.</TD></TR>
+</TABLE>
+
+<H3>Environment Variables</H3>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="30%">Variable</TH><TH>Description</TH></TR>
+<TR><TD><TT>HC_SDK_PATH</TT></TD><TD>Base directory for all tools. Overridden by <TT>--sdk-path</TT>.</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>HC_OUTPUT_DIR</TT></TD><TD>Output directory. Overridden by <TT>--output-dir</TT>.</TD></TR>
+</TABLE>
+
+<H3>Build Order</H3>
+<P>When <TT>make</TT> is executed, hcbuild processes the project in this order:</P>
+<OL>
+<LI>Collect objects from <TT>[lib:start]</TT> and <TT>[libs:start]</TT> (linked first)</LI>
+<LI>Compile and assemble source files from all <TT>[files:*]</TT> sections</LI>
+<LI>Collect objects from <TT>[lib]</TT> and <TT>[libs]</TT> (linked after user objects)</LI>
+<LI>Invoke the linker with all collected objects</LI>
+</OL>
+
+<HR>
+
+<H3>.prj File Format &mdash; Complete Reference</H3>
+
+<P>The project file uses an INI-like syntax. Lines starting with <TT>;</TT> or <TT>#</TT> are comments. Section headers use square brackets. Keys can have values after <TT>=</TT>, or stand alone (no <TT>=</TT> needed for source file entries). Values may be quoted with double quotes.</P>
+
+<H4>1. [config] &mdash; Global Settings</H4>
+<P>Optional section. All keys are optional.</P>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="22%">Key</TH><TH WIDTH="15%">Values</TH><TH>Description</TH></TR>
+<TR><TD><TT>sdk_path</TT></TD><TD>Path string</TD><TD>Base directory where <TT>hcbcomp-*</TT>, <TT>hcasm-*</TT>, <TT>hclink-*</TT>, and <TT>hclib</TT> are located.</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>output_dir</TT></TD><TD>Path string</TD><TD>Directory for all output files. If not set, output goes next to the <TT>.prj</TT> file.</TD></TR>
+<TR><TD><TT>verbose</TT></TD><TD><TT>yes</TT>, <TT>true</TT>, <TT>1</TT>, <TT>enable</TT></TD><TD>Print each tool command before executing.</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>dump</TT></TD><TD><TT>yes</TT>, <TT>true</TT>, <TT>1</TT>, <TT>enable</TT></TD><TD>Generate <TT>.dump</TT> assembly listing files.</TD></TR>
+<TR><TD><TT>keep</TT></TD><TD><TT>yes</TT>, <TT>true</TT>, <TT>1</TT>, <TT>enable</TT></TD><TD>Keep intermediate <TT>.__s</TT> files after assembly.</TD></TR>
+</TABLE>
+
+<PRE><FONT COLOR="#0000CC">[config]
+sdk_path = ../../bin
+verbose = yes
+keep = true</FONT></PRE>
+
+<H4>2. [files:ARCH] &mdash; Source Files</H4>
+<P>Lists source files for a specific target architecture. Each line is a filename (no <TT>=</TT> value). The architecture determines which compiler and assembler are used. Multiple <TT>[files:ARCH]</TT> sections can coexist in one project.</P>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="18%">Architecture</TH><TH WIDTH="28%">Compiler</TH><TH WIDTH="28%">Assembler</TH><TH>Use Case</TH></TR>
+<TR><TD><TT>z80</TT></TD><TD><TT>hcbcomp-z80</TT></TD><TD><TT>hcasm-z80</TT></TD><TD>Z80 / CP/M, MSX-DOS</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>8086</TT></TD><TD><TT>hcbcomp-8086</TT></TD><TD><TT>hcasm-8086</TT></TD><TD>8086 / MS-DOS COM (near pointers)</TD></TR>
+<TR><TD><TT>8086exe</TT></TD><TD><TT>hcbcomp-8086exe</TT></TD><TD><TT>hcasm-8086</TT></TD><TD>8086 / MS-DOS EXE (far pointers, MZ format)</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>8080</TT></TD><TD><TT>hcbcomp-8080</TT></TD><TD><TT>hcasm-8080</TT></TD><TD>8080 / CP/M</TD></TR>
+<TR><TD><TT>8085</TT></TD><TD><TT>hcbcomp-8085</TT></TD><TD><TT>hcasm-8085</TT></TD><TD>8085 / CP/M</TD></TR>
+</TABLE>
+
+<H4>Supported Source File Extensions</H4>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="20%">Extension</TH><TH WIDTH="15%">Step 1</TH><TH WIDTH="15%">Step 2</TH><TH>Notes</TH></TR>
+<TR><TD><TT>.b</TT>, <TT>.B</TT></TD><TD>Compile to <TT>.__s</TT></TD><TD>Assemble to <TT>.obj</TT></TD><TD>B language source. Uses <TT>hcbcomp-ARCH</TT>.</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>.s</TT>, <TT>.S</TT></TD><TD>&mdash;</TD><TD>Assemble to <TT>.obj</TT></TD><TD>Assembly source. Uses <TT>hcasm-ARCH</TT>.</TD></TR>
+<TR><TD><TT>.obj</TT></TD><TD COLSPAN="2" ALIGN="CENTER">Passed directly to linker</TD><TD>Pre-compiled object file.</TD></TR>
+</TABLE>
+
+<PRE><FONT COLOR="#0000CC">[files:z80]
+main.b
+utils.s
+startup.obj
+
+[files:8086]
+portable.b</FONT></PRE>
+
+<H4>3. [libs] and [lib] &mdash; Library Files</H4>
+<P>Lists library (<TT>.lib</TT>) and object (<TT>.obj</TT>) files to link. <TT>[libs]</TT> and <TT>[lib]</TT> are equivalent &mdash; both are linked <B>after</B> all source files have been compiled and assembled.</P>
+<PRE><FONT COLOR="#0000CC">[libs]
+../../libs/z80-cpm-b.lib
+extra/mylib.lib</FONT></PRE>
+
+<H4>4. [libs:start] and [lib:start] &mdash; Startup Objects</H4>
+<P>Libraries and objects linked <B>before</B> user source files. Use this for startup code (<TT>_start</TT>). The linker ensures the object containing <TT>_start</TT> is placed first.</P>
+<PRE><FONT COLOR="#0000CC">[libs:start]
+start.obj
+crt.lib</FONT></PRE>
+
+<H4>5. [link:NAME] &mdash; Link Configuration</H4>
+<P>Defines how to produce the final executable. <TT>NAME</TT> is the configuration name (e.g., <TT>release</TT>, <TT>debug</TT>). Pass the name as the third argument to hcbuild. If only one <TT>[link:*]</TT> section exists, it is used regardless of name.</P>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="18%">Key</TH><TH WIDTH="15%">Default</TH><TH>Description</TH></TR>
+<TR><TD><TT>format</TT></TD><TD><TT>bin</TT></TD><TD>Output format. <TT>bin</TT> = flat binary (COM/ROM), <TT>mz</TT> = MZ EXE (MS-DOS segmented), <TT>rex</TT> = REX relocatable, <TT>lib</TT> = librarian output (produces <TT>.lib</TT> using hclib).</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>filename</TT></TD><TD><TT>a.out</TT></TD><TD>Output file name. Relative paths are resolved from the <TT>output_dir</TT> or project directory.</TD></TR>
+<TR><TD><TT>text</TT></TD><TD>(none)</TD><TD>Text section start address (hex or decimal). Typical CP/M .COM: <TT>0x100</TT>. ROM images may use <TT>0x0000</TT> or <TT>0x4000</TT>.</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>data</TT></TD><TD>(none)</TD><TD>Data section start address. If omitted, data follows immediately after text.</TD></TR>
+<TR><TD><TT>bss</TT></TD><TD>(none)</TD><TD>BSS section start address. If omitted, BSS follows immediately after data.</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>align</TT></TD><TD>(none)</TD><TD>Section alignment in bytes. Ensures each section starts at a multiple of this value.</TD></TR>
+<TR><TD><TT>stack</TT></TD><TD>4096</TD><TD>Stack size in bytes. Only meaningful for <TT>format = mz</TT>. The stack is placed at the end of the BSS section.</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>symbols</TT></TD><TD>(none)</TD><TD>If set, generates a symbol table file listing all labels with addresses. Format: <TT>$ADDR NAME [TYPE file.obj]</TT>.</TD></TR>
+</TABLE>
+
+<PRE><FONT COLOR="#0000CC">; CP/M .COM target
+[link:release]
+format = bin
+text = 0x100
+filename = program.com
+symbols = program.sym
+
+; MS-DOS .EXE target
+[link:msdos]
+format = mz
+stack = 1024
+filename = program.exe
+
+; ROM image target
+[link:rom]
+format = bin
+text = 0x4000
+bss = 0xC000
+filename = firmware.bin</FONT></PRE>
+
+<H4>6. [blang:include_path] &mdash; B Compiler Include Paths</H4>
+<P>Additional include directories passed to the B compiler via <TT>-I</TT>. Each line is a path. These paths are used for <TT>#include</TT> resolution in <TT>.b</TT> source files.</P>
+<PRE><FONT COLOR="#0000CC">[blang:include_path]
+../include
+../lib/common</FONT></PRE>
+
+<HR>
+
+<H3>Complete Example</H3>
+
+<P>A multi-target project building for both Z80/CP/M and 8086/MS-DOS EXE:</P>
+
+<PRE><FONT COLOR="#0000CC">; game.prj &mdash; Retro game for Z80 CP/M and 8086 MS-DOS
+[config]
+sdk_path = ../../bin
+verbose = yes
+
+[files:z80]
+main.b
+sound.b
+gfx.b
+cp/m_wrapper.s
+
+[files:8086exe]
+main.b
+sound.b
+gfx.b
+dos_wrapper.s
+
+[libs]
+../../libs/z80-cpm-b.lib
+
+[libs:start]
+startup.obj
+
+[link:cpm]
+format = bin
+text = 0x100
+filename = GAME.COM
+
+[link:dos]
+format = mz
+stack = 4096
+filename = GAME.EXE</FONT></PRE>
+
+<P>Build commands:</P>
+<PRE><FONT COLOR="#0000CC">hcbuild game.prj make cpm      # build CP/M version
+hcbuild game.prj make dos      # build MS-DOS EXE version
+hcbuild game.prj clean         # remove all outputs</FONT></PRE>
+
+<HR SIZE="1" NOSHADE>
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR>
+<TD><FONT SIZE="-2" COLOR="#666666"><A HREF="quickstart.html" TARGET="main">[Quick Start]</A> &middot; <A HREF="linker.html" TARGET="main">[Linker]</A> &middot; <A HREF="bcompiler.html" TARGET="main">[B Compiler]</A></FONT></TD>
+<TD ALIGN="RIGHT"><FONT SIZE="-2" COLOR="#666666">&copy; 2025-2026 HC SDK</FONT></TD>
+</TR>
+</TABLE>
+
+</BODY></HTML>

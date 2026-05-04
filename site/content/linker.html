@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>Linker - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Linker (hclink)</B></FONT></TD></TR>
+</TABLE>
+
+<P>Multi-format linker producing <B>flat binaries</B> (COM), <B>MZ executables</B> (EXE), and <B>REX relocatable</B> format. Supports automatic object reordering and dead code elimination.</P>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Binary</TH><TH>Format</TH><TH>Use Case</TH></TR>
+<TR><TD><TT>hclink-bin</TT></TD><TD>Flat binary</TD><TD>CP/M .COM, ROM images, raw memory</TD></TR>
+<TR><TD><TT>hclink-mz</TT></TD><TD>MZ EXE</TD><TD>MS-DOS .EXE with independent segments</TD></TR>
+<TR><TD><A HREF="rex.html" TARGET="main"><TT>hclink-rex</TT></A></TD><TD><A HREF="rex.html" TARGET="main">REX relocatable</A></TD><TD>Relocatable executables with relocation table</TD></TR>
+</TABLE>
+
+<H3>Flat Binary</H3>
+<PRE><FONT COLOR="#0000CC">hclink-bin -text 0x100 -o program.com start.obj main.obj lib.lib
+hclink-bin -o firmware.bin code.obj data.obj
+hclink-bin -text 0x4000 -bss 0xC000 -o game.rom game.obj</FONT></PRE>
+
+<H3>MZ EXE (MS-DOS)</H3>
+<PRE><FONT COLOR="#0000CC">hclink-mz -stack 1024 -o program.exe start.obj main.obj lib.lib</FONT></PRE>
+
+<P>Segment deltas automatically computed:</P>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Constant</TH><TH>Value</TH></TR>
+<TR><TD><TT>__data_seg_delta__</TT></TD><TD>Paragraphs from TEXT to DATA</TD></TR>
+<TR><TD><TT>__bss_seg_delta__</TT></TD><TD>Paragraphs from TEXT to BSS</TD></TR>
+<TR><TD><TT>__stack_top__</TT></TD><TD>Top of stack (BSS + stack size)</TD></TR>
+</TABLE>
+
+<H3>REX Relocatable</H3>
+<PRE><FONT COLOR="#0000CC">hclink-rex -o program.rex main.obj lib.obj
+hclink-rex -sym symbols.txt -o program.rex main.obj</FONT></PRE>
+
+<P>Produces an <A HREF="rex.html" TARGET="main">REX-format</A> relocatable executable with a 18-byte header, sections, and a word-based relocation table. Ideal for custom operating systems and embedded environments where the loader needs to place code at arbitrary addresses.</P>
+
+<H3>Options</H3>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Option</TH><TH>Description</TH></TR>
+<TR><TD><TT>-o &lt;file&gt;</TT></TD><TD>Output file</TD></TR>
+<TR><TD><TT>-sym &lt;file&gt;</TT></TD><TD>Symbol table output</TD></TR>
+<TR><TD><TT>-text &lt;offset&gt;</TT></TD><TD>Text section start address</TD></TR>
+<TR><TD><TT>-data &lt;offset&gt;</TT></TD><TD>Data section start address</TD></TR>
+<TR><TD><TT>-bss &lt;offset&gt;</TT></TD><TD>BSS section start address</TD></TR>
+<TR><TD><TT>-stack &lt;size&gt;</TT></TD><TD>Stack size in bytes (MZ, default 4096)</TD></TR>
+<TR><TD><TT>-align &lt;offset&gt;</TT></TD><TD>Section alignment</TD></TR>
+</TABLE>
+
+<H3>Features</H3>
+<UL>
+<LI><B>Object Reordering</B>: <TT>_start</TT> object automatically placed first</LI>
+<LI><B>Dead Code Elimination</B>: Unreferenced objects excluded</LI>
+<LI><B>Symbol Table</B>: <TT>-sym symbols.txt</TT> exports all labels with addresses</LI>
+</UL>
+
+</BODY></HTML>

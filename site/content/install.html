@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>Installation - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Installation</B></FONT></TD></TR>
+</TABLE>
+
+<H3>Build from Source</H3>
+
+<H4>Prerequisites</H4>
+<P>All platforms require a C compiler and <TT>make</TT>. On macOS, install the minimum requirements for development:</P>
+<PRE><FONT COLOR="#0000CC">brew tap messense/macos-cross-toolchains
+brew install dpkg llvm mingw-w64 x86_64-unknown-linux-gnu msitools nsis</FONT></PRE>
+
+<P>For DOS cross-compilation, install DJGPP from <A HREF="https://github.com/andrewwutw/build-djgpp/releases">GitHub</A> to <TT>/usr/local/djgpp</TT>, then:</P>
+<PRE><FONT COLOR="#0000CC">sudo xattr -r -d com.apple.quarantine /usr/local/djgpp</FONT></PRE>
+
+<P>For Linux and BSD, only a C compiler and <TT>make</TT> are needed.</P>
+
+<H4>Build</H4>
+<PRE><FONT COLOR="#0000CC">git clone https://github.com/humbertocsjr/hcsdkretro.git
+cd hcsdkretro
+make posix
+sudo make install</FONT></PRE>
+
+<P>This installs to <TT>/usr/local/bin</TT>. Use <TT>make install PREFIX=/custom/path</TT> to change the destination.</P>
+
+<H3>Platform-Specific Builds</H3>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Command</TH><TH>Platform</TH></TR>
+<TR><TD><TT>make posix</TT></TD><TD>macOS / Linux / BSD (native)</TD></TR>
+<TR><TD><TT>make linux</TT></TD><TD>Linux x86_64 static binary</TD></TR>
+<TR><TD><TT>make macos</TT></TD><TD>macOS universal (x86_64 + ARM)</TD></TR>
+<TR><TD><TT>make win</TT></TD><TD>Windows 64-bit (MinGW cross-compile)</TD></TR>
+<TR><TD><TT>make win32</TT></TD><TD>Windows 32-bit</TD></TR>
+<TR><TD><TT>make dos</TT></TD><TD>DOS (DJGPP cross-compile)</TD></TR>
+</TABLE>
+
+<H3>Pre-built Packages</H3>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Platform</TH><TH>Format</TH></TR>
+<TR><TD>macOS</TD><TD><TT>.pkg</TT> installer, <TT>.tgz</TT></TD></TR>
+<TR><TD>Linux x86_64</TD><TD><TT>.deb</TT> package, <TT>.tgz</TT></TD></TR>
+<TR><TD>Windows 64-bit</TD><TD><TT>.exe</TT> NSIS installer, <TT>.zip</TT></TD></TR>
+<TR><TD>Windows 32-bit</TD><TD><TT>.exe</TT> NSIS installer, <TT>.zip</TT></TD></TR>
+<TR><TD>DOS</TD><TD><TT>.zip</TT> (DJGPP)</TD></TR>
+</TABLE>
+
+<H3>Verify Installation</H3>
+<PRE><FONT COLOR="#0000CC">hcbcomp-z80 --help
+hcasm-z80 --help
+hclink-bin --help
+msxdosemu --help</FONT></PRE>
+
+</BODY></HTML>

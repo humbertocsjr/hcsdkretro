@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>Peephole Optimizer - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Peephole Optimizer</B></FONT></TD></TR>
+</TABLE>
+
+<P>Post-compilation optimizer that applies target-specific <B>sliding-window pattern matching</B> to reduce instruction count. Operates on the generated assembly before it reaches the assembler.</P>
+
+<P><B>Location:</B> <TT>hcbcomp/peep.c</TT> / <TT>hcbcomp/peep.h</TT></P>
+
+<H3>Z80 Optimizations</H3>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Pattern</TH><TH>Before</TH><TH>After</TH><TH>Saved</TH></TR>
+<TR><TD>Local variable load</TD>
+<TD><PRE><FONT SIZE="-2">ld hl, -N
+ex de, hl
+push ix
+pop hl
+add hl, de
+ld a, [hl]
+inc hl
+ld h, [hl]
+ld l, a</FONT></PRE></TD>
+<TD><PRE><FONT SIZE="-2">ld l, [ix+N]
+ld h, [ix+N+1]</FONT></PRE></TD>
+<TD>7</TD></TR>
+<TR><TD>Local store (immediate)</TD>
+<TD><PRE><FONT SIZE="-2">ld hl, -N / ex de, hl / push ix
+pop hl / add hl, de / push hl
+ld hl, IMM / pop de / ex de, hl
+ld [hl], e / inc hl / ld [hl], d</FONT></PRE></TD>
+<TD><PRE><FONT SIZE="-2">ld hl, IMM
+ld [ix+N], l
+ld [ix+N+1], h</FONT></PRE></TD>
+<TD>9</TD></TR>
+</TABLE>
+
+<H3>8086 Optimizations</H3>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Pattern</TH><TH>Before</TH><TH>After</TH><TH>Saved</TH></TR>
+<TR><TD>LEA + deref chain</TD><TD><TT>lea ax,[bp-N]; mov bx,ax; mov ax,[bx]</TT></TD><TD><TT>mov ax, [bp-N]</TT></TD><TD>2</TD></TR>
+<TR><TD>Global dereference</TD><TD><TT>mov ax,label; mov bx,ax; mov ax,[bx]</TT></TD><TD><TT>mov ax, [label]</TT></TD><TD>2</TD></TR>
+<TR><TD>Store immediate to local</TD><TD><TT>lea ax,[bp-N]; push ax; mov ax,IMM; pop bx; mov [bx],ax</TT></TD><TD><TT>mov word [bp-N], IMM</TT></TD><TD>4</TD></TR>
+<TR><TD>Push/Pop copy</TD><TD><TT>push ax; pop bx</TT></TD><TD><TT>mov bx, ax</TT></TD><TD>1</TD></TR>
+</TABLE>
+
+<H3>Typical Results</H3>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Target</TH><TH>Reduction</TH></TR>
+<TR><TD>Z80</TD><TD>~32% fewer instruction lines</TD></TR>
+<TR><TD>8086</TD><TD>~28% fewer instruction lines</TD></TR>
+</TABLE>
+
+</BODY></HTML>

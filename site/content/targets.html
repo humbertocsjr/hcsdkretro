@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML><HEAD><TITLE>Targets - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Target CPUs</B></FONT></TD></TR>
+</TABLE>
+
+<TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>CPU</TH><TH>Compiler</TH><TH>Assembler</TH><TH>Runtime</TH><TH>Output</TH></TR>
+<TR><TD><B>Zilog Z80</B></TD><TD><TT>hcbcomp-z80</TT></TD><TD><TT>hcasm-z80</TT></TD><TD>CP/M, MSX-DOS</TD><TD>COM</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><B>Intel 8080</B></TD><TD><TT>hcbcomp-8080</TT></TD><TD><TT>hcasm-8080</TT></TD><TD>CP/M</TD><TD>COM</TD></TR>
+<TR><TD><B>Intel 8085</B></TD><TD><TT>hcbcomp-8085</TT></TD><TD><TT>hcasm-8085</TT></TD><TD>CP/M</TD><TD>COM</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><B>Intel 8086</B></TD><TD><TT>hcbcomp-8086</TT></TD><TD><TT>hcasm-8086</TT></TD><TD>MS-DOS (.COM)</TD><TD>COM</TD></TR>
+<TR><TD><B>Intel 8086</B> (EXE)</TD><TD><TT>hcbcomp-8086exe</TT></TD><TD><TT>hcasm-8086</TT></TD><TD>MS-DOS (.EXE)</TD><TD>MZ EXE</TD></TR>
+</TABLE>
+
+<P>All targets also support the <A HREF="rex.html" TARGET="main">REX relocatable format</A> via <TT>hclink-rex</TT>.</P>
+
+<H3>Z80 Details</H3>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Feature</TH><TH>Detail</TH></TR>
+<TR><TD>Word size</TD><TD>16-bit (2 bytes)</TD></TR>
+<TR><TD>Frame pointer</TD><TD>IX register</TD></TR>
+<TR><TD>Return value</TD><TD>HL register pair</TD></TR>
+<TR><TD>Primary register</TD><TD>HL (push/pop for stack operations)</TD></TR>
+<TR><TD>Secondary register</TD><TD>DE (pop/push for expression evaluation)</TD></TR>
+<TR><TD>Parameter access</TD><TD><TT>ld r, [ix+offset]</TT> (peephole-optimized)</TD></TR>
+<TR><TD>Local access</TD><TD><TT>ld r, [ix-offset]</TT> (peephole-optimized)</TD></TR>
+</TABLE>
+
+<H3>8086 Details</H3>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Feature</TH><TH>Detail</TH></TR>
+<TR><TD>Word size</TD><TD>16-bit near / 32-bit far</TD></TR>
+<TR><TD>Frame pointer</TD><TD>BP register</TD></TR>
+<TR><TD>Return value</TD><TD>AX register (DX:AX for 32-bit)</TD></TR>
+<TR><TD>Primary regs</TD><TD>AX (value), BX (address), CX/DX (scratch)</TD></TR>
+<TR><TD>COM format</TD><TD>Near pointers (16-bit), text=0x100</TD></TR>
+<TR><TD>EXE format</TD><TD>Far pointers (32-bit seg:off), MZ header, independent segments</TD></TR>
+</TABLE>
+
+<H3>8080/8085 Details</H3>
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Feature</TH><TH>Detail</TH></TR>
+<TR><TD>Word size</TD><TD>16-bit (2 bytes)</TD></TR>
+<TR><TD>Frame pointer</TD><TD>BC register pair</TD></TR>
+<TR><TD>Return value</TD><TD>HL register pair</TD></TR>
+<TR><TD>Primary register</TD><TD>HL (push h/pop d for stack operations)</TD></TR>
+<TR><TD>Secondary register</TD><TD>DE</TD></TR>
+</TABLE>
+
+</BODY></HTML>

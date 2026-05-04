@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD><TITLE>Quick Start - HC SDK</TITLE></HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
+
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Quick Start Guide</B></FONT></TD></TR>
+</TABLE>
+
+<H3>Installation</H3>
+
+<P>Build from source (macOS / Linux / BSD):</P>
+<PRE><FONT COLOR="#0000CC">git clone https://github.com/humbertocsjr/hcsdkretro.git
+cd hcsdkretro
+make posix
+sudo make install</FONT></PRE>
+
+<P>Or install via package manager:</P>
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0">
+<TR BGCOLOR="#E0E0FF"><TH>Platform</TH><TH>Format</TH></TR>
+<TR><TD>macOS</TD><TD><TT>.pkg</TT> installer</TD></TR>
+<TR><TD>Linux x86_64</TD><TD><TT>.deb</TT> package</TD></TR>
+<TR><TD>Windows</TD><TD><TT>.exe</TT> NSIS installer</TD></TR>
+</TABLE>
+
+<H3>Hello World &mdash; Assembly (Z80 / CP/M)</H3>
+
+<P>Create <TT>hello.s</TT>:</P>
+<PRE><FONT COLOR="#0000CC">section data
+msg: db "Hello World!$"
+
+section text
+global _start
+_start:
+    ld de, msg
+    ld c, 9          ; BDOS print string
+    call 5
+    ld c, 0          ; BDOS exit
+    call 5</FONT></PRE>
+
+<P>Assemble, link, and run:</P>
+<PRE><FONT COLOR="#0000CC">hcasm-z80 -o hello.obj hello.s
+hclink-bin -text 0x100 -o hello.com hello.obj
+msxdosemu hello.com</FONT></PRE>
+
+<H3>Hello World &mdash; B Language (Z80 / CP/M)</H3>
+
+<P>Create <TT>hello.b</TT>:</P>
+<PRE><FONT COLOR="#0000CC">extrn putchar;
+
+main() {
+    putchar('H'); putchar('e'); putchar('l');
+    putchar('l'); putchar('o'); putchar('!');
+}</FONT></PRE>
+
+<P>Compile with library:</P>
+<PRE><FONT COLOR="#0000CC">hcbcomp-z80 -o hello.s hello.b
+hcasm-z80 -o hello.obj hello.s
+hclink-bin -text 0x100 -o hello.com hello.obj libs/z80-cpm-b.lib
+msxdosemu hello.com</FONT></PRE>
+
+<H3>Using the Project Builder</H3>
+
+<P>Create <TT>hello.prj</TT>:</P>
+<PRE><FONT COLOR="#0000CC">[config]
+sdk_path = ./bin
+
+[files:z80]
+hello.b
+
+[libs]
+libs/z80-cpm-b.lib
+
+[link:release]
+format = bin
+text = 0x100
+filename = hello.com</FONT></PRE>
+
+<P>Build and run:</P>
+<PRE><FONT COLOR="#0000CC">hcbuild hello.prj make release
+msxdosemu hello.com</FONT></PRE>
+
+<H3>8086 MS-DOS EXE Project</H3>
+
+<P>For 8086 programs needing far pointers and MZ EXE format, use <TT>[files:8086exe]</TT>:</P>
+<PRE><FONT COLOR="#0000CC">[config]
+sdk_path = ./bin
+
+[files:8086exe]
+main.b
+
+[libs]
+libs/8086-msdos-exe-b.lib
+
+[link:release]
+format = mz
+stack = 1024
+filename = program.exe</FONT></PRE>
+
+<H3>Project File Format (.prj)</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="25%">Section</TH><TH>Description</TH></TR>
+<TR><TD><TT>[config]</TT></TD><TD>Optional settings (sdk_path, verbose, dump, keep)</TD></TR>
+<TR><TD><TT>[files:ARCH]</TT></TD><TD>Source files for architecture (z80, 8086, 8086exe, 8080, 8085)</TD></TR>
+<TR><TD><TT>[libs:start]</TT></TD><TD>Startup objects (linked first)</TD></TR>
+<TR><TD><TT>[libs]</TT></TD><TD>Libraries and additional objects</TD></TR>
+<TR><TD><TT>[link:RELEASE]</TT></TD><TD>Link configuration (format, text, data, bss, filename, stack, symbols)</TD></TR>
+</TABLE>
+
+<P ALIGN="CENTER">
+<FONT SIZE="-2" COLOR="#666666">
+<A HREF="builder.html" TARGET="main">[Builder Documentation]</A> &middot;
+<A HREF="bcompiler.html" TARGET="main">[B Compiler Reference]</A> &middot;
+<A HREF="samples.html" TARGET="main">[Sample Programs]</A>
+</FONT>
+</P>
+
+</BODY>
+</HTML>
