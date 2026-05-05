@@ -208,39 +208,39 @@ static void emit_logic(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
         }
         // First operand is a main pointer (HL, IX, IY indirect reference).
         // Primeiro operando é um ponteiro principal (referência indireta HL, IX, IY).
-         else if ((reg1 = tryget_reg(argv[0], REG_MAIN_PTR)) != NULL)
-         {
-             // Emit IX prefix if needed.
-             // Emite prefixo IX se necessário.
-             if ((reg1->group & (REG_IX_PTR)))
-             {
-                 op = 0xdd;
-                 out(REC_DATA, 0, 0, &op, 1);
-             }
-             // Emit IY prefix if needed.
-             // Emite prefixo IY se necessário.
-             if ((reg1->group & (REG_IY_PTR)))
-             {
-                 op = 0xfd;
-                 out(REC_DATA, 0, 0, &op, 1);
-             }
-             reg2 = tryget_reg(argv[1], REG_16BIT_SP);
-             // Validate register combinations for 16-bit add operations.
-             // Valida combinações de registradores para operações ADD de 16 bits.
-             if (reg2)
-             {
-                 int r1_is_hl = (reg1->group & (REG_IX_PTR | REG_IY_PTR)) == 0;
-                 int r2_is_index = (reg2->group & (REG_IX_PTR | REG_IY_PTR)) != 0;
-                 if (r1_is_hl && r2_is_index)
-                     error_expr(argv[1], "invalid register combination: add hl, ix/iy not supported");
-                 int r1_is_index = (reg1->group & (REG_IX_PTR | REG_IY_PTR)) != 0;
-                 int r2_is_hl = (reg2->group & (REG_IX_PTR | REG_IY_PTR)) == 0 && (reg2->group & REG_16BIT);
-                 if (r1_is_index && r2_is_hl)
-                     error_expr(argv[1], "invalid register combination: add ix/iy, hl not supported");
-             }
-             arg = argv[1];
-             is_16bit_op = true;
-         }
+        else if ((reg1 = tryget_reg(argv[0], REG_MAIN_PTR)) != NULL)
+        {
+            // Emit IX prefix if needed.
+            // Emite prefixo IX se necessário.
+            if ((reg1->group & (REG_IX_PTR)))
+            {
+                op = 0xdd;
+                out(REC_DATA, 0, 0, &op, 1);
+            }
+            // Emit IY prefix if needed.
+            // Emite prefixo IY se necessário.
+            if ((reg1->group & (REG_IY_PTR)))
+            {
+                op = 0xfd;
+                out(REC_DATA, 0, 0, &op, 1);
+            }
+            reg2 = tryget_reg(argv[1], REG_16BIT_SP);
+            // Validate register combinations for 16-bit add operations.
+            // Valida combinações de registradores para operações ADD de 16 bits.
+            if (reg2)
+            {
+                int r1_is_hl = (reg1->group & REG_HL) != 0;
+                int r2_is_index = (reg2->group & (REG_IX_PTR | REG_IY_PTR)) != 0;
+                if (r1_is_hl && r2_is_index)
+                    error_expr(argv[1], "invalid register combination: add hl, ix/iy not supported");
+                int r1_is_index = (reg1->group & (REG_IX_PTR | REG_IY_PTR)) != 0;
+                int r2_is_hl = (reg2->group & REG_HL) != 0;
+                if (r1_is_index && r2_is_hl)
+                    error_expr(argv[1], "invalid register combination: add ix/iy, hl not supported");
+            }
+            arg = argv[1];
+            is_16bit_op = true;
+        }
     }
     else if (argc == 1)
     {
