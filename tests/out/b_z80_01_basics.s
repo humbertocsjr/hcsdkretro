@@ -33,9 +33,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	ld hl, g
 	push hl
@@ -56,9 +55,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	ld hl, putchar
 	; call putchar
@@ -67,9 +65,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	ld hl, 68
 	ld [ix-2], l
@@ -82,9 +79,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	ld hl, putchar
 	; call putchar
@@ -93,9 +89,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	; function main epilogue
 	ld sp, ix

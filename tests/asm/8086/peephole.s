@@ -1,4 +1,4 @@
-;; 8086 assembler test — peephole-generated patterns
+;; 8086 assembler test - peephole-generated patterns
 section text
 global _start
 _start:

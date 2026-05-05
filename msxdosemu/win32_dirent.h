@@ -1,5 +1,5 @@
 /*
- * win32_dirent.h — Minimal POSIX dirent emulation for Windows
+ * win32_dirent.h - Minimal POSIX dirent emulation for Windows
  * Uses FindFirstFile / FindNextFile to emulate opendir / readdir / closedir.
  */
 

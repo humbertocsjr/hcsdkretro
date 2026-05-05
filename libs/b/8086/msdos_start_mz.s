@@ -1,4 +1,4 @@
-; MS-DOS 8086 MZ EXE _start — Independent segments (32-bit far pointers)
+; MS-DOS 8086 MZ EXE _start - Independent segments (32-bit far pointers)
 ; CS = TEXT, DS = ES = DATA, SS = BSS
 ; Stack at end of BSS, SP = __stack_top__
 ; Segment values computed at runtime as CS + __data_seg_delta__ / CS + __bss_seg_delta__

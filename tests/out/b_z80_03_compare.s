@@ -46,9 +46,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L2
 .L1:
@@ -59,9 +58,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L2:
 	ld l, [ix-2]
@@ -87,9 +85,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L5
 .L4:
@@ -100,9 +97,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L5:
 	ld l, [ix-2]
@@ -128,9 +124,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L8
 .L7:
@@ -141,9 +136,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L8:
 	ld l, [ix-4]
@@ -172,9 +166,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L12
 .L11:
@@ -185,9 +178,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L12:
 	ld l, [ix-2]
@@ -212,9 +204,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L15
 .L14:
@@ -225,9 +216,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L15:
 	ld l, [ix-2]
@@ -253,9 +243,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L18
 .L17:
@@ -266,9 +255,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L18:
 	ld l, [ix-2]
@@ -298,9 +286,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L22
 .L21:
@@ -311,9 +298,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L22:
 	ld l, [ix-4]
@@ -337,9 +323,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L26
 .L25:
@@ -350,9 +335,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L26:
 	ld l, [ix-2]
@@ -381,9 +365,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L30
 .L29:
@@ -394,9 +377,8 @@ main:
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L30:
 	; function main epilogue

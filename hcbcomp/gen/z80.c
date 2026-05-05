@@ -692,11 +692,68 @@ static int z80_match_local_store_imm(peep_line_t *w, peep_line_t *repl)
     return n;
 }
 
-// [English] Z80-specific peephole pattern dispatcher. Tests window sizes 9 (local load)
-// and 12 (local store immediate).
-// [Portuguese] Despachante de padrões peephole específicos Z80. Testa janelas 9 (carga local) e 12 (store imediato).
+// [English] Z80 Pattern 4: replaces "ld hl,N; add hl,sp; ld sp,hl" with N×inc sp for small N.
+// Replaces 3 instructions (7 bytes) with N inc sp instructions (N bytes) for N ≤ 6.
+// [Portuguese] Padrão Z80 4: substitui "ld hl,N; add hl,sp; ld sp,hl" por N×inc sp para N pequeno.
+static int z80_match_inc_sp(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "ld", 2)) return 0;
+    if (strcmp(w[0].args[0], "hl")) return 0;
+    if (!peep_op_is(&w[1], "add") || w[1].nargs != 2) return 0;
+    if (strcmp(w[1].args[0], "hl") || strcmp(w[1].args[1], "sp")) return 0;
+    if (!peep_op_args(&w[2], "ld", 2)) return 0;
+    if (strcmp(w[2].args[0], "sp") || strcmp(w[2].args[1], "hl")) return 0;
+    int val;
+    if (!peep_parse_arg_int(w[0].args[1], &val)) return 0;
+    if (val <= 0 || val > 6) return 0;
+    int n = 0;
+    for (int i = 0; i < val; i++)
+        peep_emit_repl(repl, &n, "\tinc sp");
+    return n;
+}
+
+// [English] Z80 Pattern 5: replaces "push bc; pop hl" with "ld h,b; ld l,c" (same size, faster).
+// [Portuguese] Padrão Z80 5: substitui "push bc; pop hl" por "ld h,b; ld l,c" (mesmo tamanho, mais rápido).
+static int z80_match_pushbc_pophl(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "push", 1)) return 0;
+    if (!peep_op_args(&w[1], "pop", 1)) return 0;
+    if (strcmp(w[0].args[0], "bc") || strcmp(w[1].args[0], "hl")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tld h, b");
+    peep_emit_repl(repl, &n, "\tld l, c");
+    return n;
+}
+
+// [English] Z80 Pattern 6: removes redundant "ex de,hl" around "inc sp" sequences.
+// Pattern: ex de,hl; inc sp; ...; inc sp; ex de,hl  →  inc sp; ...; inc sp
+// [Portuguese] Padrão Z80 6: remove "ex de,hl" redundante ao redor de sequências "inc sp".
+static int z80_match_ex_sp(peep_line_t *w, int wcount, peep_line_t *repl)
+{
+    if (wcount < 4) return 0;
+    if (!peep_op_is(&w[0], "ex") || w[0].nargs != 2) return 0;
+    if (strcmp(w[0].args[0], "de") || strcmp(w[0].args[1], "hl")) return 0;
+    // Middle instructions must all be "inc sp"
+    for (int k = 1; k < wcount - 1; k++) {
+        if (!peep_op_args(&w[k], "inc", 1)) return 0;
+        if (strcmp(w[k].args[0], "sp")) return 0;
+    }
+    if (!peep_op_is(&w[wcount-1], "ex") || w[wcount-1].nargs != 2) return 0;
+    if (strcmp(w[wcount-1].args[0], "de") || strcmp(w[wcount-1].args[1], "hl")) return 0;
+    int n = 0;
+    for (int k = 1; k < wcount - 1; k++)
+        peep_emit_repl(repl, &n, "\tinc sp");
+    return n;
+}
+
+// [English] Z80-specific peephole pattern dispatcher.
+// [Portuguese] Despachante de padrões peephole específicos Z80.
 int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
 {
+    if (wcount >= 4) {
+        int n = z80_match_ex_sp(window, wcount, repl);
+        if (n > 0) return n;
+    }
     if (wcount == 9) {
         int n = z80_match_local_load(window, repl);
         if (n > 0) return n;
@@ -705,6 +762,14 @@ int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
     }
     if (wcount == 12) {
         int n = z80_match_local_store_imm(window, repl);
+        if (n > 0) return n;
+    }
+    if (wcount == 3) {
+        int n = z80_match_inc_sp(window, repl);
+        if (n > 0) return n;
+    }
+    if (wcount == 2) {
+        int n = z80_match_pushbc_pophl(window, repl);
         if (n > 0) return n;
     }
     return 0;

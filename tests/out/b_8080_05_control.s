@@ -14,15 +14,15 @@ main:
 	dad sp
 	inx h
 	inx h
-	push h
-	pop b
+	mov b, h
+	mov c, l
 	lxi h, 0
 	push h
 	lxi h, -4
 	dad b
-	push h
-	lxi h, 0
-	pop d
+	xchg
+		lxi h, 0
+
 	xchg
 	mov a, e
 	mov m, a
@@ -36,9 +36,9 @@ main:
 	inx h
 	mov h, m
 	mov l, a
-	push h
-	lxi h, 3
-	pop d
+	xchg
+		lxi h, 3
+
 	xchg
 	mov a, l
 	sub e
@@ -160,9 +160,9 @@ main:
 .L8:
 	lxi h, -4
 	dad b
-	push h
-	lxi h, 5
-	pop d
+	xchg
+		lxi h, 5
+
 	xchg
 	mov a, e
 	mov m, a

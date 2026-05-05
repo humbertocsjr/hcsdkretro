@@ -24,9 +24,8 @@ extern main
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	; function _start epilogue
 	ld sp, ix

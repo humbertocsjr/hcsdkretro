@@ -445,12 +445,44 @@ void gen_call(const char *name, int nargs)
 
 void gen_data_final(void) {}
 
+// [English] 8080 Pattern 1: replaces "push h; pop b" with "mov b,h; mov c,l" (faster).
+// [Portuguese] Padrão 8080 1: substitui "push h; pop b" por "mov b,h; mov c,l" (mais rápido).
+static int i80_match_push_pop_b(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "h")) return 0;
+    if (!peep_op_args(&w[1], "pop", 1) || strcmp(w[1].args[0], "b")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tmov b, h");
+    peep_emit_repl(repl, &n, "\tmov c, l");
+    return n;
+}
+
+// [English] 8080 Pattern 2: replaces "push h; lxi h,N; pop d; xchg" with "xchg; lxi h,N; xchg".
+// [Portuguese] Padrão 8080 2: substitui "push h; lxi h,N; pop d; xchg" por "xchg; lxi h,N; xchg".
+static int i80_match_push_lxi_pop_xchg(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "h")) return 0;
+    if (!peep_op_args(&w[1], "lxi", 2) || strcmp(w[1].args[0], "h")) return 0;
+    if (!peep_op_args(&w[2], "pop", 1) || strcmp(w[2].args[0], "d")) return 0;
+    if (!peep_op_is(&w[3], "xchg") || w[3].nargs != 0) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\txchg");
+    peep_emit_repl(repl, &n, "\t%s", w[1].raw);
+    peep_emit_repl(repl, &n, "\txchg");
+    return n;
+}
+
 // [English] 8080/8085 peephole pattern dispatcher.
-// The 8080 has a minimal instruction set - patterns for redundant xchg/xchg
-// and push/pop pairs are detected but currently skipped (future enhancement).
 // [Portuguese] Despachante de padrões peephole 8080/8085.
 int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
 {
-    (void)window; (void)wcount; (void)repl;
+    if (wcount == 4) {
+        int n = i80_match_push_lxi_pop_xchg(window, repl);
+        if (n > 0) return n;
+    }
+    if (wcount == 2) {
+        int n = i80_match_push_pop_b(window, repl);
+        if (n > 0) return n;
+    }
     return 0;
 }

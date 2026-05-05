@@ -1,4 +1,4 @@
-; CP/M 8085 _start — clears BSS, parses command line, calls main(argc, argv)
+; CP/M 8085 _start - clears BSS, parses command line, calls main(argc, argv)
 ; Based on Z80 version
 global _start
 extern main

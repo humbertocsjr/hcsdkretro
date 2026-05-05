@@ -1,6 +1,11 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
 <HTML>
-<HEAD><TITLE>Downloads - HC SDK</TITLE></HEAD>
+<HEAD>
+<TITLE></TITLE>
+<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache, no-store, must-revalidate">
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<META HTTP-EQUIV="Expires" CONTENT="0">
+</HEAD>
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
 
 <TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
@@ -12,21 +17,19 @@
 <P>Pre-built binaries for all supported host platforms. Files are <B>not versioned</B> in the URL &mdash; the links below always point to the latest release. The <A HREF="changelog.html" TARGET="main">changelog</A> documents what changed between versions.</P>
 
 <TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
-<TR BGCOLOR="#CC0000"><TD COLSPAN="5"><FONT COLOR="#FFFFFF"><B>&nbsp;IMPORTANT:</B> These files are served from <TT>/hcsdk/distrosite/</TT> on the server. If you're viewing this locally, use <TT>git clone</TT> or build from source instead.</FONT></TD></TR>
+<TR BGCOLOR="#CC0000"><TD COLSPAN="4"><FONT COLOR="#FFFFFF"><B>&nbsp;IMPORTANT:</B> The source code is available at <A HREF="https://github.com/humbertocsjr/hcsdkretro" TARGET="_top"><FONT COLOR="#FFFF00">github.com/humbertocsjr/hcsdkretro</FONT></A>. Build from source or use the pre-built binaries below.</FONT></TD></TR>
 </TABLE>
 
 <H3>macOS</H3>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
-<TR BGCOLOR="#E0E0FF"><TH WIDTH="40%">File</TH><TH WIDTH="15%">Size</TH><TH WIDTH="25%">Format</TH><TH>Description</TH></TR>
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="40%">File</TH><TH WIDTH="25%">Format</TH><TH>Description</TH></TR>
 <TR>
 <TD><A HREF="/hcsdk/distrosite/hcsdk-macos.pkg"><TT>hcsdk-macos.pkg</TT></A></TD>
-<TD ALIGN="CENTER">556 KB</TD>
 <TD>Installer package</TD>
 <TD>Native macOS installer (Intel + Apple Silicon). Double-click to install. Installs to <TT>/usr/local/bin</TT>.</TD>
 </TR>
 <TR BGCOLOR="#F8F8FF">
 <TD><A HREF="/hcsdk/distrosite/hcsdk-macos.tgz"><TT>hcsdk-macos.tgz</TT></A></TD>
-<TD ALIGN="CENTER">704 KB</TD>
 <TD>Compressed tar</TD>
 <TD>Portable tarball. Extract anywhere and add <TT>bin/</TT> to your <TT>PATH</TT>.</TD>
 </TR>
@@ -34,16 +37,14 @@
 
 <H3>Linux</H3>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
-<TR BGCOLOR="#E0E0FF"><TH WIDTH="40%">File</TH><TH WIDTH="15%">Size</TH><TH WIDTH="25%">Format</TH><TH>Description</TH></TR>
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="40%">File</TH><TH WIDTH="25%">Format</TH><TH>Description</TH></TR>
 <TR>
 <TD><A HREF="/hcsdk/distrosite/hcsdk-linux.deb"><TT>hcsdk-linux.deb</TT></A></TD>
-<TD ALIGN="CENTER">2.7 MB</TD>
 <TD>Debian package</TD>
 <TD>For Debian, Ubuntu, and derivatives (x86_64). <TT>sudo dpkg -i hcsdk-linux.deb</TT></TD>
 </TR>
 <TR BGCOLOR="#F8F8FF">
 <TD><A HREF="/hcsdk/distrosite/hcsdk-linux.tgz"><TT>hcsdk-linux.tgz</TT></A></TD>
-<TD ALIGN="CENTER">18 MB</TD>
 <TD>Compressed tar</TD>
 <TD>Statically-linked x86_64 binary. Works on any Linux distribution. Extract and run.</TD>
 </TR>
@@ -51,16 +52,14 @@
 
 <H3>Windows 64-bit</H3>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
-<TR BGCOLOR="#E0E0FF"><TH WIDTH="40%">File</TH><TH WIDTH="15%">Size</TH><TH WIDTH="25%">Format</TH><TH>Description</TH></TR>
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="40%">File</TH><TH WIDTH="25%">Format</TH><TH>Description</TH></TR>
 <TR>
 <TD><A HREF="/hcsdk/distrosite/hcsdk-win.exe"><TT>hcsdk-win.exe</TT></A></TD>
-<TD ALIGN="CENTER">1.1 MB</TD>
 <TD>NSIS Installer</TD>
 <TD>Graphical installer for 64-bit Windows. Adds tools to <TT>PATH</TT> automatically.</TD>
 </TR>
 <TR BGCOLOR="#F8F8FF">
 <TD><A HREF="/hcsdk/distrosite/hcsdk-win.zip"><TT>hcsdk-win.zip</TT></A></TD>
-<TD ALIGN="CENTER">1.1 MB</TD>
 <TD>ZIP archive</TD>
 <TD>Portable ZIP. Extract anywhere. No installation required.</TD>
 </TR>
@@ -68,16 +67,14 @@
 
 <H3>Windows 32-bit</H3>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
-<TR BGCOLOR="#E0E0FF"><TH WIDTH="40%">File</TH><TH WIDTH="15%">Size</TH><TH WIDTH="25%">Format</TH><TH>Description</TH></TR>
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="40%">File</TH><TH WIDTH="25%">Format</TH><TH>Description</TH></TR>
 <TR>
 <TD><A HREF="/hcsdk/distrosite/hcsdk-win32.exe"><TT>hcsdk-win32.exe</TT></A></TD>
-<TD ALIGN="CENTER">1.0 MB</TD>
 <TD>NSIS Installer</TD>
 <TD>Graphical installer for 32-bit Windows.</TD>
 </TR>
 <TR BGCOLOR="#F8F8FF">
 <TD><A HREF="/hcsdk/distrosite/hcsdk-win32.zip"><TT>hcsdk-win32.zip</TT></A></TD>
-<TD ALIGN="CENTER">1.0 MB</TD>
 <TD>ZIP archive</TD>
 <TD>Portable ZIP for 32-bit Windows.</TD>
 </TR>
@@ -85,10 +82,9 @@
 
 <H3>DOS</H3>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
-<TR BGCOLOR="#E0E0FF"><TH WIDTH="40%">File</TH><TH WIDTH="15%">Size</TH><TH WIDTH="25%">Format</TH><TH>Description</TH></TR>
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="40%">File</TH><TH WIDTH="25%">Format</TH><TH>Description</TH></TR>
 <TR>
 <TD><A HREF="/hcsdk/distrosite/hcsdk-dos.zip"><TT>hcsdk-dos.zip</TT></A></TD>
-<TD ALIGN="CENTER">1.4 MB</TD>
 <TD>ZIP archive</TD>
 <TD>DJGPP-compiled binaries for DOS (Pentium or later). Extract and run.</TD>
 </TR>
@@ -96,10 +92,9 @@
 
 <H3>Other</H3>
 <TABLE BORDER="1" CELLPADDING="4" CELLSPACING="0" WIDTH="100%">
-<TR BGCOLOR="#E0E0FF"><TH WIDTH="40%">File</TH><TH WIDTH="15%">Size</TH><TH WIDTH="25%">Format</TH><TH>Description</TH></TR>
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="40%">File</TH><TH WIDTH="25%">Format</TH><TH>Description</TH></TR>
 <TR>
 <TD><A HREF="/hcsdk/distrosite/hcsdk-samples.zip"><TT>hcsdk-samples.zip</TT></A></TD>
-<TD ALIGN="CENTER">48 KB</TD>
 <TD>ZIP archive</TD>
 <TD>Sample programs (hello-b, calc-z80, cat-z80) with project files.</TD>
 </TR>

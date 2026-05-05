@@ -1,4 +1,4 @@
-/* B test — functions: calls, parameters, return values */
+/* B test - functions: calls, parameters, return values */
 extrn putchar;
 add(a, b) {
     return a + b;

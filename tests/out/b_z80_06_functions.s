@@ -123,9 +123,8 @@ extern add
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L5
 .L4:
@@ -136,9 +135,8 @@ extern add
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L5:
 extern is_zero
@@ -149,9 +147,8 @@ extern is_zero
 	; call is_zero(1 args)
 	call is_zero
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	; if
 	ld a, h
@@ -164,9 +161,8 @@ extern is_zero
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L7
 .L6:
@@ -177,9 +173,8 @@ extern is_zero
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L7:
 	ld hl, is_zero
@@ -189,9 +184,8 @@ extern is_zero
 	; call is_zero(1 args)
 	call is_zero
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	ld a, h
 	or l
@@ -212,9 +206,8 @@ extern is_zero
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L11
 .L10:
@@ -225,9 +218,8 @@ extern is_zero
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L11:
 	ld hl, -2
@@ -300,9 +292,8 @@ extern is_zero
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L14
 .L13:
@@ -313,9 +304,8 @@ extern is_zero
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L14:
 	; function main epilogue

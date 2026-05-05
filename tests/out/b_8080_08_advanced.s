@@ -14,8 +14,8 @@ sum6:
 	dad sp
 	inx h
 	inx h
-	push h
-	pop b
+	mov b, h
+	mov c, l
 	lxi h, 2
 	dad b
 	mov a, m
@@ -83,17 +83,17 @@ fib:
 	dad sp
 	inx h
 	inx h
-	push h
-	pop b
+	mov b, h
+	mov c, l
 	lxi h, 2
 	dad b
 	mov a, m
 	inx h
 	mov h, m
 	mov l, a
-	push h
-	lxi h, 2
-	pop d
+	xchg
+		lxi h, 2
+
 	xchg
 	mov a, l
 	sub e
@@ -191,8 +191,8 @@ main:
 	dad sp
 	inx h
 	inx h
-	push h
-	pop b
+	mov b, h
+	mov c, l
 	lxi h, 0
 	push h
 	lxi h, -4

@@ -16,6 +16,7 @@ CPU_8086   = 8086
 # --== Libraries to build (stored in libs/ root with standard names) ==--
 BLIBS = \
 	../z80-cpm-b.lib \
+	../z80-msxdos2-b.lib \
 	../8080-cpm-b.lib \
 	../8085-cpm-b.lib \
 	../8086-msdos-b.lib \
@@ -58,6 +59,21 @@ Z80_OBJECTS = \
 	$(foreach m,$(B_COMMON),$(Z80_ARCH)/$(m).obj) \
 	$(foreach m,$(ASM_COMMON),$(Z80_ARCH)/$(m).obj) \
 	$(Z80_OBJS)
+
+# MSX-DOS 2 Z80 library objects (reuses B_COMMON, ASM_COMMON, and math from Z80)
+Z80_MSXDOS2_OBJECTS = \
+	$(foreach m,$(B_COMMON),$(Z80_ARCH)/$(m).obj) \
+	$(foreach m,$(ASM_COMMON),$(Z80_ARCH)/$(m).obj) \
+	$(Z80_ARCH)/bdos.obj \
+	$(Z80_ARCH)/mul.obj \
+	$(Z80_ARCH)/div8.obj \
+	$(Z80_ARCH)/div16.obj \
+	$(Z80_ARCH)/cmp8.obj \
+	$(Z80_ARCH)/cmp16.obj \
+	$(Z80_ARCH)/shift.obj \
+	$(Z80_ARCH)/cbw.obj \
+	$(Z80_ARCH)/msxdos2_start.obj \
+	$(Z80_ARCH)/msxdos2_file.obj
 
 CPU_8080_OBJS = \
 	$(CPU_8080)/mul.obj \
@@ -195,6 +211,10 @@ $(CPU_8086EXE)/%.obj: $(CPU_8086EXE)/%.s Makefile
 ../z80-cpm-b.lib: $(Z80_OBJECTS)
 	@echo [LIB] $@
 	@$(ASM)/hclib $@ $(Z80_OBJECTS) 2>/dev/null
+
+../z80-msxdos2-b.lib: $(Z80_MSXDOS2_OBJECTS)
+	@echo [LIB] $@
+	@$(ASM)/hclib $@ $(Z80_MSXDOS2_OBJECTS) 2>/dev/null
 
 ../8080-cpm-b.lib: $(CPU_8080_OBJECTS)
 	@echo [LIB] $@

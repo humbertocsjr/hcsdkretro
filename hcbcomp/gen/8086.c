@@ -583,11 +583,26 @@ static int i86_match_label_push_store(peep_line_t *w, peep_line_t *repl)
     return n;
 }
 
+// [English] 8086 Pattern 5: replaces "mov ax, 0" with "xor ax, ax" (shorter, same effect).
+// [Portuguese] Padrão 8086 5: substitui "mov ax, 0" por "xor ax, ax" (mais curto, mesmo efeito).
+static int i86_match_mov_ax_zero(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "mov", 2)) return 0;
+    if (strcmp(w[0].args[0], "ax") || strcmp(w[0].args[1], "0")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\txor ax, ax");
+    return n;
+}
+
 // [English] 8086-specific peephole pattern dispatcher.
 // [Portuguese] Despachante de padrões peephole específicos 8086.
 int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
 {
     int n;
+    if (wcount == 1) {
+        n = i86_match_mov_ax_zero(window, repl);
+        if (n > 0) return n;
+    }
     if (wcount == 2) {
         n = i86_match_push_pop(window, repl);
         if (n > 0) return n;

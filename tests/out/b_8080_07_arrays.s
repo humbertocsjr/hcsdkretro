@@ -23,8 +23,8 @@ main:
 	dad sp
 	inx h
 	inx h
-	push h
-	pop b
+	mov b, h
+	mov c, l
 	lxi h, 0
 	push h
 	lxi h, buf
@@ -37,9 +37,9 @@ main:
 	pop d
 	dad h
 	dad d
-	push h
-	lxi h, 65
-	pop d
+	xchg
+		lxi h, 65
+
 	xchg
 	mov a, e
 	mov m, a
@@ -56,9 +56,9 @@ main:
 	pop d
 	dad h
 	dad d
-	push h
-	lxi h, 66
-	pop d
+	xchg
+		lxi h, 66
+
 	xchg
 	mov a, e
 	mov m, a
@@ -75,9 +75,9 @@ main:
 	pop d
 	dad h
 	dad d
-	push h
-	lxi h, 67
-	pop d
+	xchg
+		lxi h, 67
+
 	xchg
 	mov a, e
 	mov m, a
@@ -86,9 +86,9 @@ main:
 	mov m, a
 	lxi h, -4
 	dad b
-	push h
-	lxi h, 0
-	pop d
+	xchg
+		lxi h, 0
+
 	xchg
 	mov a, e
 	mov m, a
@@ -102,9 +102,9 @@ main:
 	inx h
 	mov h, m
 	mov l, a
-	push h
-	lxi h, 3
-	pop d
+	xchg
+		lxi h, 3
+
 	xchg
 	mov a, l
 	sub e
@@ -183,9 +183,9 @@ main:
 	pop d
 	dad h
 	dad d
-	push h
-	lxi h, 88
-	pop d
+	xchg
+		lxi h, 88
+
 	xchg
 	mov a, e
 	mov m, a

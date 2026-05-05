@@ -1,7 +1,7 @@
 ; 32-bit I/O library for MZ EXE (far pointer model)
 ; DS=DATA on entry (preserved by caller convention)
 
-; putchar(c) — print character
+; putchar(c) - print character
 global putchar
 section text
 putchar:
@@ -13,7 +13,7 @@ putchar:
     pop bp
     ret
 
-; getchar() — read character, return 32-bit (zero-extended in DX:AX)
+; getchar() - read character, return 32-bit (zero-extended in DX:AX)
 global getchar
 section text
 getchar:
@@ -26,7 +26,7 @@ getchar:
     pop bp
     ret
 
-; puts(str) — print string from far pointer
+; puts(str) - print string from far pointer
 ; Parameter: [bp+4] = far pointer (offset), [bp+6] = segment
 global puts
 section text
@@ -42,7 +42,7 @@ puts:
     pop bp
     ret
 
-; exit(code) — terminate program
+; exit(code) - terminate program
 global exit
 section text
 exit:

@@ -1,4 +1,4 @@
-/* B test — arrays and strings */
+/* B test - arrays and strings */
 extrn putchar;
 buf[10];
 main() {

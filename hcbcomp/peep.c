@@ -251,7 +251,7 @@ void peep_apply(FILE *in, FILE *out)
         int max_w = PEEP_WINDOW;
         if (i + max_w > seq.count) max_w = seq.count - i;
 
-        for (int w = max_w; w >= 2; w--) {
+        for (int w = max_w; w >= 1; w--) {
 
             // Check for barrier or non-inst inside window / Verifica barreira ou não-instrução dentro da janela
             int ok = 1;
@@ -266,7 +266,7 @@ void peep_apply(FILE *in, FILE *out)
             int n = gen_peep_replace(&seq.lines[i], w, repl);
 
             // If pattern matched, replace w lines with n lines / Se o padrão correspondeu, substitui w linhas por n linhas
-            if (n > 0 && n < w) {
+            if (n > 0 && n <= w) {
                 for (int r = 0; r < n; r++) {
                     fprintf(out, "%s\n", repl[r].raw);
                 }

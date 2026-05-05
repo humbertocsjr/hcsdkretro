@@ -1,4 +1,4 @@
-;; Z80 assembler test — basic instructions
+;; Z80 assembler test - basic instructions
 section text
 global _start
 _start:

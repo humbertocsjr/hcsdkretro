@@ -14,8 +14,8 @@ _start:
 	dad sp
 	inx h
 	inx h
-	push h
-	pop b
+	mov b, h
+	mov c, l
 extern main
 	lxi h, main
 	; call main

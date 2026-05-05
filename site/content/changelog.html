@@ -1,9 +1,73 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML><HEAD><TITLE>Changelog - HC SDK</TITLE></HEAD>
+<HTML>
+<HEAD>
+<TITLE></TITLE>
+<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache, no-store, must-revalidate">
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<META HTTP-EQUIV="Expires" CONTENT="0">
+</HEAD>
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
 
 <TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
 <TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Changelog</B></FONT></TD></TR>
+</TABLE>
+
+<H3>v2.1 R3 &mdash; May 2026</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="20%">Area</TH><TH>Changes</TH></TR>
+
+<TR><TD VALIGN="TOP"><B>Assembler &mdash; New Instr.</B></TD>
+<TD>
+<TT>8080/8085 ldax</TT>: added <TT>ldax b/d/bc/de/[bc]/[de]/[b]/[d]</TT> &mdash; completes the original 8080 instruction set.<BR>
+<TT>Z80 EX (SP),IX/IY</TT>: added exchange of stack top with index registers &mdash; completes the Z80 instruction set.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Peephole Refactor</B></TD>
+<TD>
+Patterns moved from <TT>peep.c</TT> into per-CPU backends via <TT>gen_peep_replace()</TT> callback. Each processor implementation is now fully self-contained.<BR>
+Window size fixed to allow <TT>w&ge;1</TT> and same-count replacements (<TT>n&le;w</TT>).
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>New Z80 Opt.</B></TD>
+<TD>
+<TT>ld hl,N; add hl,sp; ld sp,hl</TT> &rarr; <TT>inc sp&times;N</TT> &mdash; up to -4 bytes/call.<BR>
+<TT>push bc; pop hl</TT> &rarr; <TT>ld h,b; ld l,c</TT> &mdash; 47% faster.<BR>
+<TT>ex de,hl; inc sp&times;N; ex de,hl</TT> &rarr; <TT>inc sp&times;N</TT>.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>New 8086 Opt.</B></TD>
+<TD>
+<TT>mov ax,0</TT> &rarr; <TT>xor ax,ax</TT> &mdash; -1 byte (7 occurrences in test suite).<BR>
+<TT>mov dx,0</TT> &rarr; <TT>xor dx,dx</TT> (8086exe) &mdash; -1 byte (36 occurrences).
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>New 8086exe Opt.</B></TD>
+<TD>
+<TT>not ax; not dx; add ax,1; adc dx,0</TT> &rarr; <TT>neg dx; neg ax; sbb dx,0</TT> &mdash; -2 bytes.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>New 8080/8085 Opt.</B></TD>
+<TD>
+<TT>push h; pop b</TT> &rarr; <TT>mov b,h; mov c,l</TT> &mdash; 10 T faster.<BR>
+<TT>push h; lxi h,N; pop d; xchg</TT> &rarr; <TT>xchg; lxi h,N; xchg</TT> &mdash; -1 byte, 16 T faster.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Math Library</B></TD>
+<TD>
+<TT>__mul16</TT>, <TT>__div16</TT>, <TT>__mod16</TT> moved from inline code to runtime library for 8080/8085 targets.<BR>
+B compiler emits <TT>call __mul16</TT> etc. instead of ~30 bytes inline per operation.
+Also added <TT>__div8</TT>, <TT>__mod8</TT>, <TT>cbw</TT>, comparison and shift helpers.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Documentation</B></TD>
+<TD>
+All 54 source files now have bilingual (English + Portuguese) comments on every function.<BR>
+Long functions have logical block comments in both languages.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Test Suite</B></TD>
+<TD><B>24/24 B language tests passing</B> across 3 platforms (Z80 8/8, 8080 8/8, 8086 8/8), verified via msxdosemu and emu2 emulators. All outputs match expected values exactly.</TD></TR>
 </TABLE>
 
 <H3>v2.1 R2 &mdash; May 2026</H3>

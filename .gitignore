@@ -10,6 +10,7 @@ ram.bin
 *.bin
 *.rex
 *.lib
+*.bak
 *.o
 *.DS_Store
 *.__s

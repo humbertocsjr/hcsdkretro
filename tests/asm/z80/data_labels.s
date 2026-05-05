@@ -1,4 +1,4 @@
-;; Z80 assembler test — sections, data, labels, expressions
+;; Z80 assembler test - sections, data, labels, expressions
 section data
 var_label: dw 0x1234
 arr_label: ds 16

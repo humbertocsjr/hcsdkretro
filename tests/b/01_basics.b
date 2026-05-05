@@ -1,4 +1,4 @@
-/* B test — basic types: auto, globals, extrn, chars, numbers */
+/* B test - basic types: auto, globals, extrn, chars, numbers */
 extrn putchar;
 g;
 main() {

@@ -1,4 +1,4 @@
-; MS-DOS 8086 _start — clears BSS, parses command line, calls main(argc, argv)
+; MS-DOS 8086 _start - clears BSS, parses command line, calls main(argc, argv)
 global _start
 extern main
 

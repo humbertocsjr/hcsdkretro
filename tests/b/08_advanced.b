@@ -1,4 +1,4 @@
-/* B test — many arguments, nested calls, recursion */
+/* B test - many arguments, nested calls, recursion */
 extrn putchar;
 sum6(a,b,c,d,e,f) {
     return a+b+c+d+e+f;

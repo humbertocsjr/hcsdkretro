@@ -683,17 +683,50 @@ static int i86e_match_lea_deref(peep_line_t *w, peep_line_t *repl)
     return n;
 }
 
+// [English] 8086exe Pattern 3: replaces "mov dx, 0" with "xor dx, dx" (shorter, same effect).
+// [Portuguese] Padrão 8086exe 3: substitui "mov dx, 0" por "xor dx, dx" (mais curto, mesmo efeito).
+static int i86e_match_mov_dx_zero(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "mov", 2)) return 0;
+    if (strcmp(w[0].args[0], "dx") || strcmp(w[0].args[1], "0")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\txor dx, dx");
+    return n;
+}
+
+// [English] 8086exe Pattern 4: replaces "not ax; not dx; add ax,1; adc dx,0" with
+// "neg dx; neg ax; sbb dx,0" (smaller, same effect for 32-bit negation).
+// [Portuguese] Padrão 8086exe 4: substitui sequência de negação 32-bit por versão menor.
+static int i86e_match_neg32(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "not", 1) || strcmp(w[0].args[0], "ax")) return 0;
+    if (!peep_op_args(&w[1], "not", 1) || strcmp(w[1].args[0], "dx")) return 0;
+    if (!peep_op_args(&w[2], "add", 2) || strcmp(w[2].args[0], "ax") || strcmp(w[2].args[1], "1")) return 0;
+    if (!peep_op_args(&w[3], "adc", 2) || strcmp(w[3].args[0], "dx") || strcmp(w[3].args[1], "0")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tneg dx");
+    peep_emit_repl(repl, &n, "\tneg ax");
+    peep_emit_repl(repl, &n, "\tsbb dx, 0");
+    return n;
+}
+
 // [English] 8086exe-specific peephole pattern dispatcher.
 // [Portuguese] Despachante de padrões peephole específicos 8086exe.
 int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
 {
     int n;
+    if (wcount == 1) {
+        n = i86e_match_mov_dx_zero(window, repl);
+        if (n > 0) return n;
+    }
     if (wcount == 3) {
         n = i86e_match_lea_deref(window, repl);
         if (n > 0) return n;
     }
     if (wcount == 4) {
         n = i86e_match_push32_pop32(window, repl);
+        if (n > 0) return n;
+        n = i86e_match_neg32(window, repl);
         if (n > 0) return n;
     }
     return 0;

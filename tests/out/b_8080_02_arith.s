@@ -14,8 +14,8 @@ main:
 	dad sp
 	inx h
 	inx h
-	push h
-	pop b
+	mov b, h
+	mov c, l
 	lxi h, 0
 	push h
 	lxi h, 0
@@ -24,9 +24,9 @@ main:
 	push h
 	lxi h, -4
 	dad b
-	push h
-	lxi h, 10
-	pop d
+	xchg
+		lxi h, 10
+
 	xchg
 	mov a, e
 	mov m, a
@@ -35,9 +35,9 @@ main:
 	mov m, a
 	lxi h, -6
 	dad b
-	push h
-	lxi h, 3
-	pop d
+	xchg
+		lxi h, 3
+
 	xchg
 	mov a, e
 	mov m, a
@@ -204,30 +204,7 @@ main:
 	push h
 	lxi h, 3
 	pop d
-	push b
-	xchg
-	push h
-	pop b
-	lxi h, 0
-	mvi a, 16
-.L8:
-	push psw
-	mov a, b
-	rar
-	mov b, a
-	mov a, c
-	rar
-	mov c, a
-	jnc .L9
-	dad d
-.L9:
-	xchg
-	dad h
-	xchg
-	pop psw
-	dcr a
-	jnz .L8
-	pop b
+	call __mul16
 	pop d
 	xchg
 	mov a, e
@@ -246,19 +223,19 @@ main:
 	pop d
 	mov a,l
 	sub e
-	jnz .L10
+	jnz .L8
 	mov a,h
 	sbb d
-	jnz .L10
+	jnz .L8
 	lxi h,1
-	jmp .L11
-.L10:
+	jmp .L9
+.L8:
 	lxi h,0
-.L11:
+.L9:
 	; if
 	mov a, h
 	ora l
-	jz .L12
+	jz .L10
 	lxi h, putchar
 	; call putchar
 	lxi h, 89
@@ -270,8 +247,8 @@ main:
 	dad sp
 	sphl
 	xchg
-	jmp .L13
-.L12:
+	jmp .L11
+.L10:
 	lxi h, putchar
 	; call putchar
 	lxi h, 78
@@ -283,7 +260,7 @@ main:
 	dad sp
 	sphl
 	xchg
-.L13:
+.L11:
 	lxi h, -8
 	dad b
 	push h
@@ -301,40 +278,7 @@ main:
 	mov h, m
 	mov l, a
 	pop d
-	push b
-	xchg
-	lxi b, 0
-	mvi a, 16
-.L14:
-	push psw
-	dad h
-	mov a, c
-	ral
-	mov c, a
-	mov a, b
-	ral
-	mov b, a
-	mov a, c
-	sub e
-	mov c, a
-	mov a, b
-	sbb d
-	mov b, a
-	jc .L15
-	inx h
-	jmp .L16
-.L15:
-	mov a, c
-	add e
-	mov c, a
-	mov a, b
-	adc d
-	mov b, a
-.L16:
-	pop psw
-	dcr a
-	jnz .L14
-	pop b
+	call __div16
 	pop d
 	xchg
 	mov a, e
@@ -353,19 +297,19 @@ main:
 	pop d
 	mov a,l
 	sub e
-	jnz .L17
+	jnz .L12
 	mov a,h
 	sbb d
-	jnz .L17
+	jnz .L12
 	lxi h,1
-	jmp .L18
-.L17:
+	jmp .L13
+.L12:
 	lxi h,0
-.L18:
+.L13:
 	; if
 	mov a, h
 	ora l
-	jz .L19
+	jz .L14
 	lxi h, putchar
 	; call putchar
 	lxi h, 89
@@ -377,8 +321,8 @@ main:
 	dad sp
 	sphl
 	xchg
-	jmp .L20
-.L19:
+	jmp .L15
+.L14:
 	lxi h, putchar
 	; call putchar
 	lxi h, 78
@@ -390,7 +334,7 @@ main:
 	dad sp
 	sphl
 	xchg
-.L20:
+.L15:
 	lxi h, -8
 	dad b
 	push h
@@ -408,42 +352,7 @@ main:
 	mov h, m
 	mov l, a
 	pop d
-	push b
-	xchg
-	lxi b, 0
-	mvi a, 16
-.L21:
-	push psw
-	dad h
-	mov a, c
-	ral
-	mov c, a
-	mov a, b
-	ral
-	mov b, a
-	mov a, c
-	sub e
-	mov c, a
-	mov a, b
-	sbb d
-	mov b, a
-	jc .L22
-	inx h
-	jmp .L23
-.L22:
-	mov a, c
-	add e
-	mov c, a
-	mov a, b
-	adc d
-	mov b, a
-.L23:
-	pop psw
-	dcr a
-	jnz .L21
-	mov l, c
-	mov h, b
-	pop b
+	call __mod16
 	pop d
 	xchg
 	mov a, e
@@ -462,19 +371,19 @@ main:
 	pop d
 	mov a,l
 	sub e
-	jnz .L24
+	jnz .L16
 	mov a,h
 	sbb d
-	jnz .L24
+	jnz .L16
 	lxi h,1
-	jmp .L25
-.L24:
+	jmp .L17
+.L16:
 	lxi h,0
-.L25:
+.L17:
 	; if
 	mov a, h
 	ora l
-	jz .L26
+	jz .L18
 	lxi h, putchar
 	; call putchar
 	lxi h, 89
@@ -486,8 +395,8 @@ main:
 	dad sp
 	sphl
 	xchg
-	jmp .L27
-.L26:
+	jmp .L19
+.L18:
 	lxi h, putchar
 	; call putchar
 	lxi h, 78
@@ -499,7 +408,7 @@ main:
 	dad sp
 	sphl
 	xchg
-.L27:
+.L19:
 	lxi h, -8
 	dad b
 	push h
@@ -534,19 +443,19 @@ main:
 	pop d
 	mov a,l
 	sub e
-	jnz .L28
+	jnz .L20
 	mov a,h
 	sbb d
-	jnz .L28
+	jnz .L20
 	lxi h,1
-	jmp .L29
-.L28:
+	jmp .L21
+.L20:
 	lxi h,0
-.L29:
+.L21:
 	; if
 	mov a, h
 	ora l
-	jz .L30
+	jz .L22
 	lxi h, putchar
 	; call putchar
 	lxi h, 89
@@ -558,8 +467,8 @@ main:
 	dad sp
 	sphl
 	xchg
-	jmp .L31
-.L30:
+	jmp .L23
+.L22:
 	lxi h, putchar
 	; call putchar
 	lxi h, 78
@@ -571,7 +480,7 @@ main:
 	dad sp
 	sphl
 	xchg
-.L31:
+.L23:
 	; function main epilogue
 	lxi h, 6
 	dad sp

@@ -1,4 +1,4 @@
-/* B test — bitwise, shift, logical not */
+/* B test - bitwise, shift, logical not */
 extrn putchar;
 main() {
     auto a, b;

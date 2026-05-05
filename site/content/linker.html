@@ -1,5 +1,11 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML><HEAD><TITLE>Linker - HC SDK</TITLE></HEAD>
+<HTML>
+<HEAD>
+<TITLE></TITLE>
+<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache, no-store, must-revalidate">
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<META HTTP-EQUIV="Expires" CONTENT="0">
+</HEAD>
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
 
 <TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
@@ -39,14 +45,17 @@ hclink-rex -sym symbols.txt -o program.rex main.obj</FONT></PRE>
 
 <H3>Options</H3>
 <TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0">
-<TR BGCOLOR="#E0E0FF"><TH>Option</TH><TH>Description</TH></TR>
-<TR><TD><TT>-o &lt;file&gt;</TT></TD><TD>Output file</TD></TR>
-<TR><TD><TT>-sym &lt;file&gt;</TT></TD><TD>Symbol table output</TD></TR>
-<TR><TD><TT>-text &lt;offset&gt;</TT></TD><TD>Text section start address</TD></TR>
-<TR><TD><TT>-data &lt;offset&gt;</TT></TD><TD>Data section start address</TD></TR>
-<TR><TD><TT>-bss &lt;offset&gt;</TT></TD><TD>BSS section start address</TD></TR>
-<TR><TD><TT>-stack &lt;size&gt;</TT></TD><TD>Stack size in bytes (MZ, default 4096)</TD></TR>
-<TR><TD><TT>-align &lt;offset&gt;</TT></TD><TD>Section alignment</TD></TR>
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="20%">Option</TH><TH>Description</TH><TH>Applies to</TH></TR>
+<TR><TD><TT>-o &lt;file&gt;</TT></TD><TD>Output file (default: a.bin)</TD><TD>All</TD></TR>
+<TR><TD><TT>-sym &lt;file&gt;</TT></TD><TD>Symbol table output</TD><TD>All</TD></TR>
+<TR><TD><TT>-multicpu</TT></TD><TD>Ignore mismatched CPU types in objects</TD><TD>All</TD></TR>
+<TR><TD><TT>-v</TT></TD><TD>Verbose output</TD><TD>All</TD></TR>
+<TR><TD><TT>-text &lt;offset&gt;</TT></TD><TD>Text section start address</TD><TD>BIN</TD></TR>
+<TR><TD><TT>-data &lt;offset&gt;</TT></TD><TD>Data section start address (default: after text)</TD><TD>BIN</TD></TR>
+<TR><TD><TT>-bss &lt;offset&gt;</TT></TD><TD>BSS section start address (default: after data)</TD><TD>BIN</TD></TR>
+<TR><TD><TT>-align &lt;size&gt;</TT></TD><TD>Section alignment in bytes (default: 16)</TD><TD>BIN, REX</TD></TR>
+<TR><TD><TT>-stack &lt;size&gt;</TT></TD><TD>Stack size in bytes (BIN default: 1024, MZ default: 4096)</TD><TD>BIN, MZ, REX</TD></TR>
+<TR><TD><TT>-max-mem &lt;size&gt;</TT></TD><TD>Max memory available (default: 61440)</TD><TD>BIN, REX</TD></TR>
 </TABLE>
 
 <H3>Features</H3>

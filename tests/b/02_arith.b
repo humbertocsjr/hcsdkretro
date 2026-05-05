@@ -1,4 +1,4 @@
-/* B test — arithmetic operators */
+/* B test - arithmetic operators */
 extrn putchar;
 main() {
     auto a, b, r;

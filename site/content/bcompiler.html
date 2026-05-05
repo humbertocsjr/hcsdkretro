@@ -1,5 +1,11 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML><HEAD><TITLE>B Compiler - HC SDK</TITLE></HEAD>
+<HTML>
+<HEAD>
+<TITLE></TITLE>
+<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache, no-store, must-revalidate">
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<META HTTP-EQUIV="Expires" CONTENT="0">
+</HEAD>
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
 
 <TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
@@ -18,11 +24,11 @@
 </TABLE>
 
 <H3>Usage</H3>
-<PRE><FONT COLOR="#0000CC">hcbcomp-{target} [options] &lt;input.b&gt;
+<PRE><FONT COLOR="#0000CC">hcbcomp-{z80,8086,8080,8085} [options] &lt;input.b&gt;
 
 Options:
   -o &lt;file&gt;       Output assembly file (default: a.s)
-  -I &lt;dir&gt;        Add include directory
+  -I &lt;dir&gt;        Add include directory for preprocessor
   --help, -h      Show help</FONT></PRE>
 
 <H3>Compilation Pipeline</H3>
@@ -52,10 +58,20 @@ Options:
 <TR BGCOLOR="#E0E0FF"><TH>Target</TH><TH>Pattern</TH><TH>Before</TH><TH>After</TH><TH>Gain</TH></TR>
 <TR><TD>Z80</TD><TD>Local load</TD><TD>9 instr</TD><TD>2 instr (<TT>ld r,[ix+N]</TT>)</TD><TD>-7</TD></TR>
 <TR><TD>Z80</TD><TD>Local store (imm)</TD><TD>12 instr</TD><TD>3 instr</TD><TD>-9</TD></TR>
+<TR><TD>Z80</TD><TD>Stack cleanup</TD><TD><TT>ld hl,N; add hl,sp; ld sp,hl</TT></TD><TD><TT>inc sp&times;N</TT></TD><TD>-4B</TD></TR>
+<TR><TD>Z80</TD><TD>Reg copy</TD><TD><TT>push bc; pop hl</TT></TD><TD><TT>ld h,b; ld l,c</TT></TD><TD>-7T</TD></TR>
+<TR><TD>Z80</TD><TD>Swap around inc sp</TD><TD><TT>ex de,hl; inc sp&times;N; ex de,hl</TT></TD><TD><TT>inc sp&times;N</TT></TD><TD>-4B</TD></TR>
 <TR><TD>8086</TD><TD>LEA+deref</TD><TD>3 instr</TD><TD>1 instr (<TT>mov ax,[bp+N]</TT>)</TD><TD>-2</TD></TR>
 <TR><TD>8086</TD><TD>Global deref</TD><TD>3 instr</TD><TD>1 instr (<TT>mov ax,[label]</TT>)</TD><TD>-2</TD></TR>
 <TR><TD>8086</TD><TD>Store imm to local</TD><TD>5 instr</TD><TD>1 instr (<TT>mov word [bp+N],imm</TT>)</TD><TD>-4</TD></TR>
 <TR><TD>8086</TD><TD>Push/Pop copy</TD><TD>2 instr</TD><TD>1 instr (<TT>mov reg,reg</TT>)</TD><TD>-1</TD></TR>
+<TR><TD>8086</TD><TD>Zero register</TD><TD><TT>mov ax,0</TT></TD><TD><TT>xor ax,ax</TT></TD><TD>-1B</TD></TR>
+<TR><TD>8086exe</TD><TD>32-bit push/pop</TD><TD>4 instr</TD><TD>2 instr (<TT>mov cx,dx; mov bx,ax</TT>)</TD><TD>-2</TD></TR>
+<TR><TD>8086exe</TD><TD>LEA+deref</TD><TD>3 instr</TD><TD>1 instr</TD><TD>-2</TD></TR>
+<TR><TD>8086exe</TD><TD>Zero reg (dx)</TD><TD><TT>mov dx,0</TT></TD><TD><TT>xor dx,dx</TT></TD><TD>-1B</TD></TR>
+<TR><TD>8086exe</TD><TD>32-bit neg</TD><TD><TT>not ax;not dx;add ax,1;adc dx,0</TT></TD><TD><TT>neg dx;neg ax;sbb dx,0</TT></TD><TD>-2B</TD></TR>
+<TR><TD>8080/8085</TD><TD>FP copy</TD><TD><TT>push h; pop b</TT></TD><TD><TT>mov b,h; mov c,l</TT></TD><TD>-10T</TD></TR>
+<TR><TD>8080/8085</TD><TD>Store imm</TD><TD><TT>push h; lxi h,N; pop d; xchg</TT></TD><TD><TT>xchg; lxi h,N; xchg</TT></TD><TD>-1B -16T</TD></TR>
 </TABLE>
 
 <H3>B Language Quick Reference</H3>

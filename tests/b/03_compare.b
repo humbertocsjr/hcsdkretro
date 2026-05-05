@@ -1,4 +1,4 @@
-/* B test — comparison and logical operators */
+/* B test - comparison and logical operators */
 extrn putchar;
 main() {
     auto a, b;

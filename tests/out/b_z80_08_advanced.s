@@ -93,9 +93,8 @@ extern fib
 	; call fib(1 args)
 	call fib
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	push hl
 	ld hl, fib
@@ -112,9 +111,8 @@ extern fib
 	; call fib(1 args)
 	call fib
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	pop de
 	add hl, de
@@ -192,9 +190,8 @@ extern sum6
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L5
 .L4:
@@ -205,9 +202,8 @@ extern sum6
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L5:
 	ld hl, -2
@@ -284,9 +280,8 @@ extern sum6
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L8
 .L7:
@@ -297,9 +292,8 @@ extern sum6
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L8:
 	ld hl, putchar
@@ -309,9 +303,8 @@ extern sum6
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	ld hl, -2
 	ex de, hl
@@ -326,9 +319,8 @@ extern sum6
 	; call fib(1 args)
 	call fib
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	pop de
 	ex de, hl
@@ -357,9 +349,8 @@ extern sum6
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 	jp .L11
 .L10:
@@ -370,9 +361,8 @@ extern sum6
 	; call putchar(1 args)
 	call putchar
 	ex de, hl
-	ld hl, 2
-	add hl, sp
-	ld sp, hl
+	inc sp
+	inc sp
 	ex de, hl
 .L11:
 	; function main epilogue

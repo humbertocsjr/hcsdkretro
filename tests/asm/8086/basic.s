@@ -1,4 +1,4 @@
-;; 8086 assembler test — basic instructions
+;; 8086 assembler test - basic instructions
 section text
 global _start
 _start:

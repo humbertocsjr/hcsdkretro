@@ -1,4 +1,4 @@
-; CP/M Z80 _start - clears BSS, parses command line, calls main(argc, argv)
+; MSX-DOS 2 Z80 _start — clears BSS, parses command line, calls main(argc, argv)
 global _start
 extern main
 

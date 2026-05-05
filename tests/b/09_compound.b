@@ -1,4 +1,4 @@
-/* B test — compound assignment operators */
+/* B test - compound assignment operators */
 extrn putchar;
 main() {
     auto a;

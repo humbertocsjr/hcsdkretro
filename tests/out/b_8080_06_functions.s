@@ -14,8 +14,8 @@ add:
 	dad sp
 	inx h
 	inx h
-	push h
-	pop b
+	mov b, h
+	mov c, l
 	lxi h, 2
 	dad b
 	mov a, m
@@ -47,8 +47,8 @@ is_zero:
 	dad sp
 	inx h
 	inx h
-	push h
-	pop b
+	mov b, h
+	mov c, l
 	lxi h, 2
 	dad b
 	mov a, m
@@ -95,8 +95,8 @@ main:
 	dad sp
 	inx h
 	inx h
-	push h
-	pop b
+	mov b, h
+	mov c, l
 	lxi h, 0
 	push h
 	lxi h, -4

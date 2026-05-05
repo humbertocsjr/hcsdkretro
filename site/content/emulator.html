@@ -1,5 +1,11 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML><HEAD><TITLE>Emulator - HC SDK</TITLE></HEAD>
+<HTML>
+<HEAD>
+<TITLE></TITLE>
+<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache, no-store, must-revalidate">
+<META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+<META HTTP-EQUIV="Expires" CONTENT="0">
+</HEAD>
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#0000CC" VLINK="#660099">
 
 <TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
@@ -12,19 +18,23 @@
 <PRE><FONT COLOR="#0000CC">msxdosemu [options] &lt;program.com&gt; [args...]
 
 Options:
-  -diska &lt;dir&gt;      Mount directory as disk A:
-  -diskb &lt;dir&gt;      Mount directory as disk B:
-  -step &lt;file&gt;      Feed file as console input
-  --help, -h        Show help</FONT></PRE>
+  -debug             Start in debug mode (interactive)
+  -step              Start in single-step debug mode
+  -skip &lt;address&gt;    Step over until address (e.g. 0x103)
+  -diska &lt;dir&gt;       Mount directory as disk A:
+  -diskb &lt;dir&gt;       Mount directory as disk B:
+  --help, -h         Show help</FONT></PRE>
 
 <H3>Examples</H3>
 <P>Run a CP/M program:</P>
 <PRE><FONT COLOR="#0000CC">msxdosemu hello.com
-echo "input text" | msxdosemu program.com
-msxdosemu -diska ./mydisk program.com arg1 arg2</FONT></PRE>
+msxdosemu -diska ./mydisk program.com arg1 arg2
+msxdosemu -diska ./ -debug cat.com test.txt
+msxdosemu -diska ./ -step cat.com test.txt
+msxdosemu -diska ./ -skip 0x103 cat.com test.txt</FONT></PRE>
 
 <H3>Running Test Suite</H3>
-<PRE><FONT COLOR="#0000CC">echo "" | msxdosemu test.com</FONT></PRE>
+<PRE><FONT COLOR="#0000CC">msxdosemu test.com</FONT></PRE>
 
 <P>For 8086 DOS programs, use <B>emu2</B> (external):</P>
 <PRE><FONT COLOR="#0000CC">emu2 program.com       ; 8086 .COM

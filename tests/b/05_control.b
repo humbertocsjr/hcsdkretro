@@ -1,4 +1,4 @@
-/* B test — control flow: if/else, while, break */
+/* B test - control flow: if/else, while, break */
 extrn putchar;
 main() {
     auto i;
