@@ -246,6 +246,7 @@ static int postfix(void)
 
 // For function call handling / Para tratamento de chamada de função
 static char last_func_name[256];
+static char deferred_load_name[256];
 
 // [English] Parses primary expressions with identifier tracking for function calls.
 // Identifiers are looked up in the symbol table and generate appropriate load code
@@ -313,7 +314,10 @@ static int primary_func(void)
         {
             if (!(!strcmp(sym->name, "peekb") || !strcmp(sym->name, "pokeb") ||
                   !strcmp(sym->name, "peekw") || !strcmp(sym->name, "pokew")))
-                gen_load_addr(sym->name);
+            {
+                strncpy(deferred_load_name, sym->name, 255);
+                deferred_load_name[255] = '\0';
+            }
             kind = VAL_LVALUE;
         }
     }
@@ -351,6 +355,18 @@ static int postfix_func(void)
         {
             strcpy(funcname, last_func_name);
             has_func_name = 1;
+        }
+    }
+
+    // Emit deferred load address or discard if function call
+    if (deferred_load_name[0])
+    {
+        if (tok == TOK_LPAREN && has_func_name)
+            deferred_load_name[0] = '\0';
+        else
+        {
+            gen_load_addr(deferred_load_name);
+            deferred_load_name[0] = '\0';
         }
     }
 
