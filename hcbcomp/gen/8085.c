@@ -213,116 +213,17 @@ void gen_sub(void)
 
 void gen_mul(void)
 {
-    int l_loop = gen_label();
-    int l_skip = gen_label();
-    gen_emit("push b");    /* save frame pointer */
-    gen_emit("xchg");
-    gen_emit("push h");
-    gen_emit("pop b");
-    gen_emit("lxi h, 0");
-    gen_emit("mvi a, 16");
-    gen_label_int(l_loop);
-    gen_emit("push psw");
-    gen_emit("mov a, b");
-    gen_emit("rar");
-    gen_emit("mov b, a");
-    gen_emit("mov a, c");
-    gen_emit("rar");
-    gen_emit("mov c, a");
-    gen_emitf("jnc .L%i", l_skip);
-    gen_emit("dad d");
-    gen_label_int(l_skip);
-    gen_emit("xchg");
-    gen_emit("dad h");
-    gen_emit("xchg");
-    gen_emit("pop psw");
-    gen_emit("dcr a");
-    gen_emitf("jnz .L%i", l_loop);
-    gen_emit("pop b");    /* restore frame pointer */
+    gen_emit("call __mul16");
 }
 
 void gen_div(void)
 {
-    int l_loop = gen_label();
-    int l_sub = gen_label();
-    int l_done = gen_label();
-    gen_emit("push b");    /* save frame pointer */
-    gen_emit("xchg");
-    gen_emit("lxi b, 0");
-    gen_emit("mvi a, 16");
-    gen_label_int(l_loop);
-    gen_emit("push psw");
-    gen_emit("dad h");
-    gen_emit("mov a, c");
-    gen_emit("ral");
-    gen_emit("mov c, a");
-    gen_emit("mov a, b");
-    gen_emit("ral");
-    gen_emit("mov b, a");
-    gen_emit("mov a, c");
-    gen_emit("sub e");
-    gen_emit("mov c, a");
-    gen_emit("mov a, b");
-    gen_emit("sbb d");
-    gen_emit("mov b, a");
-    gen_emitf("jc .L%i", l_sub);
-    gen_emit("inx h");
-    gen_emitf("jmp .L%i", l_done);
-    gen_label_int(l_sub);
-    gen_emit("mov a, c");
-    gen_emit("add e");
-    gen_emit("mov c, a");
-    gen_emit("mov a, b");
-    gen_emit("adc d");
-    gen_emit("mov b, a");
-    gen_label_int(l_done);
-    gen_emit("pop psw");
-    gen_emit("dcr a");
-    gen_emitf("jnz .L%i", l_loop);
-    gen_emit("pop b");    /* restore frame pointer */
+    gen_emit("call __div16");
 }
 
 void gen_mod(void)
 {
-    int l_loop = gen_label();
-    int l_sub = gen_label();
-    int l_done = gen_label();
-    gen_emit("push b");    /* save frame pointer */
-    gen_emit("xchg");
-    gen_emit("lxi b, 0");
-    gen_emit("mvi a, 16");
-    gen_label_int(l_loop);
-    gen_emit("push psw");
-    gen_emit("dad h");
-    gen_emit("mov a, c");
-    gen_emit("ral");
-    gen_emit("mov c, a");
-    gen_emit("mov a, b");
-    gen_emit("ral");
-    gen_emit("mov b, a");
-    gen_emit("mov a, c");
-    gen_emit("sub e");
-    gen_emit("mov c, a");
-    gen_emit("mov a, b");
-    gen_emit("sbb d");
-    gen_emit("mov b, a");
-    gen_emitf("jc .L%i", l_sub);
-    gen_emit("inx h");
-    gen_emitf("jmp .L%i", l_done);
-    gen_label_int(l_sub);
-    gen_emit("mov a, c");
-    gen_emit("add e");
-    gen_emit("mov c, a");
-    gen_emit("mov a, b");
-    gen_emit("adc d");
-    gen_emit("mov b, a");
-    gen_label_int(l_done);
-    gen_emit("pop psw");
-    gen_emit("dcr a");
-    gen_emitf("jnz .L%i", l_loop);
-    gen_emit("mov l, c");
-    gen_emit("mov h, b");
-    gen_emit("pop b");    /* restore frame pointer */
+    gen_emit("call __mod16");
 }
 
 void gen_neg(void)

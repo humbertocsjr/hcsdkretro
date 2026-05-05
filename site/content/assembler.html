@@ -6,14 +6,14 @@
 <TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Assembler (hcasm)</B></FONT></TD></TR>
 </TABLE>
 
-<P>Multi-target assembler supporting <B>Z80</B>, <B>8080/8085</B>, and <B>8086</B> instruction sets. Produces relocatable object files (.obj) for linking.</P>
+<P>Multi-target assembler supporting <B>Z80</B>, <B>8080/8085</B>, and <B>8086</B> instruction sets. Produces relocatable object files (<TT>.obj</TT>) for linking with <TT>hclink</TT>. Syntax is inspired by NASM with platform-specific extensions.</P>
 
 <TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0">
 <TR BGCOLOR="#E0E0FF"><TH>Binary</TH><TH>Target</TH></TR>
 <TR><TD><TT>hcasm-z80</TT></TD><TD>Zilog Z80</TD></TR>
-<TR><TD><TT>hcasm-8086</TT></TD><TD>Intel 8086 (also used for 8086exe)</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>hcasm-8086</TT></TD><TD>Intel 8086 (also used for 8086exe)</TD></TR>
 <TR><TD><TT>hcasm-8080</TT></TD><TD>Intel 8080</TD></TR>
-<TR><TD><TT>hcasm-8085</TT></TD><TD>Intel 8085</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>hcasm-8085</TT></TD><TD>Intel 8085</TD></TR>
 </TABLE>
 
 <H3>Usage</H3>
@@ -21,35 +21,130 @@
 
 Options:
   -o &lt;file&gt;       Output object file (default: a.obj)
-  -dump &lt;file&gt;    Generate assembly dump
+  -dump &lt;file&gt;    Generate assembly listing dump
   --help, -h      Show help</FONT></PRE>
 
 <H3>Source Format</H3>
-<PRE><FONT COLOR="#0000CC">; comments start with semicolon
-section text            ; code section
-section data            ; initialized data
-section bss             ; uninitialized data
+<PRE>label: mnemonic arg1, arg2 ; comment</PRE>
+<UL>
+<LI><B>Labels</B>: end with <TT>:</TT>, must start at column 1 (no leading whitespace)</LI>
+<LI><B>Instructions</B>: must be indented with a tab or spaces</LI>
+<LI><B>Comments</B>: start with <TT>;</TT> and run to end of line</LI>
+<LI><B>Case-insensitive</B>: all mnemonics, registers, and directives</LI>
+</UL>
 
-global my_func          ; export symbol
-extern other_func       ; import symbol
+<H3>Labels</H3>
+<PRE><FONT COLOR="#0000CC">global _start       ; export symbol for linker
+extern printf       ; import symbol from another module
 
-my_label:               ; label definition
-    instruction operands</FONT></PRE>
+_start:             ; global label
+.loop:              ; sub-label (becomes _start.loop)
+    jp .loop        ; references _start.loop</FONT></PRE>
 
-<H3>Z80 Example</H3>
-<PRE><FONT COLOR="#0000CC">section text
+<H3>Sections</H3>
+<PRE><FONT COLOR="#0000CC">section text        ; executable code
+section data        ; initialized data (db, dw, dd)
+section bss         ; uninitialized data (ds, rb, resb, rw, resw)</FONT></PRE>
+<P>Output order: <B>text &rarr; data &rarr; bss</B>. BSS is zero-filled at load time.</P>
+
+<HR>
+
+<H2>Data Directives</H2>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="22%">Directive</TH><TH>Description</TH><TH>Examples</TH></TR>
+<TR><TD><TT>db</TT></TD><TD>Define byte(s)</TD><TD><TT>db 0x12, &quot;Hello&quot;, 0</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>dw</TT></TD><TD>Define word(s), 16-bit LE</TD><TD><TT>dw 0x1234, label, &quot;AB&quot;</TT></TD></TR>
+<TR><TD><TT>dd</TT></TD><TD>Define dword(s), 32-bit LE</TD><TD><TT>dd 0x12345678</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>ds</TT> / <TT>rb</TT> / <TT>resb</TT></TD><TD>Reserve bytes</TD><TD><TT>ds 256</TT></TD></TR>
+<TR><TD><TT>rw</TT> / <TT>resw</TT></TD><TD>Reserve words (size &times; 2 bytes)</TD><TD><TT>rw 128</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><TT>equ</TT></TD><TD>Define constant</TD><TD><TT>SIZE equ 512</TT></TD></TR>
+<TR><TD><TT>times</TT></TD><TD>Repeat directive/instruction</TD><TD><TT>times 256 db 0</TT></TD></TR>
+</TABLE>
+
+<H3>Expressions and Number Formats</H3>
+
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="25%">Format</TH><TH>Example</TH><TH>Notes</TH></TR>
+<TR><TD>Decimal</TD><TD><TT>42</TT></TD><TD>Standard</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Hexadecimal</TD><TD><TT>0xFF</TT>, <TT>0FFh</TT></TD><TD><TT>0x</TT> prefix or trailing <TT>h</TT></TD></TR>
+<TR><TD>Binary</TD><TD><TT>0b1010</TT></TD><TD><TT>0b</TT> prefix</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Octal</TD><TD><TT>0o777</TT></TD><TD><TT>0o</TT> prefix</TD></TR>
+</TABLE>
+
+<P><B>Operators:</B> <TT>+ - * / %</TT> &mdash; <TT>$</TT> = current position &mdash; <TT>&lt;</TT>/<TT>LOBYTE</TT> &mdash; <TT>&gt;</TT>/<TT>HIBYTE</TT></P>
+
+<HR>
+
+<H2>Z80 &mdash; Syntax and Examples</H2>
+
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="25%">Feature</TH><TH>Syntax</TH></TR>
+<TR><TD>Memory access</TD><TD>Always <B>square brackets</B> <TT>[]</TT> - <TT>ld a, [hl]</TT>, <TT>ld [ix+5], a</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Indexed addressing</TD><TD><TT>ld a, [ix+10]</TT> / <TT>ld a, [iy-4]</TT> (signed displacement)</TD></TR>
+<TR><TD>16-bit load</TD><TD><TT>ld hl, 0x1234</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>16-bit arithmetic</TD><TD><TT>add hl, de</TT> / <TT>sbc hl, bc</TT> (HL only destination)</TD></TR>
+<TR><TD>Exchange</TD><TD><TT>ex de, hl</TT> / <TT>ex (sp), hl</TT> / <TT>ex af, af'</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Block operations</TD><TD><TT>ldi</TT>, <TT>ldd</TT>, <TT>cpi</TT>, <TT>cpir</TT></TD></TR>
+<TR><TD>Bit operations</TD><TD><TT>set 0, a</TT> / <TT>res 1, [hl]</TT> / <TT>bit 2, b</TT></TD></TR>
+</TABLE>
+
+<PRE><FONT COLOR="#0000CC">; Z80 CP/M "Hello World"
+section text
 global _start
 _start:
-    ld hl, msg
-    ld c, 9
-    call 5          ; BDOS print
-    ret
+    ld de, msg
+    ld c, 9             ; BDOS print string
+    call 5
+    ld c, 0             ; BDOS exit
+    call 5
 
 section data
-msg: db "Hello!$"</FONT></PRE>
+msg: db "Hello, World!$"</FONT></PRE>
 
-<H3>8086 Example</H3>
-<PRE><FONT COLOR="#0000CC">section text
+<H2>8080/8085 &mdash; Syntax and Examples</H2>
+
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="25%">Feature</TH><TH>Syntax</TH></TR>
+<TR><TD>Memory via HL</TD><TD><TT>mov a, m</TT> = <TT>mov a, [hl]</TT> = <TT>mov a, [m]</TT> <FONT SIZE="-2" COLOR="#666666">(all equivalent)</FONT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Memory via BC/DE (store)</TD><TD><TT>stax b</TT> = <TT>stax bc</TT> = <TT>stax [bc]</TT> = <TT>stax [b]</TT></TD></TR>
+<TR><TD>Memory via BC/DE (load)</TD><TD><TT>ldax b</TT> = <TT>ldax bc</TT> = <TT>ldax [bc]</TT> = <TT>ldax [b]</TT></TD></TR>
+<TR><TD>16-bit load</TD><TD><TT>lxi h, 0x1234</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>16-bit add</TD><TD><TT>dad d</TT> (HL only destination)</TD></TR>
+<TR><TD>Direct address load</TD><TD><TT>lhld 0x1234</TT> (load HL from memory)</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>8085 extras</TD><TD><TT>rim</TT>, <TT>sim</TT> (interrupt mask)</TD></TR>
+</TABLE>
+
+<PRE><FONT COLOR="#0000CC">; 8080 CP/M "Hello World"
+section text
+global _start
+_start:
+    lxi d, msg
+    mvi c, 9
+    call 5
+    mvi c, 0
+    call 5
+
+section data
+msg: db "Hello, World!$"</FONT></PRE>
+
+<H2>8086 &mdash; Syntax and Examples</H2>
+
+<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="25%">Feature</TH><TH>Syntax</TH></TR>
+<TR><TD>Memory via register</TD><TD><TT>mov ax, [bx]</TT> / <TT>mov [si], ax</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Based addressing</TD><TD><TT>mov ax, [bp-2]</TT> / <TT>mov ax, [bp+4]</TT></TD></TR>
+<TR><TD>Based+indexed</TD><TD><TT>mov ax, [bx+si]</TT> / <TT>mov ax, [bp+di+4]</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Direct address</TD><TD><TT>mov ax, [0x1234]</TT></TD></TR>
+<TR><TD>Immediate to memory</TD><TD><TT>mov word [bp-2], 42</TT> / <TT>mov byte [bx], 0</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Size prefixes</TD><TD><TT>byte</TT>, <TT>word</TT>, <TT>dword</TT> (when operand size ambiguous)</TD></TR>
+<TR><TD>Distance prefixes</TD><TD><TT>short</TT>, <TT>near</TT>, <TT>far</TT> (override jump/call distance)</TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD>Segment overrides</TD><TD><TT>es mov ax, [bx]</TT> (use ES instead of DS)</TD></TR>
+<TR><TD>Repeat prefixes</TD><TD><TT>rep movsb</TT> / <TT>repe cmpsb</TT> / <TT>repne scasb</TT></TD></TR>
+</TABLE>
+
+<PRE><FONT COLOR="#0000CC">; 8086 MS-DOS "Hello World"
+section text
 global _start
 _start:
     mov ah, 9
@@ -59,26 +154,31 @@ _start:
     int 0x21
 
 section data
-msg: db "Hello!$"</FONT></PRE>
+msg: db "Hello, World!$"</FONT></PRE>
 
-<H3>Data Directives</H3>
-<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0">
-<TR BGCOLOR="#E0E0FF"><TH>Directive</TH><TH>Description</TH><TH>Example</TH></TR>
-<TR><TD><TT>db</TT></TD><TD>Define byte(s)</TD><TD><TT>db "hello", 0</TT></TD></TR>
-<TR><TD><TT>dw</TT></TD><TD>Define word(s)</TD><TD><TT>dw 0x1234, 42</TT></TD></TR>
-<TR><TD><TT>dd</TT></TD><TD>Define dword(s)</TD><TD><TT>dd 0x12345678</TT></TD></TR>
-<TR><TD><TT>ds / rb / resb</TT></TD><TD>Reserve bytes</TD><TD><TT>ds 256</TT></TD></TR>
-<TR><TD><TT>rw / resw</TT></TD><TD>Reserve words</TD><TD><TT>rw 128</TT></TD></TR>
-<TR><TD><TT>equ</TT></TD><TD>Constant definition</TD><TD><TT>BUFSIZ equ 512</TT></TD></TR>
+<HR>
+
+<H2>Target Comparison</H2>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH>Feature</TH><TH>Z80</TH><TH>8080/8085</TH><TH>8086</TH></TR>
+<TR><TD><B>Memory brackets</B></TD><TD><TT>[]</TT></TD><TD><TT>[]</TT> or <TT>m</TT></TD><TD><TT>[]</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><B>Indexed addressing</B></TD><TD><TT>[ix+d]</TT>, <TT>[iy+d]</TT></TD><TD>None</TD><TD><TT>[bp+N]</TT>, <TT>[bx+si]</TT></TD></TR>
+<TR><TD><B>Imm to memory</B></TD><TD><TT>ld [ix+N], imm</TT></TD><TD>Not native</TD><TD><TT>mov word [mem], imm</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><B>Segments</B></TD><TD>N/A</TD><TD>N/A</TD><TD><TT>es, cs, ss, ds</TT></TD></TR>
+<TR><TD><B>Size prefixes</B></TD><TD>N/A</TD><TD>N/A</TD><TD><TT>byte, word, dword</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><B>16-bit immediate</B></TD><TD><TT>ld hl, imm</TT></TD><TD><TT>lxi h, imm</TT></TD><TD><TT>mov ax, imm</TT></TD></TR>
+<TR><TD><B>Direct addr load</B></TD><TD><TT>ld hl, (addr)</TT></TD><TD><TT>lhld addr</TT></TD><TD><TT>mov ax, [addr]</TT></TD></TR>
+<TR BGCOLOR="#F8F8FF"><TD><B>Return value reg</B></TD><TD><TT>hl</TT></TD><TD><TT>hl</TT></TD><TD><TT>ax</TT></TD></TR>
+<TR><TD><B>16-bit arithmetic</B></TD><TD><TT>add hl, rr</TT><BR><TT>adc/sbc hl, rr</TT></TD><TD><TT>dad rr</TT></TD><TD><TT>add ax, rx</TT></TD></TR>
 </TABLE>
 
-<H3>8086-Specific Features</H3>
-<TABLE BORDER="1" CELLPADDING="2" CELLSPACING="0">
-<TR BGCOLOR="#E0E0FF"><TH>Feature</TH><TH>Example</TH></TR>
-<TR><TD>Size prefixes</TD><TD><TT>mov word [bx], 1  ;  mov byte [bx], 0</TT></TD></TR>
-<TR><TD>Distance prefixes</TD><TD><TT>call near label  ;  jmp far seg:off</TT></TD></TR>
-<TR><TD>Segment overrides</TD><TD><TT>es mov ax, [bx]</TT></TD></TR>
-<TR><TD>Repeat prefixes</TD><TD><TT>rep movsb</TT></TD></TR>
+<HR SIZE="1" NOSHADE>
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="0" CELLSPACING="0">
+<TR>
+<TD><FONT SIZE="-2" COLOR="#666666"><A HREF="bcompiler.html" TARGET="main">[B Compiler]</A> &middot; <A HREF="linker.html" TARGET="main">[Linker]</A> &middot; <A HREF="targets.html" TARGET="main">[Target CPUs]</A></FONT></TD>
+<TD ALIGN="RIGHT"><FONT SIZE="-2" COLOR="#666666">&copy; 2025-2026 HC SDK</FONT></TD>
+</TR>
 </TABLE>
 
 </BODY></HTML>

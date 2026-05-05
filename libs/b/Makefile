@@ -59,17 +59,37 @@ Z80_OBJECTS = \
 	$(foreach m,$(ASM_COMMON),$(Z80_ARCH)/$(m).obj) \
 	$(Z80_OBJS)
 
+CPU_8080_OBJS = \
+	$(CPU_8080)/mul.obj \
+	$(CPU_8080)/div16.obj \
+	$(CPU_8080)/div8.obj \
+	$(CPU_8080)/cmp8.obj \
+	$(CPU_8080)/cmp16.obj \
+	$(CPU_8080)/shift.obj \
+	$(CPU_8080)/cbw.obj
+
 CPU_8080_OBJECTS = \
 	$(foreach m,$(B_COMMON),$(CPU_8080)/$(m).obj) \
 	$(foreach m,$(ASM_COMMON),$(CPU_8080)/$(m).obj) \
 	$(CPU_8080)/bdos.obj \
-	$(CPU_8080)/cpm_start.obj
+	$(CPU_8080)/cpm_start.obj \
+	$(CPU_8080_OBJS)
+
+CPU_8085_OBJS = \
+	$(CPU_8085)/mul.obj \
+	$(CPU_8085)/div16.obj \
+	$(CPU_8085)/div8.obj \
+	$(CPU_8085)/cmp8.obj \
+	$(CPU_8085)/cmp16.obj \
+	$(CPU_8085)/shift.obj \
+	$(CPU_8085)/cbw.obj
 
 CPU_8085_OBJECTS = \
 	$(foreach m,$(B_COMMON),$(CPU_8085)/$(m).obj) \
 	$(foreach m,$(ASM_COMMON),$(CPU_8085)/$(m).obj) \
 	$(CPU_8085)/bdos.obj \
-	$(CPU_8085)/cpm_start.obj
+	$(CPU_8085)/cpm_start.obj \
+	$(CPU_8085_OBJS)
 
 CPU_8086_OBJECTS = \
 	$(foreach m,$(B_COMMON),$(CPU_8086)/$(m).obj) \
