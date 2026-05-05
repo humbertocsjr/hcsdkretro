@@ -233,3 +233,16 @@ void gen_jnz(int label);
 void gen_call(const char *name, int nargs);
 
 extern FILE *devnull;
+
+// [English] Each code generator backend must implement this function to provide
+// target-specific peephole optimizations. peep_line_t is defined in peep.h.
+// Given a window of parsed instructions, it should check for known patterns
+// and fill the replacement buffer. Returns the number of replacement lines
+// (0 if no match, < wcount on success).
+// [Portuguese] Cada backend gerador de código deve implementar esta função para
+// fornecer otimizações peephole específicas do alvo. peep_line_t é definido em peep.h.
+// Dada uma janela de instruções analisadas, deve verificar padrões conhecidos e
+// preencher o buffer de substituição. Retorna o número de linhas de substituição
+// (0 se não houver correspondência, < wcount em caso de sucesso).
+#include "peep.h"
+int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl);

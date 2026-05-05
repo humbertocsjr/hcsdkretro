@@ -429,3 +429,11 @@ void gen_call(const char *name, int nargs)
 }
 
 void gen_data_final(void) {}
+
+// [English] 8085 peephole pattern dispatcher (identical to 8080).
+// [Portuguese] Despachante de padrões peephole 8085 (idêntico ao 8080).
+int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
+{
+    (void)window; (void)wcount; (void)repl;
+    return 0;
+}

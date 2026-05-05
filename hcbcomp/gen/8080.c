@@ -444,3 +444,13 @@ void gen_call(const char *name, int nargs)
 }
 
 void gen_data_final(void) {}
+
+// [English] 8080/8085 peephole pattern dispatcher.
+// The 8080 has a minimal instruction set - patterns for redundant xchg/xchg
+// and push/pop pairs are detected but currently skipped (future enhancement).
+// [Portuguese] Despachante de padrões peephole 8080/8085.
+int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
+{
+    (void)window; (void)wcount; (void)repl;
+    return 0;
+}

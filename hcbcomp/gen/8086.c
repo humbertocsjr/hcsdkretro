@@ -472,3 +472,137 @@ void gen_call(const char *name, int nargs)
 }
 
 void gen_data_final(void) {}
+
+// [English] 8086 Pattern 1: collapses "mov ax,LABEL; mov bx,ax; mov ax,[bx]" into "mov ax,[LABEL]"
+// [Portuguese] Padrão 8086 1: colapsa "mov ax,LABEL; mov bx,ax; mov ax,[bx]" em "mov ax,[LABEL]"
+static int i86_match_label_deref(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "mov", 2)) return 0;
+    if (strcmp(w[0].args[0], "ax")) return 0;
+    const char *label = w[0].args[1];
+    if (label[0] == '[') return 0;
+    if (!peep_op_args(&w[1], "mov", 2)) return 0;
+    if (strcmp(w[1].args[1], "ax")) return 0;
+    char basereg[8];
+    strcpy(basereg, w[1].args[0]);
+    if (!peep_op_is(&w[2], "mov")) return 0;
+    if (strcmp(w[2].args[0], "ax")) return 0;
+    {
+        char expected[32];
+        snprintf(expected, sizeof(expected), "[%s]", basereg);
+        if (strcmp(w[2].args[1], expected)) return 0;
+    }
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tmov ax, [%s]", label);
+    return n;
+}
+
+// [English] 8086 Pattern 2: collapses "lea ax,[bp-N]; mov bx,ax; mov ax,[bx]" into "mov ax,[bp-N]"
+// [Portuguese] Padrão 8086 2: colapsa "lea ax,[bp-N]; mov bx,ax; mov ax,[bx]" em "mov ax,[bp-N]"
+static int i86_match_lea_deref(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "lea", 2)) return 0;
+    if (strcmp(w[0].args[0], "ax")) return 0;
+    const char *bp_expr = w[0].args[1];
+    if (strncmp(bp_expr, "[bp", 3)) return 0;
+    if (!peep_op_args(&w[1], "mov", 2)) return 0;
+    if (strcmp(w[1].args[1], "ax")) return 0;
+    char basereg[8];
+    strcpy(basereg, w[1].args[0]);
+    if (!peep_op_args(&w[2], "mov", 2)) return 0;
+    if (strcmp(w[2].args[0], "ax")) return 0;
+    {
+        char expected[32];
+        snprintf(expected, sizeof(expected), "[%s]", basereg);
+        if (strcmp(w[2].args[1], expected)) return 0;
+    }
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tmov ax, %s", bp_expr);
+    return n;
+}
+
+// [English] 8086 Pattern 3: collapses "lea ax,[bp-N]; push ax; mov ax,IMM; pop bx; mov [bx],ax"
+// into "mov word [bp-N], IMM"
+// [Portuguese] Padrão 8086 3: colapsa ... em "mov word [bp-N], IMM"
+static int i86_match_lea_push_store(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "lea", 2)) return 0;
+    if (strcmp(w[0].args[0], "ax")) return 0;
+    const char *bp_expr = w[0].args[1];
+    if (strncmp(bp_expr, "[bp", 3)) return 0;
+    if (!peep_op_args(&w[1], "push", 1)) return 0;
+    if (strcmp(w[1].args[0], "ax")) return 0;
+    if (!peep_op_args(&w[2], "mov", 2)) return 0;
+    if (strcmp(w[2].args[0], "ax")) return 0;
+    const char *val = w[2].args[1];
+    { int dummy; if (!peep_parse_arg_int(val, &dummy)) return 0; }
+    if (!peep_op_args(&w[3], "pop", 1)) return 0;
+    const char *popreg = w[3].args[0];
+    if (!peep_op_args(&w[4], "mov", 2)) return 0;
+    { char expected[32]; snprintf(expected, sizeof(expected), "[%s]", popreg); if (strcmp(w[4].args[0], expected)) return 0; }
+    if (strcmp(w[4].args[1], "ax")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tmov word %s, %s", bp_expr, val);
+    return n;
+}
+
+// [English] 8086 Pattern 4: replaces "push ax; pop bx" with "mov bx, ax"
+// [Portuguese] Padrão 8086 4: substitui "push ax; pop bx" por "mov bx, ax"
+static int i86_match_push_pop(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "push", 1)) return 0;
+    if (!peep_op_args(&w[1], "pop", 1)) return 0;
+    if (strcmp(w[0].args[0], w[1].args[0]) == 0) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tmov %s, %s", w[1].args[0], w[0].args[0]);
+    return n;
+}
+
+// [English] 8086 Pattern 5: collapses "mov ax,LABEL; push ax; mov ax,IMM; pop bx; mov [bx],ax"
+// into "mov word [LABEL], IMM"
+// [Portuguese] Padrão 8086 5: colapsa ... em "mov word [LABEL], IMM"
+static int i86_match_label_push_store(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "mov", 2)) return 0;
+    if (strcmp(w[0].args[0], "ax")) return 0;
+    const char *label = w[0].args[1];
+    if (label[0] == '[') return 0;
+    if (!peep_op_args(&w[1], "push", 1)) return 0;
+    if (strcmp(w[1].args[0], "ax")) return 0;
+    if (!peep_op_args(&w[2], "mov", 2)) return 0;
+    if (strcmp(w[2].args[0], "ax")) return 0;
+    const char *val = w[2].args[1];
+    { int dummy; if (!peep_parse_arg_int(val, &dummy)) return 0; }
+    if (!peep_op_args(&w[3], "pop", 1)) return 0;
+    const char *popreg = w[3].args[0];
+    if (!peep_op_args(&w[4], "mov", 2)) return 0;
+    { char expected[32]; snprintf(expected, sizeof(expected), "[%s]", popreg); if (strcmp(w[4].args[0], expected)) return 0; }
+    if (strcmp(w[4].args[1], "ax")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tmov word [%s], %s", label, val);
+    return n;
+}
+
+// [English] 8086-specific peephole pattern dispatcher.
+// [Portuguese] Despachante de padrões peephole específicos 8086.
+int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
+{
+    int n;
+    if (wcount == 2) {
+        n = i86_match_push_pop(window, repl);
+        if (n > 0) return n;
+    }
+    if (wcount == 3) {
+        n = i86_match_label_deref(window, repl);
+        if (n > 0) return n;
+        n = i86_match_lea_deref(window, repl);
+        if (n > 0) return n;
+    }
+    if (wcount == 5) {
+        n = i86_match_lea_push_store(window, repl);
+        if (n > 0) return n;
+        n = i86_match_label_push_store(window, repl);
+        if (n > 0) return n;
+    }
+    return 0;
+}

@@ -642,3 +642,59 @@ void gen_call(const char *name, int nargs)
 }
 
 void gen_data_final(void) {}
+
+// [English] 8086exe Pattern 1: replaces "push dx; push ax; pop bx; pop cx" with "mov cx, dx; mov bx, ax"
+// [Portuguese] Padrão 8086exe 1: substitui "push dx; push ax; pop bx; pop cx" por "mov cx, dx; mov bx, ax"
+static int i86e_match_push32_pop32(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "push", 1)) return 0;
+    if (!peep_op_args(&w[1], "push", 1)) return 0;
+    if (!peep_op_args(&w[2], "pop", 1)) return 0;
+    if (!peep_op_args(&w[3], "pop", 1)) return 0;
+    if (!strcmp(w[0].args[0], w[3].args[0]) && !strcmp(w[1].args[0], w[2].args[0]))
+        return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tmov %s, %s", w[3].args[0], w[0].args[0]);
+    peep_emit_repl(repl, &n, "\tmov %s, %s", w[2].args[0], w[1].args[0]);
+    return n;
+}
+
+// [English] 8086exe Pattern 2: collapses "lea ax,[bp+N]; mov bx,ax; mov ax,[bx]" into "mov ax,[bp+N]"
+// [Portuguese] Padrão 8086exe 2: colapsa ... em "mov ax,[bp+N]"
+static int i86e_match_lea_deref(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "lea", 2)) return 0;
+    if (strcmp(w[0].args[0], "ax")) return 0;
+    const char *bp_expr = w[0].args[1];
+    if (strncmp(bp_expr, "[bp", 3)) return 0;
+    if (!peep_op_args(&w[1], "mov", 2)) return 0;
+    if (strcmp(w[1].args[1], "ax")) return 0;
+    char basereg[8];
+    strcpy(basereg, w[1].args[0]);
+    if (!peep_op_is(&w[2], "mov")) return 0;
+    if (strcmp(w[2].args[0], "ax")) return 0;
+    {
+        char expected[32];
+        snprintf(expected, sizeof(expected), "[%s]", basereg);
+        if (strcmp(w[2].args[1], expected)) return 0;
+    }
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tmov ax, %s", bp_expr);
+    return n;
+}
+
+// [English] 8086exe-specific peephole pattern dispatcher.
+// [Portuguese] Despachante de padrões peephole específicos 8086exe.
+int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
+{
+    int n;
+    if (wcount == 3) {
+        n = i86e_match_lea_deref(window, repl);
+        if (n > 0) return n;
+    }
+    if (wcount == 4) {
+        n = i86e_match_push32_pop32(window, repl);
+        if (n > 0) return n;
+    }
+    return 0;
+}

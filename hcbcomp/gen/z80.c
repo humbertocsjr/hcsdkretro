@@ -616,3 +616,96 @@ void gen_call(const char *name, int nargs)
 }
 
 void gen_data_final(void) {}
+
+// [English] Z80 Pattern 1: optimizes local variable load with computed offset into direct IX load.
+// Replaces 9 instructions with 2 direct IX loads: ld l,[ix+N]; ld h,[ix+N+1]
+// [Portuguese] Padrão Z80 1: otimiza carga de variável local com deslocamento computado para carga direta por IX.
+static int z80_match_local_load(peep_line_t *w, peep_line_t *repl)
+{
+    if (w[0].nargs != 2) return 0;
+    if (!peep_op_is(&w[0], "ld")) return 0;
+    if (strcmp(w[0].args[0], "hl")) return 0;
+    int off;
+    if (!peep_parse_arg_int(w[0].args[1], &off)) return 0;
+    if (!peep_op_is(&w[1], "ex") || strcmp(w[1].args[0], "de") || strcmp(w[1].args[1], "hl")) return 0;
+    if (!peep_op_is(&w[2], "push") || strcmp(w[2].args[0], "ix")) return 0;
+    if (!peep_op_is(&w[3], "pop") || strcmp(w[3].args[0], "hl")) return 0;
+    if (!peep_op_is(&w[4], "add") || strcmp(w[4].args[0], "hl") || strcmp(w[4].args[1], "de")) return 0;
+    if (!peep_op_is(&w[5], "ld") || strcmp(w[5].args[0], "a") || strcmp(w[5].args[1], "[hl]")) return 0;
+    if (!peep_op_is(&w[6], "inc") || strcmp(w[6].args[0], "hl")) return 0;
+    if (!peep_op_is(&w[7], "ld") || strcmp(w[7].args[0], "h") || strcmp(w[7].args[1], "[hl]")) return 0;
+    if (!peep_op_is(&w[8], "ld") || strcmp(w[8].args[0], "l") || strcmp(w[8].args[1], "a")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tld l, [ix%+d]", off);
+    peep_emit_repl(repl, &n, "\tld h, [ix%+d]", off + 1);
+    return n;
+}
+
+// [English] Z80 Pattern 2: alternate register order for local variable load (uses e/d instead of a).
+// [Portuguese] Padrão Z80 2: ordem alternativa de registradores para carga de variável local (usa e/d em vez de a).
+static int z80_match_local_load2(peep_line_t *w, peep_line_t *repl)
+{
+    if (w[0].nargs != 2) return 0;
+    if (!peep_op_is(&w[0], "ld") || strcmp(w[0].args[0], "hl")) return 0;
+    int off;
+    if (!peep_parse_arg_int(w[0].args[1], &off)) return 0;
+    if (!peep_op_is(&w[1], "ex") || strcmp(w[1].args[0], "de") || strcmp(w[1].args[1], "hl")) return 0;
+    if (!peep_op_is(&w[2], "push") || strcmp(w[2].args[0], "ix")) return 0;
+    if (!peep_op_is(&w[3], "pop") || strcmp(w[3].args[0], "hl")) return 0;
+    if (!peep_op_is(&w[4], "add") || strcmp(w[4].args[0], "hl") || strcmp(w[4].args[1], "de")) return 0;
+    if (!peep_op_is(&w[5], "ld") || strcmp(w[5].args[0], "e") || strcmp(w[5].args[1], "[hl]")) return 0;
+    if (!peep_op_is(&w[6], "inc") || strcmp(w[6].args[0], "hl")) return 0;
+    if (!peep_op_is(&w[7], "ld") || strcmp(w[7].args[0], "d") || strcmp(w[7].args[1], "[hl]")) return 0;
+    if (!peep_op_is(&w[8], "ex") || strcmp(w[8].args[0], "de") || strcmp(w[8].args[1], "hl")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tld l, [ix%+d]", off);
+    peep_emit_repl(repl, &n, "\tld h, [ix%+d]", off + 1);
+    return n;
+}
+
+// [English] Z80 Pattern 3: optimizes storing an immediate value to a local variable.
+// Replaces 12 instructions with 3: ld hl,IMM; ld [ix+N],l; ld [ix+N+1],h
+// [Portuguese] Padrão Z80 3: otimiza armazenamento de valor imediato em variável local.
+static int z80_match_local_store_imm(peep_line_t *w, peep_line_t *repl)
+{
+    if (w[0].nargs != 2) return 0;
+    if (!peep_op_is(&w[0], "ld") || strcmp(w[0].args[0], "hl")) return 0;
+    int off;
+    if (!peep_parse_arg_int(w[0].args[1], &off)) return 0;
+    if (!peep_op_is(&w[1], "ex") || strcmp(w[1].args[0], "de") || strcmp(w[1].args[1], "hl")) return 0;
+    if (!peep_op_is(&w[2], "push") || strcmp(w[2].args[0], "ix")) return 0;
+    if (!peep_op_is(&w[3], "pop") || strcmp(w[3].args[0], "hl")) return 0;
+    if (!peep_op_is(&w[4], "add") || strcmp(w[4].args[0], "hl") || strcmp(w[4].args[1], "de")) return 0;
+    if (!peep_op_is(&w[5], "push") || strcmp(w[5].args[0], "hl")) return 0;
+    if (!peep_op_is(&w[6], "ld") || strcmp(w[6].args[0], "hl")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[6].args[1], &imm)) return 0;
+    if (!peep_op_is(&w[7], "pop") || strcmp(w[7].args[0], "de")) return 0;
+    if (!peep_op_is(&w[8], "ex") || strcmp(w[8].args[0], "de") || strcmp(w[8].args[1], "hl")) return 0;
+    if (!peep_op_is(&w[9], "ld") || strcmp(w[9].args[0], "[hl]") || strcmp(w[9].args[1], "e")) return 0;
+    if (!peep_op_is(&w[10], "inc") || strcmp(w[10].args[0], "hl")) return 0;
+    if (!peep_op_is(&w[11], "ld") || strcmp(w[11].args[0], "[hl]") || strcmp(w[11].args[1], "d")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tld hl, %d", imm);
+    peep_emit_repl(repl, &n, "\tld [ix%+d], l", off);
+    peep_emit_repl(repl, &n, "\tld [ix%+d], h", off + 1);
+    return n;
+}
+
+// [English] Z80-specific peephole pattern dispatcher. Tests window sizes 9 (local load)
+// and 12 (local store immediate).
+// [Portuguese] Despachante de padrões peephole específicos Z80. Testa janelas 9 (carga local) e 12 (store imediato).
+int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
+{
+    if (wcount == 9) {
+        int n = z80_match_local_load(window, repl);
+        if (n > 0) return n;
+        n = z80_match_local_load2(window, repl);
+        if (n > 0) return n;
+    }
+    if (wcount == 12) {
+        int n = z80_match_local_store_imm(window, repl);
+        if (n > 0) return n;
+    }
+    return 0;
+}
