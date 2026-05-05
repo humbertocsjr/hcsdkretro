@@ -9,8 +9,9 @@
 #include <ctype.h>
 #include <string.h>
 
-// --== Token types ==--
-
+// Token types / Tipos de token
+// [English] Enumeration of all token types recognized by the B compiler lexer
+// [Portuguese] Enumeração de todos os tipos de token reconhecidos pelo analisador léxico do compilador B
 typedef enum token_t
 {
     TOK_EOF = 0,
@@ -71,8 +72,10 @@ typedef enum token_t
     TOK_DOT,
 } token_t;
 
-// --== Symbol table ==--
+// Symbol table / Tabela de símbolos
 
+// [English] Enumeration of symbol kinds (global, local, parameter, extern, function)
+// [Portuguese] Enumeração dos tipos de símbolo (global, local, parâmetro, externo, função)
 typedef enum symkind_t
 {
     SYM_GLOBAL,
@@ -82,6 +85,8 @@ typedef enum symkind_t
     SYM_FUNCTION
 } symkind_t;
 
+// [English] Enumeration of memory segment kinds (DATA, BSS, STACK)
+// [Portuguese] Enumeração dos tipos de segmento de memória (DATA, BSS, STACK)
 typedef enum segkind_t
 {
     SEG_DATA = 0,
@@ -89,22 +94,26 @@ typedef enum segkind_t
     SEG_STACK = 2
 } segkind_t;
 
+// [English] Structure representing a symbol in the symbol table
+// [Portuguese] Estrutura que representa um símbolo na tabela de símbolos
 typedef struct symbol_t
 {
     char *name;
     symkind_t kind;
     int offset; // stack offset (for locals/params) or address (for globals)
+               // deslocamento na pilha (para locais/params) ou endereço (para globais)
     int size;   // array size (0 for scalars)
+               // tamanho do array (0 para escalares)
     segkind_t segment; // which segment this symbol lives in (DATA, BSS, STACK)
+                       // em qual segmento este símbolo reside (DATA, BSS, STACK)
     struct symbol_t *next;
 } symbol_t;
 
-// --== Expression kinds ==--
-
+// Expression kinds / Tipos de expressão
 #define VAL_LVALUE 1
 #define VAL_RVALUE 0
 
-// --== Globals ==--
+// Globals / Variáveis globais
 
 extern FILE *outfile;
 extern const char *target_cpu;
@@ -112,7 +121,7 @@ extern int line_num;
 extern int col_num;
 extern const char *filename;
 
-// --== Lexer ==--
+// Lexer / Analisador léxico
 
 extern token_t tok;
 extern char tok_text[256];
@@ -126,7 +135,7 @@ void lex_sync(void);
 int lex_get_ch(void);
 void lex_set_ch(int c);
 
-// --== Parser ==--
+// Parser / Analisador sintático
 
 void compile_unit(void);
 void statement(void);
@@ -136,22 +145,22 @@ int expression(void);
 int assignment(void);
 int conditional(void);
 
-// --== Symbol table ==--
+// Symbol table / Tabela de símbolos
 
 symbol_t *lookup(const char *name);
 symbol_t *install(const char *name, symkind_t kind, int size, segkind_t seg);
 
-// --== Preprocessor ==--
+// Preprocessor / Pré-processador
 
 void preproc_run(const char *filename, FILE *output, const char *cpu);
 void preproc_add_define(const char *name, const char *value);
 void preproc_add_include_dir(const char *dir);
 
-// --== Error ==--
+// Error / Erro
 
 void error(const char *fmt, ...);
 
-// --== Code generation ==--
+// Code generation / Geração de código
 
 int gen_label(void);
 void gen_text(void);

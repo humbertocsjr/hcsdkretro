@@ -6,6 +6,10 @@ static int func_nparams = 0;
 static int func_has_return = 0;
 static int break_label = -1;
 
+// [English] Expects the current token to be of type t, then advances to the next token.
+// Terminates with an error if the token does not match.
+// [Portuguese] Espera que o token atual seja do tipo t, então avança para o próximo token.
+// Encerra com erro se o token não corresponder.
 static void expect(token_t t)
 {
     if (tok != t)
@@ -13,6 +17,10 @@ static void expect(token_t t)
     next();
 }
 
+// [English] Converts an lvalue to an rvalue by dereferencing if kind is VAL_LVALUE.
+// After conversion, kind is set to VAL_RVALUE.
+// [Portuguese] Converte um lvalue para rvalue fazendo dereferência se kind for VAL_LVALUE.
+// Após a conversão, kind é definido como VAL_RVALUE.
 static void convert_rvalue(int *kind)
 {
     if (*kind)
@@ -22,8 +30,12 @@ static void convert_rvalue(int *kind)
     }
 }
 
-// --== Declarations ==--
+// Declarations / Declarações
 
+// [English] Parses function parameters enclosed in parentheses.
+// Installs each parameter as SYM_PARAM and assigns sequential offsets.
+// [Portuguese] Analisa parâmetros de função entre parênteses.
+// Instala cada parâmetro como SYM_PARAM e atribui offsets sequenciais.
 static void parse_params(void)
 {
     expect(TOK_LPAREN);
@@ -45,6 +57,10 @@ static void parse_params(void)
     expect(TOK_RPAREN);
 }
 
+// [English] Parses variable declarations (auto or extrn), including array declarations.
+// Auto variables are installed as SYM_LOCAL on the stack; extrn as SYM_EXTERN in DATA.
+// [Portuguese] Analisa declarações de variáveis (auto ou extrn), incluindo declarações de array.
+// Variáveis auto são instaladas como SYM_LOCAL na pilha; extrn como SYM_EXTERN em DATA.
 static void parse_declaration(void)
 {
     int is_auto = (tok == TOK_AUTO);
@@ -95,7 +111,7 @@ static void parse_declaration(void)
     expect(TOK_SEMICOLON);
 }
 
-// --== Expression parsing ==--
+// Expression parsing / Análise de expressões
 
 static int primary(void);
 static int postfix(void);
@@ -112,6 +128,10 @@ static int logical_and(void);
 static int logical_or(void);
 static int parse_args_rtl(long first_pos);
 
+// [English] Parses a primary expression: numbers, character constants, string literals,
+// and parenthesized expressions.
+// [Portuguese] Analisa uma expressão primária: números, constantes de caractere,
+// literais string e expressões entre parênteses.
 static int primary(void)
 {
     int kind = VAL_RVALUE;
@@ -155,6 +175,10 @@ static int primary(void)
     return kind;
 }
 
+// [English] Parses postfix expressions: array subscript [], function call (),
+// increment ++ and decrement --
+// [Portuguese] Analisa expressões pós-fixadas: subscrito de array [], chamada de função (),
+// incremento ++ e decremento --
 static int postfix(void)
 {
     int kind = primary();
@@ -166,7 +190,7 @@ static int postfix(void)
             // arr[index] -> *(arr + index * 2)
             // arr is lvalue (address in HL)
             convert_rvalue(&kind);
-            gen_push_prim(); // save address
+            gen_push_prim();
 
             next();
             int idx_kind = expression();
@@ -176,42 +200,13 @@ static int postfix(void)
             // HL = index, DE = address (from stack)
             gen_pop_sec();
 
-            // index * 2 (word size): base + index*2
-            gen_double(); // HL = index * 2
-            gen_add();    // HL = base + index*2
-            // Now HL = address of arr[index]
+            // index * 2 (word size)
+            gen_double();
+            gen_add();
             kind = VAL_LVALUE;
         }
         else if (tok == TOK_LPAREN)
         {
-            // Function call
-            // Primary parsed a name or function pointer
-            // For function calls from a name, we need the function name
-            // But primary() parsed it and loaded its address into HL
-            // For a simple call like func(), we need func as a label
-
-            // Hmm, this doesn't work. We need the function name for the call.
-            // Let me save the function name before parsing arguments.
-            // Actually, for a simple identifier, we can extract the name.
-
-            // The primary() loaded the address. But for the call, we need the name.
-            // This is a design issue. Let me think...
-
-            // Actually, for a direct call like `func(args)`, the parser should
-            // handle this BEFORE primary() loads anything. The issue is that
-            // my parser already consumed the identifier.
-
-            // Let me fix this: I'll track the last identifier name in the parser.
-            // Or better: for function calls, I'll handle the name separately.
-
-            // Actually, looking at this more carefully, for `func()`:
-            // postfix -> primary (parses "func" as identifier, loads address)
-            // Then postfix sees TOK_LPAREN and generates a call
-            // But we need the NAME for the call instruction.
-
-            // The problem is that primary() consumed the name and we lost it.
-            // I need to save it. Let me use a global variable.
-
             error("indirect function calls not yet supported");
         }
         else if (tok == TOK_INC)
@@ -221,9 +216,9 @@ static int postfix(void)
             gen_load_imm(1);
             gen_pop_sec();
             gen_add();
-            gen_pop_sec(); // DE = address
+            gen_pop_sec();
             gen_store_to_addr();
-            gen_push_prim(); // result is old value + 1
+            gen_push_prim();
             next();
             kind = VAL_RVALUE;
         }
@@ -249,10 +244,15 @@ static int postfix(void)
     return kind;
 }
 
-// For function call handling, we save the last parsed identifier
+// For function call handling / Para tratamento de chamada de função
 static char last_func_name[256];
 
-// Redefined primary for function call support
+// [English] Parses primary expressions with identifier tracking for function calls.
+// Identifiers are looked up in the symbol table and generate appropriate load code
+// (local, param, or global address). Saves the identifier name for function call resolution.
+// [Portuguese] Analisa expressões primárias com rastreamento de identificador para chamadas de função.
+// Identificadores são buscados na tabela de símbolos e geram código de carga apropriado
+// (local, parâmetro ou endereço global). Salva o nome do identificador para resolução de chamada de função.
 static int primary_func(void)
 {
     int kind = VAL_RVALUE;
@@ -331,14 +331,19 @@ static int primary_func(void)
     return kind;
 }
 
+// [English] Parses postfix expressions with full function call support, including
+// inline handling of peekb/pokeb/peekw/pokew built-in functions, array subscript,
+// and increment/decrement operators.
+// [Portuguese] Analisa expressões pós-fixadas com suporte completo a chamadas de função,
+// incluindo tratamento inline das funções embutidas peekb/pokeb/peekw/pokew,
+// subscrito de array e operadores de incremento/decremento.
 static int postfix_func(void)
 {
     int kind = primary_func();
     char funcname[256];
     int has_func_name = 0;
 
-    // Check if this was a simple function name
-    // (last_func_name is set by primary_func for identifiers)
+    // Check if this was a simple function name / Verifica se era um nome de função simples
     if (kind == VAL_LVALUE && last_func_name[0])
     {
         symbol_t *sym = lookup(last_func_name);
@@ -351,6 +356,8 @@ static int postfix_func(void)
 
     while (1)
     {
+
+        // Array subscript / Subscrito de array
         if (tok == TOK_LBRACKET)
         {
             convert_rvalue(&kind);
@@ -365,16 +372,18 @@ static int postfix_func(void)
             kind = VAL_LVALUE;
             has_func_name = 0;
         }
+
+        // Function call / Chamada de função
         else if (tok == TOK_LPAREN)
         {
             if (!has_func_name)
                 error("function call requires function name");
 
-            /* Inline peekb/pokeb/pokew/peekw */
+            // Inline peekb / peekb inline
             if (!strcmp(funcname, "peekb"))
             {
                 next();
-                int pk = assignment(); /* addr */
+                int pk = assignment();
                 convert_rvalue(&pk);
                 expect(TOK_RPAREN);
                 gen_comment("inline peekb");
@@ -384,6 +393,8 @@ static int postfix_func(void)
                 last_func_name[0] = 0;
                 break;
             }
+
+            // Inline peekw / peekw inline
             if (!strcmp(funcname, "peekw"))
             {
                 next();
@@ -397,24 +408,28 @@ static int postfix_func(void)
                 last_func_name[0] = 0;
                 break;
             }
+
+            // Inline pokeb / pokeb inline
             if (!strcmp(funcname, "pokeb"))
             {
                 next();
-                int pk = assignment(); /* addr (left arg) */
+                int pk = assignment();
                 convert_rvalue(&pk);
-                gen_push_prim(); /* save addr on stack */
+                gen_push_prim();
                 expect(TOK_COMMA);
-                pk = assignment(); /* val (right arg) */
+                pk = assignment();
                 convert_rvalue(&pk);
                 expect(TOK_RPAREN);
                 gen_comment("inline pokeb");
-                gen_pop_sec(); /* DE = addr, HL = val */
+                gen_pop_sec();
                 gen_pokeb();
                 kind = VAL_RVALUE;
                 has_func_name = 0;
                 last_func_name[0] = 0;
                 break;
             }
+
+            // Inline pokew / pokew inline
             if (!strcmp(funcname, "pokew"))
             {
                 next();
@@ -434,6 +449,7 @@ static int postfix_func(void)
                 break;
             }
 
+            // Regular function call / Chamada de função normal
             long args_start;
             {
                 int ch = lex_get_ch();
@@ -456,6 +472,8 @@ static int postfix_func(void)
             has_func_name = 0;
             last_func_name[0] = 0;
         }
+
+        // Postfix increment / Incremento pós-fixado
         else if (tok == TOK_INC)
         {
             convert_rvalue(&kind);
@@ -468,6 +486,8 @@ static int postfix_func(void)
             next();
             kind = VAL_RVALUE;
         }
+
+        // Postfix decrement / Decremento pós-fixado
         else if (tok == TOK_DEC)
         {
             convert_rvalue(&kind);
@@ -489,20 +509,18 @@ static int postfix_func(void)
     return kind;
 }
 
+// [English] Parses unary expressions: dereference (*), address-of (&), negation (-),
+// bitwise not (~), logical not (!), prefix increment (++), prefix decrement (--),
+// and falls through to postfix expressions.
+// [Portuguese] Analisa expressões unárias: dereferência (*), endereço (&), negação (-),
+// não bitwise (~), não lógico (!), pré-incremento (++), pré-decremento (--),
+// e passa para expressões pós-fixadas.
 static int unary(void)
 {
     if (tok == TOK_STAR)
     {
         next();
         int kind = unary();
-        // *expr: expr is the address, result is the value at that address
-        // The address should already be in HL
-        // Dereference: load value from HL
-        // But we also want *expr to be an lvalue (for *expr = value)
-        // After unary(), kind is LVALUE or RVALUE
-        // If LVALUE: HL already has address. *expr -> address is in HL.
-        // If RVALUE: HL has value. *value -> treat value as address.
-        // In both cases, HL has the address. Return LVALUE.
         return VAL_LVALUE;
     }
     else if (tok == TOK_AMPERSAND)
@@ -511,7 +529,6 @@ static int unary(void)
         int kind = unary();
         if (!kind)
             error("lvalue required as operand of &");
-        // &lvalue: address is already in HL
         return VAL_RVALUE;
     }
     else if (tok == TOK_MINUS)
@@ -544,14 +561,14 @@ static int unary(void)
         int kind = unary();
         if (!kind)
             error("lvalue required as operand of ++");
-        gen_push_prim(); // save address
-        gen_deref();     // HL = value
-        gen_push_prim(); // save value for return
+        gen_push_prim();
+        gen_deref();
+        gen_push_prim();
         gen_load_imm(1);
-        gen_pop_sec();       // DE = 1
-        gen_add();           // HL = value + 1
-        gen_pop_sec();       // DE = address
-        gen_store_to_addr(); // *address = value+1
+        gen_pop_sec();
+        gen_add();
+        gen_pop_sec();
+        gen_store_to_addr();
         return VAL_RVALUE;
     }
     else if (tok == TOK_DEC)
@@ -560,14 +577,14 @@ static int unary(void)
         int kind = unary();
         if (!kind)
             error("lvalue required as operand of --");
-        gen_push_prim(); // save address
-        gen_deref();     // HL = value
-        gen_push_prim(); // save value for return
+        gen_push_prim();
+        gen_deref();
+        gen_push_prim();
         gen_load_imm(1);
-        gen_pop_sec();       // DE = 1
-        gen_sub();           // HL = value - 1
-        gen_pop_sec();       // DE = address
-        gen_store_to_addr(); // *address = value-1
+        gen_pop_sec();
+        gen_sub();
+        gen_pop_sec();
+        gen_store_to_addr();
         return VAL_RVALUE;
     }
     else
@@ -576,6 +593,8 @@ static int unary(void)
     }
 }
 
+// [English] Parses multiplicative expressions: *, /, %
+// [Portuguese] Analisa expressões multiplicativas: *, /, %
 static int term(void)
 {
     int kind = unary();
@@ -607,6 +626,8 @@ static int term(void)
     return kind;
 }
 
+// [English] Parses additive expressions: +, -
+// [Portuguese] Analisa expressões aditivas: +, -
 static int additive(void)
 {
     int kind = term();
@@ -630,6 +651,8 @@ static int additive(void)
     return kind;
 }
 
+// [English] Parses shift expressions: <<, >>
+// [Portuguese] Analisa expressões de deslocamento: <<, >>
 static int shift(void)
 {
     int kind = additive();
@@ -653,6 +676,8 @@ static int shift(void)
     return kind;
 }
 
+// [English] Parses relational expressions: <, >, <=, >=
+// [Portuguese] Analisa expressões relacionais: <, >, <=, >=
 static int relational(void)
 {
     int kind = shift();
@@ -687,6 +712,8 @@ static int relational(void)
     return kind;
 }
 
+// [English] Parses equality expressions: ==, !=
+// [Portuguese] Analisa expressões de igualdade: ==, !=
 static int equality(void)
 {
     int kind = relational();
@@ -710,6 +737,8 @@ static int equality(void)
     return kind;
 }
 
+// [English] Parses bitwise AND expressions: &
+// [Portuguese] Analisa expressões AND bitwise: &
 static int bitwise_and(void)
 {
     int kind = equality();
@@ -728,6 +757,8 @@ static int bitwise_and(void)
     return kind;
 }
 
+// [English] Parses bitwise XOR expressions: ^
+// [Portuguese] Analisa expressões XOR bitwise: ^
 static int bitwise_xor(void)
 {
     int kind = bitwise_and();
@@ -746,6 +777,8 @@ static int bitwise_xor(void)
     return kind;
 }
 
+// [English] Parses bitwise OR expressions: |
+// [Portuguese] Analisa expressões OR bitwise: |
 static int bitwise_or(void)
 {
     int kind = bitwise_xor();
@@ -764,6 +797,8 @@ static int bitwise_or(void)
     return kind;
 }
 
+// [English] Parses logical AND expressions with short-circuit evaluation: &&
+// [Portuguese] Analisa expressões AND lógico com avaliação de curto-circuito: &&
 static int logical_and(void)
 {
     int kind = bitwise_or();
@@ -794,6 +829,8 @@ static int logical_and(void)
     return kind;
 }
 
+// [English] Parses logical OR expressions with short-circuit evaluation: ||
+// [Portuguese] Analisa expressões OR lógico com avaliação de curto-circuito: ||
 static int logical_or(void)
 {
     int kind = logical_and();
@@ -824,11 +861,19 @@ static int logical_or(void)
     return kind;
 }
 
+// [English] Parses conditional expressions (currently just a wrapper for logical_or)
+// [Portuguese] Analisa expressões condicionais (atualmente apenas um wrapper para logical_or)
 int conditional(void)
 {
     return logical_or();
 }
 
+// [English] Parses assignment expressions: =, +=, -=, *=, /=, %=, &=, |=, ^=
+// For simple assignment, pops the address and stores the value.
+// For compound assignment, reads the current value, applies the operation, then stores.
+// [Portuguese] Analisa expressões de atribuição: =, +=, -=, *=, /=, %=, &=, |=, ^=
+// Para atribuição simples, desempilha o endereço e armazena o valor.
+// Para atribuição composta, lê o valor atual, aplica a operação, então armazena.
 int assignment(void)
 {
     int kind = conditional();
@@ -855,12 +900,12 @@ int assignment(void)
             error("lvalue required as left operand of compound assignment");
 
         int op = tok;
-        gen_push_prim(); // save address
-        gen_deref();     // HL = current value
-        gen_push_prim(); // save current value on stack
+        gen_push_prim();
+        gen_deref();
+        gen_push_prim();
         next();
         int right_kind = assignment();
-        gen_pop_sec(); // DE = current value, HL = right value
+        gen_pop_sec();
 
         switch (op)
         {
@@ -890,14 +935,16 @@ int assignment(void)
             break;
         }
 
-        gen_pop_sec();       // DE = address
-        gen_store_to_addr(); // *address = result
+        gen_pop_sec();
+        gen_store_to_addr();
         return VAL_RVALUE;
     }
 
     return kind;
 }
 
+// [English] Parses comma-separated expressions
+// [Portuguese] Analisa expressões separadas por vírgula
 int expression(void)
 {
     int kind = assignment();
@@ -910,8 +957,16 @@ int expression(void)
     return kind;
 }
 
-// --== Function call args (right-to-left evaluation) ==--
+// Function call args (right-to-left evaluation) / Argumentos de chamada de função (avaliação da direita para a esquerda)
 
+// [English] Parses function call arguments with right-to-left evaluation order.
+// Phase 1: muted parse to record argument file positions.
+// Phase 2: replays arguments in reverse order with real code generation,
+// pushing each argument value onto the stack.
+// [Portuguese] Analisa argumentos de chamada de função com ordem de avaliação da direita para a esquerda.
+// Fase 1: análise silenciosa para registrar posições dos argumentos no arquivo.
+// Fase 2: reproduz argumentos em ordem reversa com geração de código real,
+// empilhando cada valor de argumento na pilha.
 static int parse_args_rtl(long first_pos)
 {
     FILE *fp = lex_get_fp();
@@ -919,7 +974,8 @@ static int parse_args_rtl(long first_pos)
     int count = 0;
     FILE *saved_out = outfile;
 
-    /* Phase 1: muted parse, record argument file positions */
+    // Phase 1: muted parse, record argument file positions
+    // Fase 1: análise silenciosa, registra posições dos argumentos no arquivo
     outfile = devnull;
 
     starts[0] = first_pos;
@@ -937,11 +993,11 @@ static int parse_args_rtl(long first_pos)
         assignment();
         count++;
     }
-    /* tok is TOK_RPAREN; save lookahead character and file position */
     int saved_ch = lex_get_ch();
     long end_pos = ftell(fp);
 
-    /* Phase 2: replay in right-to-left order with real codegen */
+    // Phase 2: replay in right-to-left order with real codegen
+    // Fase 2: reproduz em ordem da direita para a esquerda com geração de código real
     outfile = saved_out;
     for (int i = count - 1; i >= 0; i--)
     {
@@ -953,7 +1009,8 @@ static int parse_args_rtl(long first_pos)
         gen_push_prim();
     }
 
-    /* Advance past remaining argument tokens to reach the outer RPAREN */
+    // Advance past remaining argument tokens to reach the outer RPAREN
+    // Avança além dos tokens de argumento restantes para alcançar o RPAREN externo
     {
         int depth = 0;
         for (;;)
@@ -966,19 +1023,24 @@ static int parse_args_rtl(long first_pos)
             next();
         }
     }
-    /* tok is now the outer RPAREN */
 
-    /* Restore lexer state so expect(TOK_RPAREN) reads the token after ) */
+    // Restore lexer state so expect(TOK_RPAREN) reads the token after )
+    // Restaura o estado do lexer para que expect(TOK_RPAREN) leia o token após )
     fseek(fp, end_pos, SEEK_SET);
     lex_set_ch(saved_ch);
 
     return count;
 }
 
-// --== Statements ==--
+// Statements / Comandos
 
+// [English] Parses a single statement: asm(), compound {}, if, while, for, do-while,
+// return, break, declarations, or expression statements.
+// [Portuguese] Analisa um único comando: asm(), composto {}, if, while, for, do-while,
+// return, break, declarações ou expressões.
 static void parse_statement(void)
 {
+    // asm() statement / Comando asm()
     if (tok == TOK_ASM)
     {
         next();
@@ -990,10 +1052,14 @@ static void parse_statement(void)
         expect(TOK_RPAREN);
         expect(TOK_SEMICOLON);
     }
+
+    // Compound statement / Comando composto
     else if (tok == TOK_LBRACE)
     {
         compound_statement();
     }
+
+    // if statement / Comando if
     else if (tok == TOK_IF)
     {
         next();
@@ -1022,6 +1088,8 @@ static void parse_statement(void)
             gen_label_int(l_else);
         }
     }
+
+    // while statement / Comando while
     else if (tok == TOK_WHILE)
     {
         int l_test = gen_label();
@@ -1045,6 +1113,8 @@ static void parse_statement(void)
 
         break_label = saved_break;
     }
+
+    // for statement / Comando for
     else if (tok == TOK_FOR)
     {
         int l_test = gen_label();
@@ -1056,7 +1126,7 @@ static void parse_statement(void)
         next();
         expect(TOK_LPAREN);
 
-        // init
+        // Init / Inicialização
         if (tok != TOK_SEMICOLON)
         {
             int kind = expression();
@@ -1064,7 +1134,7 @@ static void parse_statement(void)
         expect(TOK_SEMICOLON);
 
         gen_label_int(l_test);
-        // test
+        // Test / Teste
         if (tok != TOK_SEMICOLON)
         {
             int kind = expression();
@@ -1075,6 +1145,7 @@ static void parse_statement(void)
         expect(TOK_SEMICOLON);
 
         // Parse increment, emit to temp buffer for later replay
+        // Analisa incremento, emite para buffer temporário para reprodução posterior
         FILE *inc_fp = tmpfile();
         FILE *saved_out = outfile;
         outfile = inc_fp;
@@ -1083,7 +1154,6 @@ static void parse_statement(void)
         {
             gen_comment("for increment");
             int inc_kind = expression();
-            // Don't need to convert - expression value is unused
         }
         expect(TOK_RPAREN);
 
@@ -1094,7 +1164,7 @@ static void parse_statement(void)
 
         parse_statement();
 
-        // Emit deferred increment code
+        // Emit deferred increment code / Emite código de incremento adiado
         if (inc_size > 0)
         {
             char inc_buf[4096];
@@ -1110,6 +1180,8 @@ static void parse_statement(void)
 
         break_label = saved_break;
     }
+
+    // do-while statement / Comando do-while
     else if (tok == TOK_DO)
     {
         int l_body = gen_label();
@@ -1133,6 +1205,8 @@ static void parse_statement(void)
 
         break_label = saved_break;
     }
+
+    // return statement / Comando return
     else if (tok == TOK_RETURN)
     {
         next();
@@ -1145,6 +1219,8 @@ static void parse_statement(void)
         gen_comment("return");
         gen_return();
     }
+
+    // break statement / Comando break
     else if (tok == TOK_BREAK)
     {
         next();
@@ -1153,14 +1229,20 @@ static void parse_statement(void)
             error("break outside loop");
         gen_jmp(break_label);
     }
+
+    // Empty statement / Comando vazio
     else if (tok == TOK_SEMICOLON)
     {
         next();
     }
+
+    // Declaration / Declaração
     else if (tok == TOK_AUTO || tok == TOK_EXTRN)
     {
         parse_declaration();
     }
+
+    // Expression statement / Expressão como comando
     else if (tok == TOK_IDENT || tok == TOK_NUMBER || tok == TOK_CHAR ||
              tok == TOK_STRING || tok == TOK_LPAREN || tok == TOK_STAR ||
              tok == TOK_AMPERSAND || tok == TOK_MINUS || tok == TOK_TILDE ||
@@ -1175,6 +1257,8 @@ static void parse_statement(void)
     }
 }
 
+// [English] Parses a compound statement enclosed in braces { }
+// [Portuguese] Analisa um comando composto entre chaves { }
 void compound_statement(void)
 {
     expect(TOK_LBRACE);
@@ -1185,8 +1269,14 @@ void compound_statement(void)
     expect(TOK_RBRACE);
 }
 
-// --== Top-level ==--
+// Top-level / Nível superior
 
+// [English] Parses a function definition: name, parameters, declarations, and body.
+// Generates the prologue (stack frame setup), parses all statements,
+// then generates the epilogue (stack frame teardown and return).
+// [Portuguese] Analisa uma definição de função: nome, parâmetros, declarações e corpo.
+// Gera o prólogo (configuração do quadro de pilha), analisa todos os comandos,
+// então gera o epílogo (desmontagem do quadro de pilha e retorno).
 static void function_definition(const char *name)
 {
     gen_global(name);
@@ -1201,6 +1291,7 @@ static void function_definition(const char *name)
     expect(TOK_LBRACE);
 
     // Parse all declarations first to count locals
+    // Analisa todas as declarações primeiro para contar variáveis locais
     while (tok == TOK_AUTO || tok == TOK_EXTRN)
     {
         parse_declaration();
@@ -1209,7 +1300,7 @@ static void function_definition(const char *name)
     gen_comment("function %s prologue", name);
     gen_prologue(name, func_nlocals);
 
-    // Parse remaining statements
+    // Parse remaining statements / Analisa comandos restantes
     while (tok != TOK_RBRACE && tok != TOK_EOF)
     {
         parse_statement();
@@ -1220,22 +1311,28 @@ static void function_definition(const char *name)
     gen_epilogue();
 }
 
+// [English] Parses the entire compilation unit (top level).
+// Handles global variable declarations with initial values in DATA or BSS segments,
+// and function definitions.
+// [Portuguese] Analisa a unidade de compilação inteira (nível superior).
+// Processa declarações de variáveis globais com valores iniciais nos segmentos DATA ou BSS,
+// e definições de função.
 void compile_unit(void)
 {
     gen_text();
-    
+
     while (tok != TOK_EOF) {
         if (tok == TOK_AUTO || tok == TOK_EXTRN) {
             parse_declaration();
         } else if (tok == TOK_IDENT) {
             const char *name = strdup(tok_text);
             next();
-            
+
             if (tok == TOK_LPAREN) {
                 function_definition(name);
             } else if (tok == TOK_SEMICOLON || tok == TOK_COMMA || tok == TOK_LBRACKET) {
                 if (tok == TOK_LBRACKET) {
-                    /* Array → BSS */
+                    // Array -> BSS / Array -> BSS
                     next();
                     int size = tok_value;
                     if (tok != TOK_NUMBER) error("array size expected");
@@ -1248,7 +1345,7 @@ void compile_unit(void)
                     gen_label_str(name);
                     gen_reserve(size * 2);
                 } else {
-                    /* Scalar → DATA */
+                    // Scalar -> DATA / Escalar -> DATA
                     symbol_t *sym = install(name, SYM_GLOBAL, 0, SEG_DATA);
                     gen_data();
                     gen_global(name);
@@ -1267,6 +1364,6 @@ void compile_unit(void)
             error("unexpected token at top level: '%s'", tok_text);
         }
     }
-    
+
     gen_data_final();
 }

@@ -4,6 +4,8 @@ char _disasm[256];
 char _disasm_arg0[32];
 char _disasm_arg1[32];
 
+// [English] Format the main disassembly string
+// [Portuguese] Formata a string principal de desmontagem
 static void fmt(char *fmt, ...)
 {
     va_list args;
@@ -12,6 +14,8 @@ static void fmt(char *fmt, ...)
     va_end(args);
 }
 
+// [English] Format a disassembly argument string
+// [Portuguese] Formata uma string de argumento da desmontagem
 static void fmt_arg(int arg, char *fmt, ...)
 {
     va_list args;
@@ -31,6 +35,8 @@ enum pre_e
     PRE_FDCB
 };
 
+// [English] Get 8-bit register name from opcode
+// [Portuguese] Obtém nome do registrador de 8 bits do opcode
 char *disasm_reg8(uint8_t opcode, int offset, enum pre_e prefix, bool *has_index)
 {
     switch((opcode >> offset) & 7)
@@ -47,6 +53,8 @@ char *disasm_reg8(uint8_t opcode, int offset, enum pre_e prefix, bool *has_index
     return "";
 }
 
+// [English] Get 16-bit register pair name from opcode
+// [Portuguese] Obtém nome do par de registradores de 16 bits do opcode
 char *disasm_reg16(uint8_t opcode, int offset, enum pre_e prefix, char *last)
 {
     switch((opcode >> offset) & 3)
@@ -59,6 +67,8 @@ char *disasm_reg16(uint8_t opcode, int offset, enum pre_e prefix, char *last)
     return "";
 }
 
+// [English] Get main register name (HL/IX/IY) based on prefix
+// [Portuguese] Obtém nome do registrador principal (HL/IX/IY) baseado no prefixo
 char *disasm_mainreg(enum pre_e prefix)
 {
     switch(prefix)
@@ -70,11 +80,15 @@ char *disasm_mainreg(enum pre_e prefix)
     return "";
 }
 
+// [English] Read 16-bit value from memory (for disassembler operand)
+// [Portuguese] Lê valor de 16 bits da memória (para operando do desmontador)
 uint16_t disasm_16(void *ptr)
 {
     return *(uint16_t*)ptr;
 }
 
+// [English] Disassemble a Z80 instruction at the given address
+// [Portuguese] Desmonta uma instrução Z80 no endereço fornecido
 void disasm(uint16_t address)
 {
     uint8_t *ptr = &_memory[address];
@@ -82,6 +96,9 @@ void disasm(uint16_t address)
     bool has_index = false;
     int8_t offset = 0;
     strcpy(_disasm, "UNKNOWN");
+
+    // [English] Detect and handle instruction prefixes (DD, FD, ED, CB)
+    // [Portuguese] Detecta e gerencia prefixos de instrução (DD, FD, ED, CB)
     if(*ptr == 0xdd)
     {
         prefix = PRE_DD;
@@ -108,8 +125,13 @@ void disasm(uint16_t address)
         }
     }
     uint8_t op = *ptr++;
+
+    // [English] Dispatch based on prefix type
+    // [Portuguese] Despacha baseado no tipo de prefixo
     switch (prefix)
     {
+        // [English] Standard opcodes and IX/IY-prefixed opcodes
+        // [Portuguese] Opcodes padrão e prefixados com IX/IY
         case PRE_NO:
         case PRE_DD:
         case PRE_FD:
@@ -341,6 +363,8 @@ void disasm(uint16_t address)
                     break;
             }
             break;
+        // [English] ED-prefixed opcodes
+        // [Portuguese] Opcodes prefixados com ED
         case PRE_ED:
             switch (op)
             {
@@ -406,6 +430,8 @@ void disasm(uint16_t address)
                 case 0xbb: fmt("otdr"); break;
             }
             break;
+        // [English] CB-prefixed opcodes (bit/shift/rotate) - TODO: full decode
+        // [Portuguese] Opcodes prefixados com CB (bit/deslocamento/rotação) - TODO: decodificação completa
         case PRE_CB:
         case PRE_DDCB:
         case PRE_FDCB:

@@ -21,6 +21,8 @@ static uint8_t _vdp_status = 0;
 static uint8_t _vdp_foreground = 7;  // white
 static uint8_t _vdp_background = 4;   // blue (MSX default)
 
+// [English] Initialize the screen subsystem (enable ANSI on Windows)
+// [Portuguese] Inicializa o subsistema de tela (habilita ANSI no Windows)
 void screen_init()
 {
 #ifdef _WIN32
@@ -33,7 +35,8 @@ void screen_init()
 #endif
 }
 
-// MSX color to ANSI mapping
+// [English] MSX color to ANSI mapping
+// [Portuguese] Mapeamento de cores MSX para ANSI
 static const char *_vdp_ansi_fg[16] = {
     "\033[30m","\033[34m","\033[31m","\033[35m",
     "\033[32m","\033[36m","\033[33m","\033[37m",
@@ -47,12 +50,16 @@ static const char *_vdp_ansi_bg[16] = {
     "\033[102m","\033[106m","\033[103m","\033[107m"
 };
 
+// [English] Return printable character or space if not printable
+// [Portuguese] Retorna caractere imprimível ou espaço se não for imprimível
 char printable(char c)
 {
     if(c >= ' ' && c <= 127) return c;
     return ' ';
 }
 
+// [English] Set a VDP register
+// [Portuguese] Define um registrador do VDP
 void screen_set_reg(uint8_t reg, uint8_t value)
 {
     _vdp_registers[reg] = value;
@@ -81,7 +88,9 @@ void screen_set_reg(uint8_t reg, uint8_t value)
     }
 }
 
-void screen_out_99(uint8_t value) // Set Register
+// [English] Write to VDP register port 0x99
+// [Portuguese] Escreve na porta de registrador VDP 0x99
+void screen_out_99(uint8_t value)
 {
     if(_vdp_is_first_byte)
     {
@@ -101,7 +110,9 @@ void screen_out_99(uint8_t value) // Set Register
 
 }
 
-uint8_t screen_in_99() // Get Status
+// [English] Read VDP status from port 0x99
+// [Portuguese] Lê status do VDP da porta 0x99
+uint8_t screen_in_99()
 {
     _vdp_is_first_byte = true;
     uint8_t s = _vdp_status;
@@ -109,16 +120,22 @@ uint8_t screen_in_99() // Get Status
     return s;
 }
 
-void screen_out_98(uint8_t value) // Data
+// [English] Write data byte to VDP VRAM via port 0x98
+// [Portuguese] Escreve byte de dados na VRAM do VDP via porta 0x98
+void screen_out_98(uint8_t value)
 {
     _vdp_memory[_vdp_pointer++ % VDP_MEMORY_MAX] = value;
 }
 
-uint8_t screen_in_98() // Data
+// [English] Read data byte from VDP VRAM via port 0x98
+// [Portuguese] Lê byte de dados da VRAM do VDP via porta 0x98
+uint8_t screen_in_98()
 {
     return _vdp_memory[_vdp_pointer++ % VDP_MEMORY_MAX];
 }
 
+// [English] Draw a single debug register line in the debug overlay
+// [Portuguese] Desenha uma linha de registro no overlay de debug
 void screen_draw_reg(uint16_t curr, uint16_t prev, char *name, bool ptr, bool str)
 {
     char curr_value[11];
@@ -143,9 +160,14 @@ void screen_draw_reg(uint16_t curr, uint16_t prev, char *name, bool ptr, bool st
     }
 }
 
+// [English] Full debug screen redraw
+// [Portuguese] Redesenho completo da tela de debug
 void screen_draw()
 {
     if(!_debuggable) return;
+
+    // [English] Define ANSI color codes
+    // [Portuguese] Define códigos de cores ANSI
     char *title_color = "\033[0m\033[1;36;40m";
     char *menu_color = "\033[0m\033[0;36;40m";
     char *info_color = "\033[0m\033[0;37;40m";
@@ -154,6 +176,8 @@ void screen_draw()
     char *true_text = "\033[0m\033[0;32;40mT\033[0m\033[0;37;40m";
     char *false_text = "\033[0m\033[0;31;40mF\033[0m\033[0;37;40m";
 
+    // [English] Clear screen and render text buffer
+    // [Portuguese] Limpa tela e renderiza buffer de texto
     printf("\033[0m%s%s\033[H\033[2J\033[3J", _vdp_ansi_bg[_vdp_background], _vdp_ansi_fg[_vdp_foreground]);
     for(int y = 0; y < TTY_HEIGHT; y++)
     {
@@ -167,6 +191,9 @@ void screen_draw()
         if(y == 0) printf("%s", title_color);
         else if(y < 5 || y > 20) printf("%s", menu_color);
         else printf("%s", info_color);
+
+        // [English] Draw info/status lines
+        // [Portuguese] Desenha linhas de informação/status
         switch(y)
         {
             case 0:
@@ -268,21 +295,29 @@ void screen_draw()
             printf("\033[0m\n");
         }
     }
+    // [English] Restore cursor position to match emulated terminal
+    // [Portuguese] Restaura posição do cursor para corresponder ao terminal emulado
     printf("\033[%i;%iH", _y+1, _x+1);
     fflush(stdout);
     _changed = false;
 }
 
+// [English] Redraw debug screen only if content changed
+// [Portuguese] Redesenha tela de debug apenas se houve mudança
 void screen_draw_if_changed()
 {
     if(_changed) screen_draw();
 }
 
+// [English] Clear the screen
+// [Portuguese] Limpa a tela
 void screen_clear()
 {
     printf("\033[H\033[2J\033[3J");
 }
 
+// [English] Move cursor to specified position (1-based)
+// [Portuguese] Move cursor para posição especificada (base 1)
 void screen_goto(int line, int column)
 {
     _x = column - 1;
@@ -291,6 +326,8 @@ void screen_goto(int line, int column)
     if(_y >= TTY_HEIGHT) _y %= TTY_HEIGHT;
 }
 
+// [English] Scroll the text buffer up one line
+// [Portuguese] Rola o buffer de texto uma linha para cima
 static void screen_scroll()
 {
     memmove(_buffer, &_buffer[TTY_WIDTH], TTY_WIDTH * (TTY_HEIGHT -1));
@@ -298,8 +335,12 @@ static void screen_scroll()
     _y--;
 }
 
+// [English] Output a character to the screen (handles escape sequences, control chars)
+// [Portuguese] Envia um caractere para a tela (gerencia sequências de escape, caracteres de controle)
 void screen_put_char(char c)
 {
+    // [English] Simple mode (no debug overlay)
+    // [Portuguese] Modo simples (sem overlay de debug)
     if(!_debuggable)
     {
         switch(c)
@@ -315,7 +356,8 @@ void screen_put_char(char c)
     }
     _changed = true;
 
-    // Handle escape sequences statefully
+    // [English] Handle escape sequences statefully
+    // [Portuguese] Gerencia sequências de escape com estado
     if(_esc_state == 1) {
         if(c == 'Y') { _esc_state = 2; return; }    // ESC Y r c - cursor position
         if(c == 'K') { for(int cx = _x; cx < TTY_WIDTH; cx++) _buffer[_y * TTY_WIDTH + cx] = ' '; _esc_state = 0; return; }
@@ -327,42 +369,46 @@ void screen_put_char(char c)
     if(_esc_state == 2) { _esc_row = c - 32; _esc_state = 3; return; }
     if(_esc_state == 3) { _y = _esc_row; _x = c - 32; _esc_state = 0; return; }
 
+    // [English] Process control characters and regular characters
+    // [Portuguese] Processa caracteres de controle e regulares
     switch(c)
     {
-        case 7:  // BEL
+        case 7:  // BEL - bell
             printf("\a");
             fflush(stdout);
             break;
-        case 8:  // BS
+        case 8:  // BS - backspace
             if(_x == 0) { if(_y > 0) { _x = TTY_WIDTH - 1; _y--; } }
             else _x--;
             break;
-        case 9:  // HT
+        case 9:  // HT - horizontal tab
             _x = (_x + 8) & ~7;
             break;
-        case 10: // LF
+        case 10: // LF - line feed
             _y++;
             break;
-        case 11: // VT
+        case 11: // VT - vertical tab
             _y++;
             break;
-        case 12: // FF
+        case 12: // FF - form feed (clear screen)
             memset(_buffer, ' ', TTY_HEIGHT * TTY_WIDTH);
             _x = 0; _y = 0;
             break;
-        case 13: // CR
+        case 13: // CR - carriage return
             _x = 0;
             break;
         case 27: // ESC - start escape sequence
             _esc_state = 1;
             break;
-        case 127: // DEL
+        case 127: // DEL - delete (ignored)
             break;
-        default:
+        default: // Regular character / Caractere regular
             _buffer[_y * TTY_WIDTH + _x] = c;
             _x++;
             break;
     }
+    // [English] Handle line wrapping and scrolling
+    // [Portuguese] Gerencia quebra de linha e rolagem
     while(_x >= TTY_WIDTH) { _x -= TTY_WIDTH; _y++; }
     while(_y >= TTY_HEIGHT) screen_scroll();
 }

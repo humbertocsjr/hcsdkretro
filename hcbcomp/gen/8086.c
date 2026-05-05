@@ -4,6 +4,8 @@ extern FILE *outfile;
 #define out outfile
 static int label_counter = 0;
 
+// [English] Generates a new unique label number for 8086 assembly
+// [Portuguese] Gera um novo número de rótulo único para assembly 8086
 int gen_label(void)
 {
     return label_counter++;
@@ -18,6 +20,9 @@ void gen_label_str(const char *name) { fprintf(out, "%s:\n", name); }
 void gen_label_int(int label) { fprintf(out, ".L%i:\n", label); }
 void gen_word(int val) { fprintf(out, "\tdw %i\n", val); }
 void gen_dword(int val) { fprintf(out, "\tdw %i, 0\n", val & 0xFFFF); }
+
+// [English] Emits a string as a DB directive with escape sequence handling for 8086
+// [Portuguese] Emite uma string como diretiva DB com tratamento de sequências de escape para 8086
 void gen_bytes(const char *str)
 {
     fprintf(out, "\tdb \"");
@@ -39,6 +44,9 @@ void gen_bytes(const char *str)
     fprintf(out, "\"\n");
 }
 void gen_reserve(int n) { fprintf(out, "\tds %i\n", n); }
+
+// [English] Emits a formatted comment line in 8086 assembly
+// [Portuguese] Emite uma linha de comentário formatada em assembly 8086
 void gen_comment(const char *fmt, ...)
 {
     va_list args;
@@ -49,6 +57,8 @@ void gen_comment(const char *fmt, ...)
     va_end(args);
 }
 
+// [English] Emits a raw 8086 assembly instruction line
+// [Portuguese] Emite uma linha de instrução assembly 8086 bruta
 void gen_emit_raw(const char *line)
 {
     fprintf(out, "\t%s\n", line);
@@ -69,6 +79,8 @@ static void gen_emitf(const char *fmt, ...)
     va_end(args);
 }
 
+// [English] Generates function prologue for 8086: push bp, mov bp/sp, allocate locals
+// [Portuguese] Gera prólogo de função para 8086: push bp, mov bp/sp, aloca locais
 void gen_prologue(const char *name, int nlocals)
 {
     gen_label_str(name);
@@ -80,6 +92,8 @@ void gen_prologue(const char *name, int nlocals)
     }
 }
 
+// [English] Generates function epilogue for 8086: mov sp/bp, pop bp, ret
+// [Portuguese] Gera epílogo de função para 8086: mov sp/bp, pop bp, ret
 void gen_epilogue(void)
 {
     gen_emit("mov sp, bp");
@@ -118,57 +132,80 @@ void gen_load_addr(const char *name)
 }
 
 void gen_load_label(int label) { fprintf(outfile, "\tmov ax, .L%i\n", label); }
+
+// [English] Stores AX to a local variable at BP-offset
+// [Portuguese] Armazena AX em uma variável local no deslocamento BP-offset
 void gen_store_local(int offset)
 {
     gen_emitf("mov [bp-%i], ax", offset * 2 + 2);
 }
 
+// [English] Loads AX from a local variable at BP-offset
+// [Portuguese] Carrega AX de uma variável local no deslocamento BP-offset
 void gen_load_local(int offset)
 {
     gen_emitf("mov ax, [bp-%i]", offset * 2 + 2);
 }
 
+// [English] Computes address of a local variable: LEA AX, [BP-offset]
+// [Portuguese] Computa endereço de variável local: LEA AX, [BP-offset]
 void gen_local_addr(int offset)
 {
     gen_emitf("lea ax, [bp-%i]", offset * 2 + 2);
 }
 
+// [English] Stores AX to a parameter at BP+offset
+// [Portuguese] Armazena AX em um parâmetro no deslocamento BP+offset
 void gen_store_param(int offset)
 {
     gen_emitf("mov [bp+%i], ax", offset * 2 + 4);
 }
 
+// [English] Loads AX from a parameter at BP+offset
+// [Portuguese] Carrega AX de um parâmetro no deslocamento BP+offset
 void gen_load_param(int offset)
 {
     gen_emitf("mov ax, [bp+%i]", offset * 2 + 4);
 }
 
+// [English] Computes address of a parameter: LEA AX, [BP+offset]
+// [Portuguese] Computa endereço de parâmetro: LEA AX, [BP+offset]
 void gen_param_addr(int offset)
 {
     gen_emitf("lea ax, [bp+%i]", offset * 2 + 4);
 }
 
+// [English] Stores AX to a named global variable
+// [Portuguese] Armazena AX em uma variável global nomeada
 void gen_store_global(const char *name)
 {
     gen_emitf("mov [%s], ax", name);
 }
 
+// [English] Loads AX from a named global variable
+// [Portuguese] Carrega AX de uma variável global nomeada
 void gen_load_global(const char *name)
 {
     gen_emitf("mov ax, [%s]", name);
 }
 
+// [English] Dereferences AX: loads the 16-bit value at [AX] into AX via BX
+// [Portuguese] Dereferencia AX: carrega o valor de 16 bits em [AX] para AX via BX
 void gen_deref(void)
 {
     gen_emit("mov bx, ax");
     gen_emit("mov ax, [bx]");
 }
 
+// [English] Stores AX to the address in BX
+// [Portuguese] Armazena AX no endereço em BX
 void gen_store_to_addr(void)
 {
     gen_emit("mov [bx], ax");
 }
 
+// [English] Reads a byte from [AX] (peekb), zero-extends to 16 bits in AX
+// [Portuguese] Lê um byte de [AX] (peekb), estende com zero para 16 bits em AX
 void gen_peekb(void)
 {
     gen_emit("mov bx, ax");
@@ -176,33 +213,45 @@ void gen_peekb(void)
     gen_emit("mov al, [bx]");
 }
 
+// [English] Writes a byte (pokeb): stores AL to the address in BX
+// [Portuguese] Escreve um byte (pokeb): armazena AL no endereço em BX
 void gen_pokeb(void)
 {
     gen_emit("mov [bx], al");
 }
 
+// [English] 16-bit addition: AX = AX + BX
+// [Portuguese] Adição de 16 bits: AX = AX + BX
 void gen_add(void)
 {
     gen_emit("add ax, bx");
 }
 
+// [English] Doubles AX: AX = AX * 2
+// [Portuguese] Dobra AX: AX = AX * 2
 void gen_double(void)
 {
     gen_emit("add ax, ax");
 }
 
+// [English] 16-bit subtraction: AX = BX - AX (after xchg)
+// [Portuguese] Subtração de 16 bits: AX = BX - AX (após xchg)
 void gen_sub(void)
 {
     gen_emit("xchg ax, bx");
     gen_emit("sub ax, bx");
 }
 
+// [English] 16-bit unsigned multiplication: AX = BX * AX
+// [Portuguese] Multiplicação unsigned de 16 bits: AX = BX * AX
 void gen_mul(void)
 {
     gen_emit("xchg ax, bx");
     gen_emit("mul bx");
 }
 
+// [English] 16-bit unsigned division: AX = BX / AX, remainder in DX
+// [Portuguese] Divisão unsigned de 16 bits: AX = BX / AX, resto em DX
 void gen_div(void)
 {
     gen_emit("xchg ax, bx");
@@ -210,6 +259,8 @@ void gen_div(void)
     gen_emit("div bx");
 }
 
+// [English] 16-bit unsigned modulo: DX = BX % AX (result in AX after mov)
+// [Portuguese] Módulo unsigned de 16 bits: DX = BX % AX (resultado em AX após mov)
 void gen_mod(void)
 {
     gen_emit("xchg ax, bx");
@@ -218,16 +269,22 @@ void gen_mod(void)
     gen_emit("mov ax, dx");
 }
 
+// [English] 16-bit negation: AX = -AX
+// [Portuguese] Negação de 16 bits: AX = -AX
 void gen_neg(void)
 {
     gen_emit("neg ax");
 }
 
+// [English] 16-bit bitwise NOT: AX = ~AX
+// [Portuguese] NOT bitwise de 16 bits: AX = ~AX
 void gen_not(void)
 {
     gen_emit("not ax");
 }
 
+// [English] 16-bit logical NOT: AX = !AX (returns 0 or 1)
+// [Portuguese] NOT lógico de 16 bits: AX = !AX (retorna 0 ou 1)
 void gen_lnot(void)
 {
     int l1 = gen_label();
@@ -241,21 +298,29 @@ void gen_lnot(void)
     gen_label_int(l2);
 }
 
+// [English] 16-bit bitwise AND: AX = AX & BX
+// [Portuguese] AND bitwise de 16 bits: AX = AX & BX
 void gen_and(void)
 {
     gen_emit("and ax, bx");
 }
 
+// [English] 16-bit bitwise OR: AX = AX | BX
+// [Portuguese] OR bitwise de 16 bits: AX = AX | BX
 void gen_or(void)
 {
     gen_emit("or ax, bx");
 }
 
+// [English] 16-bit bitwise XOR: AX = AX ^ BX
+// [Portuguese] XOR bitwise de 16 bits: AX = AX ^ BX
 void gen_xor(void)
 {
     gen_emit("xor ax, bx");
 }
 
+// [English] 16-bit left shift: shifts BX left by CX times, result in AX
+// [Portuguese] Deslocamento à esquerda de 16 bits: desloca BX para esquerda CX vezes, resultado em AX
 void gen_shl(void)
 {
     int l1 = gen_label();
@@ -271,6 +336,8 @@ void gen_shl(void)
     gen_emit("mov ax, bx");
 }
 
+// [English] 16-bit right shift: shifts BX right by CX times, result in AX
+// [Portuguese] Deslocamento à direita de 16 bits: desloca BX para direita CX vezes, resultado em AX
 void gen_shr(void)
 {
     int l1 = gen_label();
@@ -286,6 +353,8 @@ void gen_shr(void)
     gen_emit("mov ax, bx");
 }
 
+// [English] 16-bit equality comparison: AX = (BX == AX) ? 1 : 0
+// [Portuguese] Comparação de igualdade de 16 bits: AX = (BX == AX) ? 1 : 0
 void gen_cmp_eq(void)
 {
     int l1 = gen_label();
@@ -299,6 +368,8 @@ void gen_cmp_eq(void)
     gen_label_int(lend);
 }
 
+// [English] 16-bit not-equal comparison: AX = (BX != AX) ? 1 : 0
+// [Portuguese] Comparação de desigualdade de 16 bits: AX = (BX != AX) ? 1 : 0
 void gen_cmp_ne(void)
 {
     int l1 = gen_label();
@@ -312,6 +383,8 @@ void gen_cmp_ne(void)
     gen_label_int(lend);
 }
 
+// [English] 16-bit less-than comparison: AX = (BX < AX) ? 1 : 0
+// [Portuguese] Comparação menor-que de 16 bits: AX = (BX < AX) ? 1 : 0
 void gen_cmp_lt(void)
 {
     int l1 = gen_label();
@@ -325,6 +398,8 @@ void gen_cmp_lt(void)
     gen_label_int(lend);
 }
 
+// [English] 16-bit greater-than comparison: AX = (BX > AX) ? 1 : 0
+// [Portuguese] Comparação maior-que de 16 bits: AX = (BX > AX) ? 1 : 0
 void gen_cmp_gt(void)
 {
     int l1 = gen_label();
@@ -338,6 +413,8 @@ void gen_cmp_gt(void)
     gen_label_int(lend);
 }
 
+// [English] 16-bit less-or-equal comparison: AX = (BX <= AX) ? 1 : 0
+// [Portuguese] Comparação menor-ou-igual de 16 bits: AX = (BX <= AX) ? 1 : 0
 void gen_cmp_le(void)
 {
     int l1 = gen_label();
@@ -351,6 +428,8 @@ void gen_cmp_le(void)
     gen_label_int(lend);
 }
 
+// [English] 16-bit greater-or-equal comparison: AX = (BX >= AX) ? 1 : 0
+// [Portuguese] Comparação maior-ou-igual de 16 bits: AX = (BX >= AX) ? 1 : 0
 void gen_cmp_ge(void)
 {
     int l1 = gen_label();
@@ -381,6 +460,8 @@ void gen_jnz(int label)
     gen_emitf("jnz near .L%i", label);
 }
 
+// [English] Generates function call and adjusts stack for arguments on 8086
+// [Portuguese] Gera chamada de função e ajusta a pilha para argumentos no 8086
 void gen_call(const char *name, int nargs)
 {
     gen_emitf("call %s", name);
@@ -391,4 +472,3 @@ void gen_call(const char *name, int nargs)
 }
 
 void gen_data_final(void) {}
-

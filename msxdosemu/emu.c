@@ -16,6 +16,8 @@ char *_disk_b_path = "";
 uint16_t _disk_transferr_address = 0x80;
 int _return_code = 0;
 
+// [English] Display help
+// [Portuguese] Exibe ajuda
 void help()
 {
     printf("MSX-DOS 1 Simplified Emulator for Retro Computing v%d.%d R%d\n", VERSION, SUBVERSION, REVISION);
@@ -36,6 +38,10 @@ void help()
     exit(1);
 }
 
+// [English] Entry point
+// [Portuguese] Ponto de entrada
+// [English] Parses arguments, loads COM file, sets up FCB and args, executes
+// [Portuguese] Analisa argumentos, carrega arquivo COM, configura FCB e argumentos, executa
 int main(int argc, char **argv)
 {
     char *com_name = NULL;
@@ -45,6 +51,9 @@ int main(int argc, char **argv)
     char args[128];
     char *endptr;
     strcpy(args, "");
+
+    // [English] Parse command-line arguments
+    // [Portuguese] Analisa argumentos da linha de comando
     for(int i = 1; i < argc; i++)
     {
         if(!strcmp(argv[i], "-h"))
@@ -116,8 +125,14 @@ int main(int argc, char **argv)
             else com_name = argv[i];
         }
     }
+
+    // [English] Clear memory and validate
+    // [Portuguese] Limpa memória e valida
     memset(_memory, 0, 0x10000);
     if(!com_name) help();
+
+    // [English] Setup File Control Block at 0x5c (first filename)
+    // [Portuguese] Configura FCB em 0x5c (primeiro nome)
     abi_dos_fcb_t *fcb = (abi_dos_fcb_t *)&_memory[0x5c];
     memset(fcb->name, ' ', 11);
     if(args_first_fname)
@@ -145,6 +160,9 @@ int main(int argc, char **argv)
             }
         }
     }
+
+    // [English] Setup File Control Block at 0x6c (second filename)
+    // [Portuguese] Configura FCB em 0x6c (segundo nome)
     fcb = (abi_dos_fcb_t *)&_memory[0x6c];
     memset(fcb->name, ' ', 11);
     if(args_second_fname)
@@ -173,6 +191,8 @@ int main(int argc, char **argv)
         }
     }
 
+    // [English] Load COM file into memory at 0x100
+    // [Portuguese] Carrega arquivo COM na memória em 0x100
     FILE *com_file = fopen(com_name, "rb");
     if(!com_file)
     {
@@ -191,10 +211,13 @@ int main(int argc, char **argv)
     // NOTE: ZEXDOC test skipping would go here
     // (requires understanding the ZEXDOC's internal test table structure)
 
+    // [English] Setup command-line tail
+    // [Portuguese] Configura cauda da linha de comando
     memcpy(&_memory[0x81], args, 127);
     _memory[0x80] = strlen(args) > 127 ? 127 : strlen(args);
 
+    // [English] Execute program
+    // [Portuguese] Executa programa
     exec();
     return _return_code;
 }
-

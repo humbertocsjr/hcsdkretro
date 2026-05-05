@@ -5,6 +5,10 @@ FILE *outfile = NULL;
 FILE *devnull = NULL;
 const char *target_cpu = "z80";
 
+// [English] Detects the target CPU architecture from the executable name suffix
+// (e.g. hcbcomp-z80, hcbcomp-8086, hcbcomp-8080, hcbcomp-8085, hcbcomp-8086exe)
+// [Portuguese] Detecta a arquitetura de CPU alvo a partir do sufixo do nome do executável
+// (ex.: hcbcomp-z80, hcbcomp-8086, hcbcomp-8080, hcbcomp-8085, hcbcomp-8086exe)
 static void detect_cpu(const char *argv0)
 {
     const char *p = strrchr(argv0, '-');
@@ -21,6 +25,8 @@ static void detect_cpu(const char *argv0)
     }
 }
 
+// [English] Displays the help message with usage instructions and available options
+// [Portuguese] Exibe a mensagem de ajuda com instruções de uso e opções disponíveis
 static void help(void)
 {
     printf("HC B Compiler for Retro Computing v%d.%d R%d\n", 2, 0, 0);
@@ -34,12 +40,19 @@ static void help(void)
     exit(1);
 }
 
+// [English] Main entry point: parses command-line arguments, runs the preprocessor,
+// lexer, parser, and peephole optimizer, then writes the output assembly file
+// [Portuguese] Ponto de entrada principal: analisa argumentos da linha de comando,
+// executa o pré-processador, analisador léxico, analisador sintático e otimizador
+// peephole, então escreve o arquivo assembly de saída
 int main(int argc, char **argv)
 {
     char *input = NULL;
     char *output = NULL;
 
     detect_cpu(argv[0]);
+
+    // Parse command-line arguments / Analisa argumentos da linha de comando
     for (int i = 1; i < argc; i++)
     {
         if (!strcmp(argv[i], "-o"))
@@ -79,6 +92,7 @@ int main(int argc, char **argv)
     if (!output)
         output = "a.s";
 
+    // Open input file / Abre arquivo de entrada
     FILE *fp = fopen(input, "r");
     if (!fp)
     {
@@ -87,6 +101,7 @@ int main(int argc, char **argv)
     }
     fclose(fp);
 
+    // Create temp file for output / Cria arquivo temporário para saída
     outfile = tmpfile();
     if (!outfile)
     {
@@ -101,7 +116,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    /* Run preprocessor to temp file */
+    // Run preprocessor to temp file / Executa pré-processador para arquivo temporário
     FILE *pp_out = tmpfile();
     if (!pp_out)
     {
@@ -110,7 +125,7 @@ int main(int argc, char **argv)
     }
     preproc_run(input, pp_out, target_cpu);
 
-    /* Lex from temp file */
+    // Lex from temp file / Analisa léxicamente a partir do arquivo temporário
     rewind(pp_out);
     filename = input;
     lex_init(pp_out);
@@ -118,7 +133,7 @@ int main(int argc, char **argv)
     next();
     compile_unit();
 
-    /* ── Peephole optimization ── */
+    // Peephole optimization / Otimização peephole
     rewind(outfile);
     FILE *real_out = fopen(output, "w");
     if (!real_out)

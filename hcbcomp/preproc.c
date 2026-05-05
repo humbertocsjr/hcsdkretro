@@ -4,6 +4,8 @@
 #define MACRO_NAME 64
 #define MACRO_VAL 4096
 
+// [English] Structure representing a preprocessor macro definition
+// [Portuguese] Estrutura que representa uma definição de macro do pré-processador
 typedef struct
 {
     char name[MACRO_NAME];
@@ -21,6 +23,10 @@ static int cond_skip = 0;
 static char *incl_dirs[32];
 static int nincl = 0;
 
+// [English] Adds a new preprocessor define (macro with no arguments).
+// Stores the name and value, marks it as object-like (nargs = -1).
+// [Portuguese] Adiciona uma nova definição de pré-processador (macro sem argumentos).
+// Armazena o nome e valor, marca como macro do tipo objeto (nargs = -1).
 void preproc_add_define(const char *name, const char *value)
 {
     if (nmacros >= MAX_MACROS)
@@ -31,6 +37,8 @@ void preproc_add_define(const char *name, const char *value)
     nmacros++;
 }
 
+// [English] Searches for a macro by name using linear search
+// [Portuguese] Busca uma macro pelo nome usando busca linear
 static macro_t *find_macro(const char *name)
 {
     for (int i = 0; i < nmacros; i++)
@@ -39,6 +47,12 @@ static macro_t *find_macro(const char *name)
     return NULL;
 }
 
+// [English] Expands macro invocations in a source line recursively.
+// Handles string/char literals (skips macro expansion inside them),
+// comments, and object-like macros. Recursion depth is limited to 16.
+// [Portuguese] Expande invocações de macro em uma linha fonte recursivamente.
+// Processa literais string/char (pula expansão de macro dentro deles),
+// comentários e macros do tipo objeto. Profundidade de recursão limitada a 16.
 static void expand_line(const char *line, FILE *out, int depth)
 {
     if (depth > 16)
@@ -51,6 +65,7 @@ static void expand_line(const char *line, FILE *out, int depth)
     int wi = 0;
     while (*p)
     {
+        // String literal / Literal string
         if (*p == '"')
         {
             if (wi > 0)
@@ -77,6 +92,8 @@ static void expand_line(const char *line, FILE *out, int depth)
             }
             continue;
         }
+
+        // Char literal / Literal caractere
         if (*p == '\'')
         {
             if (wi > 0)
@@ -103,6 +120,8 @@ static void expand_line(const char *line, FILE *out, int depth)
             }
             continue;
         }
+
+        // Whitespace or punctuation / Espaço em branco ou pontuação
         if (*p <= ' ' || *p == ',' || *p == '(' || *p == ')' || *p == ';' || *p == '{' || *p == '}')
         {
             if (wi > 0)
@@ -118,6 +137,8 @@ static void expand_line(const char *line, FILE *out, int depth)
             fputc(*p, out);
             p++;
         }
+
+        // Block comment / Comentário de bloco
         else if (*p == '/' && *(p + 1) == '*')
         {
             if (wi > 0)
@@ -142,6 +163,8 @@ static void expand_line(const char *line, FILE *out, int depth)
                 p++;
             }
         }
+
+        // Line comment / Comentário de linha
         else if (*p == '/' && *(p + 1) == '/')
         {
             if (wi > 0)
@@ -161,6 +184,8 @@ static void expand_line(const char *line, FILE *out, int depth)
             }
             break;
         }
+
+        // Accumulate word character / Acumula caractere de palavra
         else
         {
             if (wi < MACRO_NAME - 1)
@@ -168,6 +193,8 @@ static void expand_line(const char *line, FILE *out, int depth)
             p++;
         }
     }
+
+    // Flush remaining word / Descarrega palavra restante
     if (wi > 0)
     {
         word[wi] = 0;
@@ -179,6 +206,10 @@ static void expand_line(const char *line, FILE *out, int depth)
     }
 }
 
+// [English] Evaluates a conditional expression (#ifdef/#ifndef).
+// Returns 1 if the referenced macro is defined, 0 otherwise.
+// [Portuguese] Avalia uma expressão condicional (#ifdef/#ifndef).
+// Retorna 1 se a macro referenciada estiver definida, 0 caso contrário.
 static int eval_cond(const char *expr)
 {
     while (*expr == ' ' || *expr == '\t')
@@ -191,6 +222,12 @@ static int eval_cond(const char *expr)
     return find_macro(name) != NULL;
 }
 
+// [English] Main preprocessor entry point: reads an input file line by line,
+// processes preprocessor directives (#define, #include, #ifdef, #ifndef, #else, #endif),
+// expands macros, and writes the result to the output stream.
+// [Portuguese] Ponto de entrada principal do pré-processador: lê um arquivo de entrada
+// linha por linha, processa diretivas de pré-processador (#define, #include, #ifdef,
+// #ifndef, #else, #endif), expande macros e escreve o resultado no fluxo de saída.
 void preproc_run(const char *filename, FILE *output, const char *cpu)
 {
     FILE *in = fopen(filename, "r");
@@ -204,6 +241,7 @@ void preproc_run(const char *filename, FILE *output, const char *cpu)
     cond_sp = 0;
     cond_skip = 0;
 
+    // Define CPU-specific macro / Define macro específica da CPU
     if (cpu)
     {
         char buf[64];
@@ -229,6 +267,7 @@ void preproc_run(const char *filename, FILE *output, const char *cpu)
             while (*p == ' ')
                 p++;
 
+            // #define directive / Diretiva #define
             if (!strcmp(cmd, "define"))
             {
                 char name[MACRO_NAME];
@@ -239,6 +278,7 @@ void preproc_run(const char *filename, FILE *output, const char *cpu)
                 if (nmacros < MAX_MACROS)
                 {
                     strncpy(macros[nmacros].name, name, MACRO_NAME - 1);
+                    // Function-like macro / Macro do tipo função
                     if (*p == '(')
                     {
                         p++;
@@ -261,8 +301,10 @@ void preproc_run(const char *filename, FILE *output, const char *cpu)
                     }
                     else
                     {
+                        // Object-like macro / Macro do tipo objeto
                         macros[nmacros].nargs = -1;
                     }
+                    // Parse macro value / Analisa valor da macro
                     int vi = 0;
                     while (*p && vi < MACRO_VAL - 1)
                     {
@@ -287,6 +329,8 @@ void preproc_run(const char *filename, FILE *output, const char *cpu)
                     nmacros++;
                 }
             }
+
+            // #include directive / Diretiva #include
             else if (!strcmp(cmd, "include"))
             {
                 while (*p == ' ')
@@ -301,6 +345,7 @@ void preproc_run(const char *filename, FILE *output, const char *cpu)
                         fname[fi++] = *p++;
                     fname[fi] = 0;
                 }
+                // Search in file's directory / Busca no diretório do arquivo
                 char fullpath[512];
                 const char *slash = strrchr(filename, '/');
                 if (slash && delim == '"')
@@ -315,6 +360,7 @@ void preproc_run(const char *filename, FILE *output, const char *cpu)
                         continue;
                     }
                 }
+                // Search in include directories / Busca nos diretórios de inclusão
                 int found = 0;
                 for (int i = 0; i < nincl; i++)
                 {
@@ -328,6 +374,7 @@ void preproc_run(const char *filename, FILE *output, const char *cpu)
                         break;
                     }
                 }
+                // Search in current directory / Busca no diretório atual
                 if (!found)
                 {
                     FILE *tf = fopen(fname, "r");
@@ -343,6 +390,8 @@ void preproc_run(const char *filename, FILE *output, const char *cpu)
                     }
                 }
             }
+
+            // #ifdef / #ifndef directive / Diretiva #ifdef / #ifndef
             else if (!strcmp(cmd, "ifdef") || !strcmp(cmd, "ifndef"))
             {
                 int is_ifndef = !strcmp(cmd, "ifndef");
@@ -353,16 +402,22 @@ void preproc_run(const char *filename, FILE *output, const char *cpu)
                 if (cond_sp < 64)
                     cond_stack[cond_sp++] = take ? 0 : 1;
             }
+
+            // #else directive / Diretiva #else
             else if (!strcmp(cmd, "else"))
             {
                 if (cond_sp > 0)
                     cond_stack[cond_sp - 1] = !cond_stack[cond_sp - 1];
             }
+
+            // #endif directive / Diretiva #endif
             else if (!strcmp(cmd, "endif"))
             {
                 if (cond_sp > 0)
                     cond_sp--;
             }
+
+            // Update skip state / Atualiza estado de pulo condicional
             cond_skip = 0;
             for (int i = 0; i < cond_sp; i++)
                 if (cond_stack[i])
@@ -370,6 +425,7 @@ void preproc_run(const char *filename, FILE *output, const char *cpu)
             continue;
         }
 
+        // Skip lines inside disabled conditional blocks / Pula linhas em blocos condicionais desabilitados
         if (cond_skip)
             continue;
         expand_line(line, output, 0);
@@ -378,6 +434,8 @@ void preproc_run(const char *filename, FILE *output, const char *cpu)
     fclose(in);
 }
 
+// [English] Adds a directory to the include search path list (up to 32 directories)
+// [Portuguese] Adiciona um diretório à lista de caminhos de busca de inclusão (até 32 diretórios)
 void preproc_add_include_dir(const char *dir)
 {
     if (nincl < 32)

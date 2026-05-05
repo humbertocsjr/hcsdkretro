@@ -12,9 +12,15 @@ enum
     REG_PTR = 0x20
 };
 
+// Generates a register encoding value with bit offset.
+// Handles both indexed (e.g., M[HL]) and direct register operands, applies group filtering, and shifts the result.
+// Gera um valor de codificacao de registro com deslocamento de bits.
+// Trata operandos de registro indexados (ex: M[HL]) e diretos, aplica filtro de grupo e desloca o resultado.
 static uint8_t gen_reg(expr_t *arg, int bits_offset, int group_filter, bool use_value_aux)
 {
     uint8_t value = 0;
+    // If the argument is an indexed register (e.g., M[HL]) and group filter allows pointer or B/D registers
+    // Se o argumento for um registro indexado (ex: M[HL]) e o filtro de grupo permitir registros ponteiro ou B/D
     if (arg->token == TOK_INDEX_OPEN && (group_filter & (REG_PTR | REG_ONLY_B_D)))
     {
         if (!arg->right || arg->right->token != TOK_REGISTER)
@@ -23,6 +29,8 @@ static uint8_t gen_reg(expr_t *arg, int bits_offset, int group_filter, bool use_
             error_expr(arg, "invalid register type [%x !& %x]", arg->right->reg->group, group_filter);
         value = arg->right->reg->value_aux & 0x7;
     }
+    // Otherwise, handle as a direct register operand
+    // Caso contrario, trata como operando de registro direto
     else
     {
         if (arg->token != TOK_REGISTER)
@@ -31,9 +39,15 @@ static uint8_t gen_reg(expr_t *arg, int bits_offset, int group_filter, bool use_
             error_expr(arg, "invalid register type [%x !& %x]", arg->reg->group, group_filter);
         value = use_value_aux ? (arg->reg->value_aux & 0x7) : (arg->reg->value & 0x7);
     }
+    // Shift the encoded value to the correct bit position and return
+    // Desloca o valor codificado para a posicao de bits correta e retorna
     return value << bits_offset;
 }
 
+// Emits a simple opcode with no operands.
+// Validates that no arguments were provided, then outputs a single byte of the opcode.
+// Emite um opcode simples sem operandos.
+// Valida que nenhum argumento foi fornecido e emite um unico byte do opcode.
 static void emit_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -42,6 +56,10 @@ static void emit_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *ar
     out(REC_DATA, 0, 0, &opcode->op1, 1);
 }
 
+// Emits an opcode followed by an 8-bit immediate value.
+// Validates exactly one argument, outputs the opcode byte, generates the expression, and emits the 8-bit result.
+// Emite um opcode seguido de um valor imediato de 8 bits.
+// Valida exatamente um argumento, emite o byte do opcode, gera a expressao e emite o resultado de 8 bits.
 static void emit_8bit_value(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -52,6 +70,10 @@ static void emit_8bit_value(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
     out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
 }
 
+// Emits an opcode with an 8-bit value that is masked and shifted.
+// Validates exactly one argument, generates the expression, applies a mask, shifts, ORs with the base opcode, and emits.
+// Emite um opcode com um valor de 8 bits que e mascarado e deslocado.
+// Valida exatamente um argumento, gera a expressao, aplica mascara, desloca, faz OR com o opcode base e emite.
 static void emit_8bit_value_with_mask_and_offset(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -67,6 +89,10 @@ static void emit_8bit_value_with_mask_and_offset(expr_t *mnemonic, opcode_t *opc
     out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
 }
 
+// Emits an opcode followed by a 16-bit immediate value.
+// Validates exactly one argument, outputs the opcode byte, generates the expression, and emits relocatable or absolute 16-bit value.
+// Emite um opcode seguido de um valor imediato de 16 bits.
+// Valida exatamente um argumento, emite o byte do opcode, gera a expressao e emite valor relocavel ou absoluto de 16 bits.
 static void emit_16bit_value(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -76,6 +102,10 @@ static void emit_16bit_value(expr_t *mnemonic, opcode_t *opcode, int argc, expr_
     out(generate(argv[0], 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
 }
 
+// Emits an opcode followed by a 16-bit address, handling indexed operands.
+// Similar to emit_16bit_value but extracts the inner expression from indexed arguments for address resolution.
+// Emite um opcode seguido de um endereco de 16 bits, tratando operandos indexados.
+// Similar a emit_16bit_value mas extrai a expressao interna de argumentos indexados para resolucao de endereco.
 static void emit_16bit_address(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -85,6 +115,10 @@ static void emit_16bit_address(expr_t *mnemonic, opcode_t *opcode, int argc, exp
     out(generate(argv[0]->token == TOK_INDEX_OPEN ? argv[0]->right : argv[0], 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
 }
 
+// Emits an opcode with two 8-bit register operands (e.g., MOV r,r).
+// Validates two arguments, encodes both registers into the opcode byte, and outputs it.
+// Emite um opcode com dois operandos de registro de 8 bits (ex: MOV r,r).
+// Valida dois argumentos, codifica ambos os registros no byte do opcode e o emite.
 static void emit_reg__reg___only8bit(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -96,6 +130,10 @@ static void emit_reg__reg___only8bit(expr_t *mnemonic, opcode_t *opcode, int arg
     out(REC_DATA, 0, 0, &op, 1);
 }
 
+// Emits an opcode with an 8-bit register and an 8-bit immediate value (e.g., MVI r,data).
+// Validates two arguments, encodes the register into the opcode, generates the immediate expression.
+// Emite um opcode com um registro de 8 bits e um valor imediato de 8 bits (ex: MVI r,data).
+// Valida dois argumentos, codifica o registro no opcode, gera a expressao do valor imediato.
 static void emit_reg__8bit_value___only8bit(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -108,6 +146,10 @@ static void emit_reg__8bit_value___only8bit(expr_t *mnemonic, opcode_t *opcode, 
     out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
 }
 
+// Emits an opcode with an 8-bit register operand shifted by an offset (e.g., ADD r).
+// Validates one argument, encodes the register at the specified bit offset.
+// Emite um opcode com um operando de registro de 8 bits deslocado por um offset (ex: ADD r).
+// Valida um argumento, codifica o registro no deslocamento de bits especificado.
 static void emit_reg_with_offset___only8bit(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -118,6 +160,10 @@ static void emit_reg_with_offset___only8bit(expr_t *mnemonic, opcode_t *opcode, 
     out(REC_DATA, 0, 0, &op, 1);
 }
 
+// Emits an opcode with a 16-bit register operand shifted by an offset (e.g., INX rp).
+// Validates one argument, encodes the 16-bit register at the specified bit offset.
+// Emite um opcode com um operando de registro de 16 bits deslocado por um offset (ex: INX rp).
+// Valida um argumento, codifica o registro de 16 bits no deslocamento de bits especificado.
 static void emit_reg_with_offset___only16bit(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -128,6 +174,10 @@ static void emit_reg_with_offset___only16bit(expr_t *mnemonic, opcode_t *opcode,
     out(REC_DATA, 0, 0, &op, 1);
 }
 
+// Emits an opcode with a 16-bit register and a 16-bit immediate value (e.g., LXI rp,data).
+// Validates two arguments, encodes the register, generates the 16-bit expression.
+// Emite um opcode com um registro de 16 bits e um valor imediato de 16 bits (ex: LXI rp,data).
+// Valida dois argumentos, codifica o registro, gera a expressao de 16 bits.
 static void emit_reg__16bit_value___only16bit(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -140,6 +190,10 @@ static void emit_reg__16bit_value___only16bit(expr_t *mnemonic, opcode_t *opcode
     out(REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
 }
 
+// Emits an opcode with a 16-bit auxiliary register operand (e.g., DAD rp).
+// Validates one argument, encodes the auxiliary 16-bit register at the specified bit offset.
+// Emite um opcode com um operando de registro auxiliar de 16 bits (ex: DAD rp).
+// Valida um argumento, codifica o registro auxiliar de 16 bits no deslocamento de bits especificado.
 static void emit_reg_with_offset___only16bitaux(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -150,6 +204,10 @@ static void emit_reg_with_offset___only16bitaux(expr_t *mnemonic, opcode_t *opco
     out(REC_DATA, 0, 0, &op, 1);
 }
 
+// Emits an opcode with a 16-bit PSW register operand (e.g., PUSH PSW, POP PSW).
+// Validates one argument, encodes the PSW 16-bit register at the specified bit offset.
+// Emite um opcode com um operando de registro PSW de 16 bits (ex: PUSH PSW, POP PSW).
+// Valida um argumento, codifica o registro PSW de 16 bits no deslocamento de bits especificado.
 static void emit_reg_with_offset___only16bitpsw(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -160,6 +218,10 @@ static void emit_reg_with_offset___only16bitpsw(expr_t *mnemonic, opcode_t *opco
     out(REC_DATA, 0, 0, &op, 1);
 }
 
+// Emits an opcode with a B or D register operand (e.g., STAX B, STAX D, LDAX B, LDAX D).
+// Validates one argument, encodes the B/D register at the specified bit offset.
+// Emite um opcode com um operando de registro B ou D (ex: STAX B, STAX D, LDAX B, LDAX D).
+// Valida um argumento, codifica o registro B/D no deslocamento de bits especificado.
 static void emit_reg_with_offset___only_b_d(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     uint8_t op = opcode->op1;

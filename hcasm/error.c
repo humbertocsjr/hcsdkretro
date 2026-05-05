@@ -1,5 +1,7 @@
 #include "asm.h"
 
+// [English] Print error message with source position (if available) and exit
+// [Portuguese] Imprime mensagem de erro com posição no fonte (se disponível) e sai
 void error(char *fmt, ...)
 {
     va_list args;
@@ -15,6 +17,8 @@ void error(char *fmt, ...)
     exit(1);
 }
 
+// [English] Print error with expression source position (file:line:col) and exit
+// [Portuguese] Imprime erro com posição no fonte da expressão (arquivo:linha:coluna) e sai
 void error_expr(expr_t *e, char *fmt, ...)
 {
     va_list args;

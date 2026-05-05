@@ -6,6 +6,8 @@ bool _multicpu = false;
 rectype_t _cpu = 0;
 bool _verbose = false;
 
+// [English] Display help
+// [Portuguese] Exibe ajuda
 void help()
 {
     printf("HC Linker for Retro Computing v%d.%d R%d [%s]\n", VERSION, SUBVERSION, REVISION, format_name());
@@ -21,14 +23,24 @@ void help()
     exit(1);
 }
 
+// [English] Linker entry point
+// [Portuguese] Ponto de entrada do linker
+// [English] Parses arguments, initializes sections, processes objects, generates output
+// [Portuguese] Analisa argumentos, inicializa seções, processa objetos, gera saída
 int main(int argc, char **argv)
 {
     char *out_name = NULL;
     char *sym_name = NULL;
+
+    // [English] Create default sections
+    // [Portuguese] Cria seções padrão
     section_new("text", NULL, REC_SECTION_TEXT);
     section_new("data", "text", REC_SECTION_DATA);
     section_new("bss", "data", REC_SECTION_BSS);
     section_new("reloc", "bss", REC_SECTION_RELOC);
+
+    // [English] Parse command-line arguments
+    // [Portuguese] Analisa argumentos da linha de comando
     for (int i = 1; i < argc; i++)
     {
         if (!strcmp(argv[i], "-h"))
@@ -68,10 +80,16 @@ int main(int argc, char **argv)
             obj_add(argv[i]);
         }
     }
+
+    // [English] Set defaults if not specified
+    // [Portuguese] Define padrões se não especificados
     if (!out_name)
         out_name = format_default_out_name();
     if (!_objs)
         help();
+
+    // [English] Run linker pipeline
+    // [Portuguese] Executa o pipeline do linker
     format_init();
     out_open(out_name);
     process(STEP_INITIALIZE);
@@ -81,7 +99,11 @@ int main(int argc, char **argv)
     process(STEP_VALIDATE);
     process(STEP_GENERATE);
     out_close();
+
+    // [English] Print symbols if requested
+    // [Portuguese] Imprime símbolos se solicitado
     if (sym_name)
         consts_print(sym_name);
+
     return 0;
 }

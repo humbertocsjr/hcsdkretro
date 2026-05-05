@@ -77,123 +77,170 @@ extern bool _verbose;
 
 // --== format/?????.c ==--
 
-// Initialize format
+// [English] Initialize format
+// [Portuguese] Inicializa o formato
 void format_init();
-// Get Format Name
+// [English] Get Format Name
+// [Portuguese] Obtém o nome do formato
 char *format_name();
-// Get Default File Extension
+// [English] Get Default File Extension
+// [Portuguese] Obtém a extensão de arquivo padrão
 char *format_ext();
-// Get Default Output File Name
+// [English] Get Default Output File Name
+// [Portuguese] Obtém o nome do arquivo de saída padrão
 char *format_default_out_name();
-// Get Help Arguments
+// [English] Get Help Arguments
+// [Portuguese] Obtém os argumentos de ajuda
 void format_help_arguments();
-// Try Parse Argument
+// [English] Try Parse Argument
+// [Portuguese] Tenta analisar um argumento
 bool format_parse_arg(int argc, int *argi, char **argv);
-// Process step
+// [English] Process step
+// [Portuguese] Processa uma etapa
 void format_process(step_t step);
 
 // --== error.c ==--
 
-// Emit error
+// [English] Emit error
+// [Portuguese] Emite um erro
 void error(char *fmt, ...);
 
 // --== section.c ==--
 
-// Get first section
+// [English] Get first section
+// [Portuguese] Obtém a primeira seção
 section_t *section_first();
-// Find section (return NULL if not found)
+// [English] Find section (return NULL if not found)
+// [Portuguese] Localiza uma seção (retorna NULL se não encontrada)
 section_t *section_find(char *name);
-// Create new section
+// [English] Create new section
+// [Portuguese] Cria uma nova seção
 section_t *section_new(char *name, char *prev_section, rectype_t section);
-// Set default align
+// [English] Set default align
+// [Portuguese] Define o alinhamento padrão
 void section_set_default_align(int align);
-// Reset section sizes
+// [English] Reset section sizes
+// [Portuguese] Redefine os tamanhos das seções
 void section_reset_sizes();
 
 // --== toint.c ==--
 
-// Convert string to int (support: binary, octal, hexadecimal, decimal)
+// [English] Convert string to int (support: binary, octal, hexadecimal, decimal)
+// [Portuguese] Converte string para int (suporta: binário, octal, hexadecimal, decimal)
 int toint(char *str);
 
 // --== obj.c ==--
 
-// Add object file
+// [English] Add object file
+// [Portuguese] Adiciona um arquivo-objeto
 void obj_add(char *filename);
-// Read object record
+// [English] Read object record
+// [Portuguese] Lê um registro de objeto
 bool obj_read(object_file_t *file, record_t *rec);
-// Reset object record position to zero
+// [English] Reset object record position to zero
+// [Portuguese] Redefine a posição do registro de objeto para zero
 void obj_reset(object_file_t *file);
-// Get object from constant
+// [English] Get object from constant
+// [Portuguese] Obtém o objeto a partir de uma constante
 object_file_t *consts_get_obj(object_file_t *obj, char *name);
 
 // --== verbose.c ==--
 
-// Print if in verbose mode
+// [English] Print if in verbose mode
+// [Portuguese] Imprime se estiver no modo verbose
 void verbose(char *fmt, ...);
 
 // --== process.c ==--
-// Process
+
+// [English] Process
+// [Portuguese] Processa
 void process(step_t step);
-// Process objects
+// [English] Process objects
+// [Portuguese] Processa objetos
 size_t process_objs(step_t step, rectype_t section);
-// Emit error on process stages
+// [English] Emit error on process stages
+// [Portuguese] Emite erro nas etapas de processamento
 void process_error(char *fmt, ...);
-// Reorder objects so _start/_main is first in output
+// [English] Reorder objects so _start/_main is first in output
+// [Portuguese] Reordena objetos para que _start/_main seja o primeiro na saída
 void reorder_start_first(void);
 
 // --== out.c ==--
 
-// Open output file
+// [English] Open output file
+// [Portuguese] Abre o arquivo de saída
 void out_open(char *name);
-// Close output file
+// [English] Close output file
+// [Portuguese] Fecha o arquivo de saída
 void out_close();
-// Write byte
+// [English] Write byte
+// [Portuguese] Escreve um byte
 void outb(int value);
-// Write word
+// [English] Write word
+// [Portuguese] Escreve uma word
 void outw(int value);
-// Write data
+// [English] Write data
+// [Portuguese] Escreve dados
 void out(void *data, int data_size);
-// Seek in output file
+// [English] Seek in output file
+// [Portuguese] Posiciona no arquivo de saída
 void out_seek(long offset, int whence);
-// Get current position in output file
+// [English] Get current position in output file
+// [Portuguese] Obtém a posição atual no arquivo de saída
 long out_tell(void);
 
-// Format hooks (optional, can be NULL)
+// [English] Format hooks (optional, can be NULL)
+// [Portuguese] Hooks do formato (opcionais, podem ser NULL)
 extern int (*format_adjust_value)(int value, int position, rectype_t section);
 extern void (*format_record_reloc)(int position, rectype_t section);
 
 // --== consts.c ==--
 
-// Verify if constant exists
+// [English] Verify if constant exists
+// [Portuguese] Verifica se a constante existe
 bool consts_exists(object_file_t *obj, char *name);
-// Set constant section
+// [English] Set constant section
+// [Portuguese] Define a seção da constante
 void consts_set_section(object_file_t *obj, char *name, rectype_t section);
-// Get constant section
+// [English] Get constant section
+// [Portuguese] Obtém a seção da constante
 rectype_t consts_get_section(object_file_t *obj, char *name);
-// Get constant value
+// [English] Get constant value
+// [Portuguese] Obtém o valor da constante
 int consts_get(object_file_t *obj, char *name);
-// Set constant value
+// [English] Set constant value
+// [Portuguese] Define o valor da constante
 void consts_set(object_file_t *obj, char *name, int value);
-// Reset changed flags
+// [English] Reset changed flags
+// [Portuguese] Redefine as flags de alteração
 void consts_reset_changed();
-// Get changed status
+// [English] Get changed status
+// [Portuguese] Obtém o status de alteração
 bool consts_is_changed();
-// Set constant global flag
+// [English] Set constant global flag
+// [Portuguese] Define a flag global da constante
 void consts_set_global(object_file_t *obj, char *name);
-// Print symbols list
+// [English] Print symbols list
+// [Portuguese] Imprime a lista de símbolos
 void consts_print(char *sym_name);
-// Set constant as offset
+// [English] Set constant as offset
+// [Portuguese] Define a constante como offset
 void consts_set_offset(object_file_t *obj, char *name);
-// Get constant is offset/label
+// [English] Get constant is offset/label
+// [Portuguese] Verifica se a constante é offset/rótulo
 bool consts_is_offset(object_file_t *obj, char *name);
-// Emit consts keep changing error
+// [English] Emit consts keep changing error
+// [Portuguese] Emite erro de constantes continuamente alteradas
 void error_consts_has_changed();
 
 // --== stack.c ==--
 
-// Push value to stack
+// [English] Push value to stack
+// [Portuguese] Empurra valor para a pilha
 void stack_push(int value);
-// Pop value from stack
+// [English] Pop value from stack
+// [Portuguese] Remove valor da pilha
 int stack_pop();
-// Reset stack pointer
+// [English] Reset stack pointer
+// [Portuguese] Redefine o ponteiro da pilha
 void stack_reset();

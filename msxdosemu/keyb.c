@@ -8,6 +8,8 @@ char _keyb_keys_in = 0;
 char _keyb_keys_out = 0;
 char _keyb_keys_count = 0;
 
+// [English] Initialize keyboard input (Windows raw mode)
+// [Portuguese] Inicializa entrada do teclado (modo raw Windows)
 void keyb_init()
 {
     HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
@@ -17,6 +19,8 @@ void keyb_init()
     atexit(keyb_exit);
 }
 
+// [English] Push a key into the circular buffer
+// [Portuguese] Insere uma tecla no buffer circular
 void keyb_push(char c)
 {
     if(_keyb_keys_count >= 16) return;
@@ -25,6 +29,8 @@ void keyb_push(char c)
     _keyb_keys_count++;
 }
 
+// [English] Pop a key from the circular buffer
+// [Portuguese] Remove uma tecla do buffer circular
 bool keyb_pop(char *out)
 {
     if(_keyb_keys_count == 0) return false;
@@ -34,12 +40,16 @@ bool keyb_pop(char *out)
     return true;
 }
 
+// [English] Check if a key is available
+// [Portuguese] Verifica se há tecla disponível
 bool keyb_avail()
 {
     if(_kbhit()) return true;
     return _keyb_keys_count > 0;
 }
 
+// [English] Wait for and pop a key (blocking)
+// [Portuguese] Aguarda e remove uma tecla (bloqueante)
 char keyb_wait_pop()
 {
     char c;
@@ -50,23 +60,34 @@ char keyb_wait_pop()
     return c;
 }
 
+// [English] Restore original console mode on exit
+// [Portuguese] Restaura modo original do console na saída
 void keyb_exit()
 {
     SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), orig_console_mode);
 }
 
+// [English] Get a single character from console (Windows)
+// [Portuguese] Obtém um caractere do console (Windows)
 static char keyb_getc()
 {
     return _getch();
 }
 
+// [English] Process keyboard input (read keys, handle escape sequences for debug)
+// [Portuguese] Processa entrada do teclado (lê teclas, gerencia sequências de escape para debug)
 void keyb_process()
 {
     char c = _kbhit() ? _getch() : 0;
+    // [English] Handle escape sequences (cursor keys, function keys, etc.)
+    // [Portuguese] Gerencia sequências de escape (teclas de cursor, teclas de função, etc.)
     if(c == 033)
     {
         int params[5];
         char seq[128];
+
+        // [English] Read complete escape sequence
+        // [Portuguese] Lê sequência de escape completa
         seq[0] = _kbhit() ? _getch() : 0;
         if(seq[0] == 0) return;
         for(int i = 1; i < 127; i++)
@@ -76,10 +97,16 @@ void keyb_process()
             seq[i+1] = 0;
             if(seq[i] == 0 || (seq[i] >= 0x40 && seq[i] <= 0x7f)) break;
         }
+
+        // [English] Parse CSI sequences (ESC [ ... )
+        // [Portuguese] Analisa sequências CSI (ESC [...)
         if(seq[0] == '[')
         {
             char *ptr = seq;
             ptr++;
+
+            // [English] Parse numeric parameters separated by semicolons
+            // [Portuguese] Analisa parâmetros numéricos separados por ponto e vírgula
             int params_total = 0;
             for(int i = 0; i < 5; i++)
             {
@@ -99,11 +126,16 @@ void keyb_process()
                 if(*ptr != ';') break;
                 ptr++;
             }
+
+            // [English] Dispatch debugger commands based on final character and parameters
+            // [Portuguese] Despacha comandos do debugger baseado no caractere final e parâmetros
             switch(*ptr)
             {
                 case '~':
                     switch(params[0])
                     {
+                        // [English] Step into
+                        // [Portuguese] Executar próxima instrução
                         case 24:
                         case 31:
                             if(_debug)
@@ -111,6 +143,9 @@ void keyb_process()
                                 _next_step = true;
                             }
                             break;
+
+                        // [English] Step over
+                        // [Portuguese] Pular chamada
                         case 23:
                         case 29:
                             if(_debug)
@@ -120,6 +155,9 @@ void keyb_process()
                                 _skip_call_step_address = -1;
                             }
                             break;
+
+                        // [English] Dump RAM and VRAM to files
+                        // [Portuguese] Despeja RAM e VRAM para arquivos
                         case 21:
                         case 28:;
                             if(_debug)
@@ -138,6 +176,9 @@ void keyb_process()
                                 }
                             }
                             break;
+
+                        // [English] Toggle debug mode
+                        // [Portuguese] Alterna modo debug
                         case 20:
                         case 26:
                             if(_debuggable)
@@ -149,6 +190,7 @@ void keyb_process()
                                 }
                             }
                             break;
+
                         default:
                             printf("\r{ESC%s  -> %c %i %i}", seq, *ptr, params[0], params[1]);
                             exit(1);
@@ -163,6 +205,8 @@ void keyb_process()
             exit(1);
         }
     }
+    // [English] Regular key - push into buffer
+    // [Portuguese] Tecla normal - insere no buffer
     else if(c)
     {
         keyb_push(c);
@@ -180,6 +224,8 @@ char _keyb_keys_in = 0;
 char _keyb_keys_out = 0;
 char _keyb_keys_count = 0;
 
+// [English] Initialize keyboard input (POSIX raw mode)
+// [Portuguese] Inicializa entrada do teclado (modo raw POSIX)
 void keyb_init()
 {
     struct termios new_tio;
@@ -192,6 +238,8 @@ void keyb_init()
     tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
 }
 
+// [English] Push a key into the circular buffer
+// [Portuguese] Insere uma tecla no buffer circular
 void keyb_push(char c)
 {
     if(_keyb_keys_count >= 16) return;
@@ -200,6 +248,8 @@ void keyb_push(char c)
     _keyb_keys_count++;
 }
 
+// [English] Pop a key from the circular buffer
+// [Portuguese] Remove uma tecla do buffer circular
 bool keyb_pop(char *out)
 {
     if(_keyb_keys_count == 0) return false;
@@ -209,11 +259,15 @@ bool keyb_pop(char *out)
     return true;
 }
 
+// [English] Check if a key is available
+// [Portuguese] Verifica se há tecla disponível
 bool keyb_avail()
 {
     return _keyb_keys_count > 0;
 }
 
+// [English] Wait for and pop a key (blocking)
+// [Portuguese] Aguarda e remove uma tecla (bloqueante)
 char keyb_wait_pop()
 {
     char c;
@@ -224,11 +278,15 @@ char keyb_wait_pop()
     return c;
 }
 
+// [English] Restore original terminal settings on exit
+// [Portuguese] Restaura configurações originais do terminal na saída
 void keyb_exit()
 {
     tcsetattr(STDIN_FILENO, TCSANOW, &orig_tio);
 }
 
+// [English] Get a single character from console (POSIX)
+// [Portuguese] Obtém um caractere do console (POSIX)
 static char keyb_getc()
 {
     char c;
@@ -236,13 +294,21 @@ static char keyb_getc()
     return 0;
 }
 
+// [English] Process keyboard input (read keys, handle escape sequences for debug)
+// [Portuguese] Processa entrada do teclado (lê teclas, gerencia sequências de escape para debug)
 void keyb_process()
 {
     char c = keyb_getc();
+
+    // [English] Handle escape sequences (cursor keys, function keys, etc.)
+    // [Portuguese] Gerencia sequências de escape (teclas de cursor, teclas de função, etc.)
     if(c == 033)
     {
         int params[5];
         char seq[128];
+
+        // [English] Read complete escape sequence
+        // [Portuguese] Lê sequência de escape completa
         seq[0] = keyb_getc();
         for(int i = 1; i < 127; i++)
         {
@@ -250,10 +316,16 @@ void keyb_process()
             seq[i+1] = 0;
             if(seq[i] == 0 || (seq[i] >= 0x40 && seq[i] <= 0x7f)) break;
         }
+
+        // [English] Parse CSI sequences (ESC [ ... )
+        // [Portuguese] Analisa sequências CSI (ESC [...)
         if(seq[0] == '[')
         {
             char *ptr = seq;
             ptr++;
+
+            // [English] Parse numeric parameters separated by semicolons
+            // [Portuguese] Analisa parâmetros numéricos separados por ponto e vírgula
             int params_total = 0;
             for(int i = 0; i < 5; i++)
             {
@@ -273,11 +345,16 @@ void keyb_process()
                 if(*ptr != ';') break;
                 ptr++;
             }
+
+            // [English] Dispatch debugger commands based on final character and parameters
+            // [Portuguese] Despacha comandos do debugger baseado no caractere final e parâmetros
             switch(*ptr)
             {
                 case '~':
                     switch(params[0])
                     {
+                        // [English] Step into
+                        // [Portuguese] Executar próxima instrução
                         case 24:
                         case 31:
                             if(_debug)
@@ -285,6 +362,9 @@ void keyb_process()
                                 _next_step = true;
                             }
                             break;
+
+                        // [English] Step over
+                        // [Portuguese] Pular chamada
                         case 23:
                         case 29:
                             if(_debug)
@@ -294,6 +374,9 @@ void keyb_process()
                                 _skip_call_step_address = -1;
                             }
                             break;
+
+                        // [English] Dump RAM and VRAM to files
+                        // [Portuguese] Despeja RAM e VRAM para arquivos
                         case 21:
                         case 28:;
                             if(_debug)
@@ -312,6 +395,9 @@ void keyb_process()
                                 }
                             }
                             break;
+
+                        // [English] Toggle debug mode
+                        // [Portuguese] Alterna modo debug
                         case 20:
                         case 26:
                             if(_debuggable)
@@ -323,6 +409,7 @@ void keyb_process()
                                 }
                             }
                             break;
+
                         default:
                             printf("\r{ESC%s  -> %c %i %i}", seq, *ptr, params[0], params[1]);
                             exit(1);
@@ -337,6 +424,8 @@ void keyb_process()
             exit(1);
         }
     }
+    // [English] Regular key - push into buffer
+    // [Portuguese] Tecla normal - insere no buffer
     else if(c)
     {
         keyb_push(c);

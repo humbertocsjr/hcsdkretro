@@ -2,6 +2,8 @@
 
 source_t *_source = NULL;
 
+// [English] Show help message with usage info and exit
+// [Portuguese] Mostra mensagem de ajuda com informações de uso e sai
 void help()
 {
     printf("HC Assembler for Retro Computing v%d.%d R%d\n", VERSION, SUBVERSION, REVISION);
@@ -14,11 +16,15 @@ void help()
     exit(1);
 }
 
+// [English] Entry point: parse args, open output, parse source, close output
+// [Portuguese] Ponto de entrada: analisa argumentos, abre saída, analisa fonte, fecha saída
 int main(int argc, char **argv)
 {
     char *out_name = NULL;
     char *dump_name = NULL;
     char *in_name = NULL;
+    // [English] Parse command-line arguments
+    // [Portuguese] Analisa argumentos da linha de comando
     for (int i = 1; i < argc; i++)
     {
         if (!strcmp(argv[i], "-h"))
@@ -54,6 +60,8 @@ int main(int argc, char **argv)
         out_name = "a.obj";
     if (!in_name)
         help();
+    // [English] Open output, parse source, finalize
+    // [Portuguese] Abre saída, analisa fonte, finaliza
     out_open(out_name, dump_name);
     parse(in_name);
     out_close();

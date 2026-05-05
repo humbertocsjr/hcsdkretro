@@ -37,6 +37,8 @@ static char *_env[MAX_ENV];
 static int _env_count = 0;
 static bool _env_inited = false;
 
+// [English] Initialize MSX-DOS 2.0 environment variables
+// [Portuguese] Inicializa variáveis de ambiente do MSX-DOS 2.0
 static void env_init() {
     if(_env_inited) return;
     _env[0] = strdup("PATH=/bin:/usr/local/bin");
@@ -45,8 +47,11 @@ static void env_init() {
     _env_inited = true;
 }
 
-// Parse MSX-DOS 2.0 ASCIIZ path: supports "X:path" or just "path"
-// Output: full_path with / separators, *drive = drive number (0/1)
+// [English] Parse MSX-DOS 2.0 ASCIIZ path: supports "X:path" or just "path"
+// [Portuguese] Parseia caminho ASCIIZ do MSX-DOS 2.0: suporta "X:caminho" ou só "caminho"
+// [English] Output: full_path with
+// [Portuguese] separators, *drive = drive number (0/1)
+// Saída: full_path com separadores /, *drive = número do drive (0/1)
 static void parse_asciiz(uint16_t addr, char *out, int *drive) {
     char *p = (char*)&_memory[addr];
     if(p[0] && p[1] == ':') {
@@ -71,13 +76,24 @@ static void parse_asciiz(uint16_t addr, char *out, int *drive) {
     out[strlen(out)] = 0;
 }
 
+// [English] MSX-DOS CALL 5 handler (main system call entry point)
+// [Portuguese] Manipulador de CALL 5 do MSX-DOS (ponto de entrada principal de chamadas de sistema)
 void abi_dos_call_5()
 {
+    // [English] Ensure default disk is set
+    // [Portuguese] Garante que o disco padrão esteja definido
     if(!_disk_default) _disk_default = _disk_a_path;
     uint16_t ptr;
     char path[FILENAME_MAX];
+
+    // [English] Dispatch by function code in C register
+    // [Portuguese] Despacha pelo código de função no registrador C
+    // --== CP/M-compatible function codes (0x00-0x3F) ==--
+    // --== Códigos de função compatíveis com CP/M (0x00-0x3F) ==--
     switch(_regs_curr.bc.c)
     {
+        // [English] Program terminate
+        // [Portuguese] Terminação de programa
         case 0x00: // Program terminate
             _executing = false;
             break;
@@ -442,6 +458,7 @@ void abi_dos_call_5()
         case 0x1a: // Set Disk Transfer Address
             _disk_transferr_address = _regs_curr.de.word;
             break;
+        // --== Disk operations / Operações de disco ==--
         case 0x1b: // Get Allocation Vector
             _regs_curr.hl.word = 0xE000;
             _regs_curr.de.word = 0xE000;
@@ -493,7 +510,8 @@ void abi_dos_call_5()
                 dpb[3]  = 0x0F; // BLM (block mask)
                 dpb[4]  = 0;    // EXM (extent mask)
                 dpb[5]  = 0;    // reserved
-                // DSM (disk size in blocks - 1): 1440 sectors / 16 = 90 blocks
+                // [English] DSM (disk size in blocks - 1): 1440 sectors
+                // [Portuguese] 16 = 90 blocks
                 dpb[6]  = 89;   // DSM low
                 dpb[7]  = 0;    // DSM high
                 dpb[8]  = 63;   // DRM (directory max)
@@ -604,6 +622,7 @@ void abi_dos_call_5()
             _disk_transferr_address = 0x80;
             if(_search.active && _search.dir) { closedir(_search.dir); _search.active = false; }
             break;
+        // --== MSX-DOS specific FCB functions / Funções FCB específicas do MSX-DOS ==--
         case 0x29: // Get/Set File Date/Time (MSX-DOS specific via FCB)
             {
                 abi_dos_fcb_t *fcb = (abi_dos_fcb_t*)&_memory[_regs_curr.de.word];
@@ -619,8 +638,8 @@ void abi_dos_call_5()
                     // Store in FCB: time at offset 16, date at offset 18
                     uint16_t ftime = (tm->tm_hour << 11) | (tm->tm_min << 5) | (tm->tm_sec >> 1);
                     uint16_t fdate = ((tm->tm_year - 80) << 9) | ((tm->tm_mon + 1) << 5) | tm->tm_mday;
-                    // No FCB padrão, offset 16-19 são para EX/SZ/RC
-                    // O MSX-DOS usa campos estendidos do FCB
+                    // [English] O MSX-DOS usa campos estendidos do FCB
+                    // [Portuguese] No FCB padrão, offset 16-19 são para EX/SZ/RC
                     _regs_curr.af.a = 0x00;
                 } else _regs_curr.af.a = 0xff;
             }
@@ -736,6 +755,7 @@ void abi_dos_call_5()
                 
             }
             break;
+        // --== Date/Time functions / Funções de data/hora ==--
         case 0x2a: // Get Data
             {
                 time_t t = time(NULL);
@@ -762,6 +782,7 @@ void abi_dos_call_5()
         case 0x2d: // Set Time
             _regs_curr.af.a = 0xff;
             break;
+        // --== System functions / Funções de sistema ==--
         case 0x2e: // Get/Set Return Code
             if(_regs_curr.de.e == 0) // Get
                 _regs_curr.hl.word = _return_code_store;
@@ -782,7 +803,7 @@ void abi_dos_call_5()
             _regs_curr.bc.word = 0x0001;
             _regs_curr.de.word = 0x0000;
             break;
-        // === MSX-DOS 2.0 ASCIIZ/Handle-based API ===
+        // --== MSX-DOS 2.0 ASCIIZ/Handle-based API / API baseada em handles ASCIIZ do MSX-DOS 2.0 ==--
         case 0x40: // Open file (ASCIIZ handle-based)
         case 0x44: // Create file
             {
@@ -1159,6 +1180,8 @@ void abi_dos_call_5()
             break;
     }
 
+    // [English] Return from CALL 5 - pop return address from stack
+    // [Portuguese] Retorno do CALL 5 - desempilha endereço de retorno da pilha
     _regs_curr.ip = mem_get_word(_regs_curr.sp);
     _regs_curr.sp += 2;
 }

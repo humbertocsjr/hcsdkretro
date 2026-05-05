@@ -6,6 +6,8 @@ static int label_counter = 0;
 static int emit_mul = 1;
 static int emit_div = 1;
 
+// [English] Generates a new unique label number for Z80 assembly
+// [Portuguese] Gera um novo número de rótulo único para assembly Z80
 int gen_label(void)
 {
     return label_counter++;
@@ -20,6 +22,9 @@ void gen_label_str(const char *name) { fprintf(out, "%s:\n", name); }
 void gen_label_int(int label) { fprintf(out, ".L%i:\n", label); }
 void gen_word(int val) { fprintf(out, "\tdw %i\n", val); }
 void gen_dword(int val) { fprintf(out, "\tdw %i, 0\n", val & 0xFFFF); }
+
+// [English] Emits a string as a DB (define byte) directive with escape sequence handling
+// [Portuguese] Emite uma string como diretiva DB (define byte) com tratamento de sequências de escape
 void gen_bytes(const char *str)
 {
     fprintf(out, "\tdb \"");
@@ -41,6 +46,9 @@ void gen_bytes(const char *str)
     fprintf(out, "\"\n");
 }
 void gen_reserve(int n) { fprintf(out, "\tds %i\n", n); }
+
+// [English] Emits a formatted comment line in Z80 assembly
+// [Portuguese] Emite uma linha de comentário formatada em assembly Z80
 void gen_comment(const char *fmt, ...)
 {
     va_list args;
@@ -51,6 +59,8 @@ void gen_comment(const char *fmt, ...)
     va_end(args);
 }
 
+// [English] Emits a raw assembly instruction line prefixed with a tab
+// [Portuguese] Emite uma linha de instrução assembly bruta prefixada com tabulação
 void gen_emit_raw(const char *line)
 {
     fprintf(out, "\t%s\n", line);
@@ -71,6 +81,8 @@ static void gen_emitf(const char *fmt, ...)
     va_end(args);
 }
 
+// [English] Generates function prologue: saves IX, sets up IX=SP, allocates locals on stack
+// [Portuguese] Gera prólogo de função: salva IX, configura IX=SP, aloca locais na pilha
 void gen_prologue(const char *name, int nlocals)
 {
     gen_label_str(name);
@@ -85,6 +97,8 @@ void gen_prologue(const char *name, int nlocals)
     }
 }
 
+// [English] Generates function epilogue: restores SP from IX, pops IX, returns
+// [Portuguese] Gera epílogo de função: restaura SP de IX, desempilha IX, retorna
 void gen_epilogue(void)
 {
     gen_emit("ld sp, ix");
@@ -92,60 +106,84 @@ void gen_epilogue(void)
     gen_emit("ret");
 }
 
+// [English] Generates a return (same as epilogue for Z80)
+// [Portuguese] Gera um retorno (mesmo que epílogo para Z80)
 void gen_return(void)
 {
     gen_epilogue();
 }
 
+// [English] Pushes the primary register (HL) onto the stack
+// [Portuguese] Empilha o registrador primário (HL) na pilha
 void gen_push_prim(void)
 {
     gen_emit("push hl");
 }
 
+// [English] Pops the secondary register (DE) from the stack
+// [Portuguese] Desempilha o registrador secundário (DE) da pilha
 void gen_pop_sec(void)
 {
     gen_emit("pop de");
 }
 
+// [English] Loads an immediate 16-bit value into HL
+// [Portuguese] Carrega um valor imediato de 16 bits em HL
 void gen_load_imm(int val)
 {
     gen_emitf("ld hl, %i", val);
 }
 
+// [English] Loads HL with the 16-bit value stored at the named variable's address
+// [Portuguese] Carrega HL com o valor de 16 bits armazenado no endereço da variável nomeada
 void gen_load_var(const char *name)
 {
     gen_emitf("ld hl, [%s]", name);
 }
 
+// [English] Loads HL with the address of a named variable
+// [Portuguese] Carrega HL com o endereço de uma variável nomeada
 void gen_load_addr(const char *name)
 {
     gen_emitf("ld hl, %s", name);
 }
 
+// [English] Loads HL with the address of a compiler-generated label
+// [Portuguese] Carrega HL com o endereço de um rótulo gerado pelo compilador
 void gen_load_label(int label) { fprintf(outfile, "\tld hl, .L%i\n", label); }
 
+// [English] Stores the 16-bit value in HL to a named global variable
+// [Portuguese] Armazena o valor de 16 bits em HL em uma variável global nomeada
 void gen_store_global(const char *name)
 {
     gen_emitf("ld [%s], hl", name);
 }
 
+// [English] Loads HL with the 16-bit value from a named global variable
+// [Portuguese] Carrega HL com o valor de 16 bits de uma variável global nomeada
 void gen_load_global(const char *name)
 {
     gen_emitf("ld hl, [%s]", name);
 }
 
+// [English] Stores HL to a local variable at given offset from IX
+// [Portuguese] Armazena HL em uma variável local no deslocamento fornecido de IX
 void gen_store_local(int offset)
 {
     gen_emitf("ld [ix+%i], l", -(offset * 2 + 2));
     gen_emitf("ld [ix+%i], h", -(offset * 2 + 1));
 }
 
+// [English] Loads HL from a local variable at given offset from IX
+// [Portuguese] Carrega HL de uma variável local no deslocamento fornecido de IX
 void gen_load_local(int offset)
 {
     gen_emitf("ld l, [ix+%i]", -(offset * 2 + 2));
     gen_emitf("ld h, [ix+%i]", -(offset * 2 + 1));
 }
 
+// [English] Computes the address of a local variable into HL using IX+offset
+// [Portuguese] Computa o endereço de uma variável local em HL usando IX+offset
 void gen_local_addr(int offset)
 {
     gen_emitf("ld hl, %i", -(offset * 2 + 2));
@@ -154,18 +192,25 @@ void gen_local_addr(int offset)
     gen_emit("pop hl");
     gen_emit("add hl, de");
 }
+
+// [English] Stores HL to a parameter at given offset from IX
+// [Portuguese] Armazena HL em um parâmetro no deslocamento fornecido de IX
 void gen_store_param(int offset)
 {
     gen_emitf("ld [ix+%i], l", offset * 2 + 4);
     gen_emitf("ld [ix+%i], h", offset * 2 + 5);
 }
 
+// [English] Loads HL from a parameter at given offset from IX
+// [Portuguese] Carrega HL de um parâmetro no deslocamento fornecido de IX
 void gen_load_param(int offset)
 {
     gen_emitf("ld l, [ix+%i]", offset * 2 + 4);
     gen_emitf("ld h, [ix+%i]", offset * 2 + 5);
 }
 
+// [English] Computes the address of a parameter into HL using IX+offset
+// [Portuguese] Computa o endereço de um parâmetro em HL usando IX+offset
 void gen_param_addr(int offset)
 {
     gen_emitf("ld hl, %i", offset * 2 + 4);
@@ -175,6 +220,8 @@ void gen_param_addr(int offset)
     gen_emit("add hl, de");
 }
 
+// [English] Dereferences HL: loads the 16-bit value at address HL into HL
+// [Portuguese] Dereferencia HL: carrega o valor de 16 bits no endereço HL em HL
 void gen_deref(void)
 {
     gen_emit("ld a, [hl]");
@@ -183,18 +230,24 @@ void gen_deref(void)
     gen_emit("ld l, a");
 }
 
+// [English] Reads a byte from the address in HL (peekb), zero-extends to 16 bits
+// [Portuguese] Lê um byte do endereço em HL (peekb), estende com zero para 16 bits
 void gen_peekb(void)
 {
     gen_emit("ld l, [hl]");
     gen_emit("ld h, 0");
 }
 
+// [English] Writes a byte (pokeb): stores E to the address in HL
+// [Portuguese] Escreve um byte (pokeb): armazena E no endereço em HL
 void gen_pokeb(void)
 {
     gen_emit("ex de, hl");
     gen_emit("ld [hl], e");
 }
 
+// [English] Stores the 16-bit value in DE to the address in HL (word poke)
+// [Portuguese] Armazena o valor de 16 bits em DE no endereço em HL (poke word)
 void gen_store_to_addr(void)
 {
     gen_emit("ex de, hl");
@@ -203,16 +256,22 @@ void gen_store_to_addr(void)
     gen_emit("ld [hl], d");
 }
 
+// [English] 16-bit addition: HL = HL + DE
+// [Portuguese] Adição de 16 bits: HL = HL + DE
 void gen_add(void)
 {
     gen_emit("add hl, de");
 }
 
+// [English] Doubles the 16-bit value in HL: HL = HL * 2
+// [Portuguese] Dobra o valor de 16 bits em HL: HL = HL * 2
 void gen_double(void)
 {
     gen_emit("add hl, hl");
 }
 
+// [English] 16-bit subtraction: HL = DE - HL (performs HL = 0 - HL after ex de,hl)
+// [Portuguese] Subtração de 16 bits: HL = DE - HL (faz HL = 0 - HL após ex de,hl)
 void gen_sub(void)
 {
     gen_emit("ex de, hl");
@@ -220,6 +279,8 @@ void gen_sub(void)
     gen_emit("sbc hl, de");
 }
 
+// [English] 16-bit unsigned multiplication using shift-and-add algorithm
+// [Portuguese] Multiplicação unsigned de 16 bits usando algoritmo shift-and-add
 void gen_mul(void)
 {
     int l = gen_label();
@@ -242,6 +303,8 @@ void gen_mul(void)
     gen_emit("pop de");
 }
 
+// [English] 16-bit unsigned division using shift-and-subtract algorithm
+// [Portuguese] Divisão unsigned de 16 bits usando algoritmo shift-and-subtract
 void gen_div(void)
 {
     int l = gen_label();
@@ -277,6 +340,8 @@ void gen_div(void)
     gen_emitf("jr nz, .L%i", l);
 }
 
+// [English] 16-bit unsigned modulo: same as division but returns remainder in BC
+// [Portuguese] Módulo unsigned de 16 bits: mesma lógica da divisão mas retorna resto em BC
 void gen_mod(void)
 {
     int l = gen_label();
@@ -314,6 +379,8 @@ void gen_mod(void)
     gen_emit("pop hl");
 }
 
+// [English] 16-bit negation (two's complement): HL = -HL
+// [Portuguese] Negação de 16 bits (complemento de dois): HL = -HL
 void gen_neg(void)
 {
     gen_emit("ex de, hl");
@@ -322,6 +389,8 @@ void gen_neg(void)
     gen_emit("sbc hl, de");
 }
 
+// [English] 16-bit bitwise NOT: HL = ~HL
+// [Portuguese] NOT bitwise de 16 bits: HL = ~HL
 void gen_not(void)
 {
     gen_emit("ld a, l");
@@ -332,6 +401,8 @@ void gen_not(void)
     gen_emit("ld h, a");
 }
 
+// [English] 16-bit logical NOT: HL = !HL (returns 0 or 1)
+// [Portuguese] NOT lógico de 16 bits: HL = !HL (retorna 0 ou 1)
 void gen_lnot(void)
 {
     int l_set = gen_label();
@@ -346,6 +417,8 @@ void gen_lnot(void)
     gen_label_int(l_done);
 }
 
+// [English] 16-bit bitwise AND: HL = HL & DE
+// [Portuguese] AND bitwise de 16 bits: HL = HL & DE
 void gen_and(void)
 {
     gen_emit("ld a, e");
@@ -356,6 +429,8 @@ void gen_and(void)
     gen_emit("ld h, a");
 }
 
+// [English] 16-bit bitwise OR: HL = HL | DE
+// [Portuguese] OR bitwise de 16 bits: HL = HL | DE
 void gen_or(void)
 {
     gen_emit("ld a, e");
@@ -366,6 +441,8 @@ void gen_or(void)
     gen_emit("ld h, a");
 }
 
+// [English] 16-bit bitwise XOR: HL = HL ^ DE
+// [Portuguese] XOR bitwise de 16 bits: HL = HL ^ DE
 void gen_xor(void)
 {
     gen_emit("ld a, e");
@@ -376,31 +453,31 @@ void gen_xor(void)
     gen_emit("ld h, a");
 }
 
+// [English] 16-bit left shift: HL = DE << HL (shift count in HL, value in DE)
+// [Portuguese] Deslocamento à esquerda de 16 bits: HL = DE << HL (contagem em HL, valor em DE)
 void gen_shl(void)
 {
     int l_done = gen_label();
     int l_loop = gen_label();
-    // DE = value to shift, HL = shift count
-    // Result: HL = DE << HL
-    gen_emit("ex de, hl"); // HL = value, DE = shift count
-    gen_emit("ld a, e");   // A = shift count
+    gen_emit("ex de, hl");
+    gen_emit("ld a, e");
     gen_emit("or a");
     gen_emitf("jr z, .L%i", l_done);
     gen_label_int(l_loop);
-    gen_emit("add hl, hl"); // HL <<= 1
+    gen_emit("add hl, hl");
     gen_emit("dec a");
     gen_emitf("jr nz, .L%i", l_loop);
     gen_label_int(l_done);
 }
 
+// [English] 16-bit right shift: HL = DE >> HL (shift count in HL, value in DE)
+// [Portuguese] Deslocamento à direita de 16 bits: HL = DE >> HL (contagem em HL, valor em DE)
 void gen_shr(void)
 {
     int l_done = gen_label();
     int l_loop = gen_label();
-    // DE = value to shift, HL = shift count
-    // Result: HL = DE >> HL
-    gen_emit("ex de, hl"); // HL = value, DE = shift count
-    gen_emit("ld a, e");   // A = shift count
+    gen_emit("ex de, hl");
+    gen_emit("ld a, e");
     gen_emit("or a");
     gen_emitf("jr z, .L%i", l_done);
     gen_label_int(l_loop);
@@ -411,6 +488,8 @@ void gen_shr(void)
     gen_label_int(l_done);
 }
 
+// [English] 16-bit equality comparison: HL = (HL == DE) ? 1 : 0
+// [Portuguese] Comparação de igualdade de 16 bits: HL = (HL == DE) ? 1 : 0
 void gen_cmp_eq(void)
 {
     int l1 = gen_label();
@@ -422,6 +501,8 @@ void gen_cmp_eq(void)
     gen_label_int(l1);
 }
 
+// [English] 16-bit not-equal comparison: HL = (HL != DE) ? 1 : 0
+// [Portuguese] Comparação de desigualdade de 16 bits: HL = (HL != DE) ? 1 : 0
 void gen_cmp_ne(void)
 {
     int l1 = gen_label();
@@ -433,6 +514,8 @@ void gen_cmp_ne(void)
     gen_label_int(l1);
 }
 
+// [English] 16-bit less-than comparison: HL = (DE < HL) ? 1 : 0
+// [Portuguese] Comparação menor-que de 16 bits: HL = (DE < HL) ? 1 : 0
 void gen_cmp_lt(void)
 {
     int l1 = gen_label();
@@ -445,6 +528,8 @@ void gen_cmp_lt(void)
     gen_label_int(l1);
 }
 
+// [English] 16-bit greater-than comparison: HL = (DE > HL) ? 1 : 0
+// [Portuguese] Comparação maior-que de 16 bits: HL = (DE > HL) ? 1 : 0
 void gen_cmp_gt(void)
 {
     int l1 = gen_label();
@@ -458,6 +543,8 @@ void gen_cmp_gt(void)
     gen_label_int(l1);
 }
 
+// [English] 16-bit less-or-equal comparison: HL = (DE <= HL) ? 1 : 0
+// [Portuguese] Comparação menor-ou-igual de 16 bits: HL = (DE <= HL) ? 1 : 0
 void gen_cmp_le(void)
 {
     int l1 = gen_label();
@@ -474,6 +561,8 @@ void gen_cmp_le(void)
     gen_label_int(l1);
 }
 
+// [English] 16-bit greater-or-equal comparison: HL = (DE >= HL) ? 1 : 0
+// [Portuguese] Comparação maior-ou-igual de 16 bits: HL = (DE >= HL) ? 1 : 0
 void gen_cmp_ge(void)
 {
     int l1 = gen_label();
@@ -486,11 +575,15 @@ void gen_cmp_ge(void)
     gen_label_int(l1);
 }
 
+// [English] Unconditional jump to a compiler-generated label
+// [Portuguese] Salto incondicional para um rótulo gerado pelo compilador
 void gen_jmp(int label)
 {
     gen_emitf("jp .L%i", label);
 }
 
+// [English] Conditional jump if zero: jumps if HL == 0
+// [Portuguese] Salto condicional se zero: salta se HL == 0
 void gen_jz(int label)
 {
     gen_emit("ld a, h");
@@ -498,6 +591,8 @@ void gen_jz(int label)
     gen_emitf("jp z, .L%i", label);
 }
 
+// [English] Conditional jump if non-zero: jumps if HL != 0
+// [Portuguese] Salto condicional se não-zero: salta se HL != 0
 void gen_jnz(int label)
 {
     gen_emit("ld a, h");
@@ -505,6 +600,8 @@ void gen_jnz(int label)
     gen_emitf("jp nz, .L%i", label);
 }
 
+// [English] Generates a function call and adjusts stack for arguments
+// [Portuguese] Gera uma chamada de função e ajusta a pilha para argumentos
 void gen_call(const char *name, int nargs)
 {
     gen_emitf("call %s", name);
@@ -519,4 +616,3 @@ void gen_call(const char *name, int nargs)
 }
 
 void gen_data_final(void) {}
-

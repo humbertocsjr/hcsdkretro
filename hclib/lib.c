@@ -5,6 +5,8 @@ FILE *_tmp = NULL;
 object_t *_objs = NULL;
 object_t *_last_obj = NULL;
 
+// [English] Display help
+// [Portuguese] Exibe ajuda
 void help()
 {
     printf("HC Librarian for Retro Computing v%d.%d R%d\n", VERSION, SUBVERSION, REVISION);
@@ -16,6 +18,8 @@ void help()
     exit(1);
 }
 
+// [English] Emit error and cleanup
+// [Portuguese] Emite erro e faz limpeza
 void error(char *fmt, ...)
 {
     va_list args;
@@ -30,6 +34,8 @@ void error(char *fmt, ...)
     exit(1);
 }
 
+// [English] Read object record from file
+// [Portuguese] Le um registro de objeto do arquivo
 bool obj_read(FILE *file, record_t *rec)
 {
     memset(rec, 0, sizeof(record_t));
@@ -38,6 +44,8 @@ bool obj_read(FILE *file, record_t *rec)
     return true;
 }
 
+// [English] Write object record to file
+// [Portuguese] Escreve um registro de objeto no arquivo
 bool obj_write(FILE *file, record_t *rec)
 {
     fwrite(&rec->header, 1, sizeof(record_header_t), file);
@@ -45,6 +53,8 @@ bool obj_write(FILE *file, record_t *rec)
     return true;
 }
 
+// [English] Extract basename from path
+// [Portuguese] Extrai o nome base do caminho
 static const char *obj_basename(const char *path)
 {
     const char *p = path;
@@ -53,6 +63,8 @@ static const char *obj_basename(const char *path)
     return p;
 }
 
+// [English] Check if object already exists in list
+// [Portuguese] Verifica se o objeto ja existe na lista
 bool obj_exists(char *name)
 {
     const char *base = obj_basename(name);
@@ -68,19 +80,35 @@ bool obj_exists(char *name)
     return false;
 }
 
+// [English] Entry point
+// [Portuguese] Ponto de entrada
+// [English] Reads input objects, merges with existing library, writes output
+// [Portuguese] Le objetos de entrada, mescla com biblioteca existente, escreve saida
 int main(int argc, char **argv)
 {
     char *out_name = NULL;
     record_t rec;
+
+    // [English] Parse output filename
+    // [Portuguese] Analisa nome do arquivo de saida
     if(argc > 1 && strcmp(argv[1], "-h")) out_name = argv[1];
     else help();
+
+    // [English] Open temporary and existing library
+    // [Portuguese] Abre temporario e biblioteca existente
     _tmp = fopen("hclib.$$$", "wb");
     _lib = fopen(out_name, "rb");
+
+    // [English] Process input object files
+    // [Portuguese] Processa arquivos-objeto de entrada
     for(int i = 2; i < argc; i++)
     {
         FILE *obj = fopen(argv[i], "rb");
         if(!obj) error("can't open object file: %s", argv[i]);
         bool has_filename = false;
+
+        // [English] Read all records from object
+        // [Portuguese] Le todos os registros do objeto
         while(obj_read(obj, &rec))
         {
             switch (rec.header.type)
@@ -113,6 +141,9 @@ int main(int argc, char **argv)
         }
         fclose(obj);
     }
+
+    // [English] Merge existing library (skip replaced objects)
+    // [Portuguese] Mescla biblioteca existente (pula objetos substituidos)
     if(_lib)
     {
         while(obj_read(_lib, &rec))
@@ -136,9 +167,12 @@ int main(int argc, char **argv)
         }
         fclose(_lib);
     }
+
+    // [English] Finalize: close temp, replace original
+    // [Portuguese] Finaliza: fecha temp, substitui original
     fclose(_tmp);
     remove(out_name);
     rename("hclib.$$$", out_name);
+
     return 0;
 }
-

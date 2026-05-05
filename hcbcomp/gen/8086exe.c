@@ -4,13 +4,15 @@ extern FILE *outfile;
 #define out outfile
 static int label_counter = 0;
 
-/* External library routines for 32-bit math */
+/* External library routines for 32-bit math / Rotinas de biblioteca externas para matemática de 32 bits */
 extern void __mul32u(void);
 extern void __udiv32(void);
 extern void __umod32(void);
 extern void __shl32(void);
 extern void __shr32(void);
 
+// [English] Generates a new unique label number for 8086exe (32-bit far) assembly
+// [Portuguese] Gera um novo número de rótulo único para assembly 8086exe (32-bit far)
 int gen_label(void)
 {
 	return label_counter++;
@@ -24,16 +26,22 @@ void gen_extern(const char *name) { fprintf(out, "extern %s\n", name); }
 void gen_label_str(const char *name) { fprintf(out, "%s:\n", name); }
 void gen_label_int(int label) { fprintf(out, ".L%i:\n", label); }
 
+// [English] Emits a 32-bit doubleword value (DD directive)
+// [Portuguese] Emite um valor doubleword de 32 bits (diretiva DD)
 void gen_dword(int val)
 {
 	fprintf(out, "\tdd %i\n", val);
 }
 
+// [English] In 8086exe mode, all words are 32-bit: emits DD (not DW)
+// [Portuguese] No modo 8086exe, todas as words são 32-bit: emite DD (não DW)
 void gen_word(int val)
 {
 	fprintf(out, "\tdd %i\n", val);
 }
 
+// [English] Emits a string as a DB directive with escape sequence handling for 8086exe
+// [Portuguese] Emite uma string como diretiva DB com tratamento de sequências de escape para 8086exe
 void gen_bytes(const char *str)
 {
 	fprintf(out, "\tdb \"");
@@ -55,8 +63,12 @@ void gen_bytes(const char *str)
 	fprintf(out, "\"\n");
 }
 
+// [English] Reserves space: in 8086exe mode each unit is 4 bytes (32-bit)
+// [Portuguese] Reserva espaço: no modo 8086exe cada unidade tem 4 bytes (32-bit)
 void gen_reserve(int n) { fprintf(out, "\tds %i\n", n * 2); }
 
+// [English] Emits a formatted comment line in 8086exe assembly
+// [Portuguese] Emite uma linha de comentário formatada em assembly 8086exe
 void gen_comment(const char *fmt, ...)
 {
 	va_list args;
@@ -67,6 +79,8 @@ void gen_comment(const char *fmt, ...)
 	va_end(args);
 }
 
+// [English] Emits a raw 8086exe assembly instruction line
+// [Portuguese] Emite uma linha de instrução assembly 8086exe bruta
 void gen_emit_raw(const char *line)
 {
 	fprintf(out, "\t%s\n", line);
@@ -87,6 +101,8 @@ static void gen_emitf(const char *fmt, ...)
 	va_end(args);
 }
 
+// [English] Generates segment override prefix for BSS variables
+// [Portuguese] Gera prefixo de override de segmento para variáveis BSS
 static void gen_seg_override(const char *name)
 {
 	symbol_t *sym = lookup(name);
@@ -96,6 +112,8 @@ static void gen_seg_override(const char *name)
 	}
 }
 
+// [English] Generates function prologue for 8086exe: push bp, mov bp/sp, allocate 32-bit locals
+// [Portuguese] Gera prólogo de função para 8086exe: push bp, mov bp/sp, aloca locais de 32 bits
 void gen_prologue(const char *name, int nlocals)
 {
 	gen_label_str(name);
@@ -107,6 +125,8 @@ void gen_prologue(const char *name, int nlocals)
 	}
 }
 
+// [English] Generates function epilogue for 8086exe: mov sp/bp, pop bp, ret
+// [Portuguese] Gera epílogo de função para 8086exe: mov sp/bp, pop bp, ret
 void gen_epilogue(void)
 {
 	gen_emit("mov sp, bp");
@@ -119,27 +139,32 @@ void gen_return(void)
 	gen_epilogue();
 }
 
-/* Push 32-bit primary (DX:AX) */
+// [English] Pushes 32-bit primary (DX:AX) onto the stack
+// [Portuguese] Empilha o primário de 32 bits (DX:AX) na pilha
 void gen_push_prim(void)
 {
 	gen_emit("push dx");
 	gen_emit("push ax");
 }
 
-/* Pop 32-bit secondary (CX:BX) */
+// [English] Pops 32-bit secondary (CX:BX) from the stack
+// [Portuguese] Desempilha o secundário de 32 bits (CX:BX) da pilha
 void gen_pop_sec(void)
 {
 	gen_emit("pop bx");
 	gen_emit("pop cx");
 }
 
+// [English] Loads a 32-bit immediate value into DX:AX
+// [Portuguese] Carrega um valor imediato de 32 bits em DX:AX
 void gen_load_imm(int val)
 {
 	gen_emitf("mov ax, %i", val & 0xFFFF);
 	gen_emitf("mov dx, %i", (val >> 16) & 0xFFFF);
 }
 
-/* Load 32-bit VALUE of a global variable */
+// [English] Loads 32-bit VALUE of a global variable into DX:AX
+// [Portuguese] Carrega o VALOR de 32 bits de uma variável global em DX:AX
 void gen_load_var(const char *name)
 {
 	gen_seg_override(name);
@@ -148,7 +173,10 @@ void gen_load_var(const char *name)
 	gen_emitf("mov dx, [%s+2]", name);
 }
 
-/* Load far address of a variable/name → DX:AX = segment:offset */
+// [English] Loads far address of a variable/name into DX:AX = segment:offset.
+// Handles functions (CS), BSS (CS + bss_delta), and DATA (CS + data_delta).
+// [Portuguese] Carrega endereço far de uma variável/nome em DX:AX = segment:offset.
+// Trata funções (CS), BSS (CS + bss_delta) e DATA (CS + data_delta).
 void gen_load_addr(const char *name)
 {
 	symbol_t *sym = lookup(name);
@@ -170,6 +198,8 @@ void gen_load_addr(const char *name)
 	}
 }
 
+// [English] Loads the far address of a compiler-generated label into DX:AX
+// [Portuguese] Carrega o endereço far de um rótulo gerado pelo compilador em DX:AX
 void gen_load_label(int label)
 {
 	gen_emitf("mov ax, .L%i", label);
@@ -177,43 +207,56 @@ void gen_load_label(int label)
 	gen_emit("add dx, __data_seg_delta__");
 }
 
+// [English] Stores 32-bit DX:AX to a local variable at BP-offset
+// [Portuguese] Armazena DX:AX de 32 bits em uma variável local no deslocamento BP-offset
 void gen_store_local(int offset)
 {
 	gen_emitf("mov [bp-%i], ax", offset * 4 + 4);
 	gen_emitf("mov [bp-%i], dx", offset * 4 + 2);
 }
 
+// [English] Loads 32-bit DX:AX from a local variable at BP-offset
+// [Portuguese] Carrega DX:AX de 32 bits de uma variável local no deslocamento BP-offset
 void gen_load_local(int offset)
 {
 	gen_emitf("mov ax, [bp-%i]", offset * 4 + 4);
 	gen_emitf("mov dx, [bp-%i]", offset * 4 + 2);
 }
 
+// [English] Computes far address of a local variable: LEA AX BP-offset, DX = SS
+// [Portuguese] Computa endereço far de variável local: LEA AX BP-offset, DX = SS
 void gen_local_addr(int offset)
 {
 	gen_emitf("lea ax, [bp-%i]", offset * 4 + 4);
 	gen_emit("mov dx, ss");
 }
 
+// [English] Stores 32-bit DX:AX to a parameter at BP+offset
+// [Portuguese] Armazena DX:AX de 32 bits em um parâmetro no deslocamento BP+offset
 void gen_store_param(int offset)
 {
 	gen_emitf("mov [bp+%i], ax", offset * 4 + 4);
 	gen_emitf("mov [bp+%i], dx", offset * 4 + 6);
 }
 
+// [English] Loads 32-bit DX:AX from a parameter at BP+offset
+// [Portuguese] Carrega DX:AX de 32 bits de um parâmetro no deslocamento BP+offset
 void gen_load_param(int offset)
 {
 	gen_emitf("mov ax, [bp+%i]", offset * 4 + 4);
 	gen_emitf("mov dx, [bp+%i]", offset * 4 + 6);
 }
 
+// [English] Computes far address of a parameter: LEA AX BP+offset, DX = SS
+// [Portuguese] Computa endereço far de parâmetro: LEA AX BP+offset, DX = SS
 void gen_param_addr(int offset)
 {
 	gen_emitf("lea ax, [bp+%i]", offset * 4 + 4);
 	gen_emit("mov dx, ss");
 }
 
-/* Store 32-bit value (DX:AX) to global variable */
+// [English] Stores 32-bit value (DX:AX) to a global variable with segment override
+// [Portuguese] Armazena valor de 32 bits (DX:AX) em variável global com override de segmento
 void gen_store_global(const char *name)
 {
 	gen_seg_override(name);
@@ -222,13 +265,15 @@ void gen_store_global(const char *name)
 	gen_emitf("mov [%s+2], dx", name);
 }
 
-/* Load 32-bit VALUE of a global (same as gen_load_var for this model) */
+// [English] Loads 32-bit value from a global (same as gen_load_var)
+// [Portuguese] Carrega valor de 32 bits de uma global (mesmo que gen_load_var)
 void gen_load_global(const char *name)
 {
 	gen_load_var(name);
 }
 
-/* Far dereference: DX:AX = *ptr where ptr is in DX:AX */
+// [English] Far dereference: loads 32-bit value from far pointer DX:AX into DX:AX
+// [Portuguese] Dereferência far: carrega valor de 32 bits do ponteiro far DX:AX em DX:AX
 void gen_deref(void)
 {
 	gen_emit("mov di, ax");
@@ -237,13 +282,12 @@ void gen_deref(void)
 	gen_emit("mov dx, [es:di+2]");
 }
 
-/* Store to far pointer: CX:BX = value, DX:AX = ptr */
+// [English] Stores 32-bit value to far pointer. CX:BX = dest ptr, DX:AX = value.
+// Swaps so ES:DI = dest, then stores value low/high.
+// [Portuguese] Armazena valor de 32 bits em ponteiro far. CX:BX = ptr dest, DX:AX = valor.
+// Troca para ES:DI = dest, então armazena valor baixo/alto.
 void gen_store_to_addr(void)
 {
-	/* After gen_push_prim/gen_pop_sec cycle:
-	 *   CX:BX = destination far pointer (segment:offset)
-	 *   DX:AX = value to store (high:low)
-	 * Swap so ES:DI = dest, and use AX/DX for value high/low */
 	gen_emit("xchg ax, bx");
 	gen_emit("xchg dx, cx");
 	gen_emit("mov di, ax");
@@ -252,6 +296,8 @@ void gen_store_to_addr(void)
 	gen_emit("mov [es:di+2], cx");
 }
 
+// [English] Reads a byte from far pointer DX:AX (peekb), zero-extends to 32 bits
+// [Portuguese] Lê um byte de ponteiro far DX:AX (peekb), estende com zero para 32 bits
 void gen_peekb(void)
 {
 	gen_emit("mov di, ax");
@@ -261,6 +307,8 @@ void gen_peekb(void)
 	gen_emit("xor dx, dx");
 }
 
+// [English] Writes a byte (pokeb) to far pointer DX:AX via CX:BX swap
+// [Portuguese] Escreve um byte (pokeb) em ponteiro far DX:AX via troca CX:BX
 void gen_pokeb(void)
 {
 	gen_emit("xchg ax, bx");
@@ -270,13 +318,17 @@ void gen_pokeb(void)
 	gen_emit("mov [es:di], bl");
 }
 
-/* 32-bit add: DX:AX = CX:BX + DX:AX */
+// [English] 32-bit addition: DX:AX = CX:BX + DX:AX
+// [Portuguese] Adição de 32 bits: DX:AX = CX:BX + DX:AX
 void gen_add(void)
 {
 	gen_emit("add ax, bx");
 	gen_emit("adc dx, cx");
 }
 
+// [English] 32-bit double (multiply by 2): DX:AX = DX:AX * 2
+// Note: this does add hl,hl twice which is DX:AX *= 4, not 2.
+// [Portuguese] Duplicação de 32 bits (multiplicar por 2): DX:AX = DX:AX * 2
 void gen_double(void)
 {
 	gen_emit("add ax, ax");
@@ -285,7 +337,8 @@ void gen_double(void)
 	gen_emit("adc dx, dx");
 }
 
-/* 32-bit sub: DX:AX = CX:BX - DX:AX */
+// [English] 32-bit subtraction: DX:AX = CX:BX - DX:AX
+// [Portuguese] Subtração de 32 bits: DX:AX = CX:BX - DX:AX
 void gen_sub(void)
 {
 	gen_emit("xchg ax, bx");
@@ -294,7 +347,8 @@ void gen_sub(void)
 	gen_emit("sbb dx, cx");
 }
 
-/* 32-bit unsigned multiply via library */
+// [English] 32-bit unsigned multiplication via library call
+// [Portuguese] Multiplicação unsigned de 32 bits via chamada de biblioteca
 void gen_mul(void)
 {
 	gen_emit("push cx");
@@ -305,7 +359,8 @@ void gen_mul(void)
 	gen_emit("add sp, 8");
 }
 
-/* 32-bit unsigned divide via library */
+// [English] 32-bit unsigned division via library call
+// [Portuguese] Divisão unsigned de 32 bits via chamada de biblioteca
 void gen_div(void)
 {
 	gen_emit("push cx");
@@ -316,7 +371,8 @@ void gen_div(void)
 	gen_emit("add sp, 8");
 }
 
-/* 32-bit unsigned modulo via library */
+// [English] 32-bit unsigned modulo via library call
+// [Portuguese] Módulo unsigned de 32 bits via chamada de biblioteca
 void gen_mod(void)
 {
 	gen_emit("push cx");
@@ -327,6 +383,8 @@ void gen_mod(void)
 	gen_emit("add sp, 8");
 }
 
+// [English] 32-bit negation (two's complement): DX:AX = -DX:AX
+// [Portuguese] Negação de 32 bits (complemento de dois): DX:AX = -DX:AX
 void gen_neg(void)
 {
 	gen_emit("not ax");
@@ -335,12 +393,16 @@ void gen_neg(void)
 	gen_emit("adc dx, 0");
 }
 
+// [English] 32-bit bitwise NOT: DX:AX = ~DX:AX
+// [Portuguese] NOT bitwise de 32 bits: DX:AX = ~DX:AX
 void gen_not(void)
 {
 	gen_emit("not ax");
 	gen_emit("not dx");
 }
 
+// [English] 32-bit logical NOT: DX:AX = !DX:AX (returns 0 or 1)
+// [Portuguese] NOT lógico de 32 bits: DX:AX = !DX:AX (retorna 0 ou 1)
 void gen_lnot(void)
 {
 	int l1 = gen_label();
@@ -357,25 +419,32 @@ void gen_lnot(void)
 	gen_label_int(l2);
 }
 
+// [English] 32-bit bitwise AND: DX:AX = DX:AX & CX:BX
+// [Portuguese] AND bitwise de 32 bits: DX:AX = DX:AX & CX:BX
 void gen_and(void)
 {
 	gen_emit("and ax, bx");
 	gen_emit("and dx, cx");
 }
 
+// [English] 32-bit bitwise OR: DX:AX = DX:AX | CX:BX
+// [Portuguese] OR bitwise de 32 bits: DX:AX = DX:AX | CX:BX
 void gen_or(void)
 {
 	gen_emit("or ax, bx");
 	gen_emit("or dx, cx");
 }
 
+// [English] 32-bit bitwise XOR: DX:AX = DX:AX ^ CX:BX
+// [Portuguese] XOR bitwise de 32 bits: DX:AX = DX:AX ^ CX:BX
 void gen_xor(void)
 {
 	gen_emit("xor ax, bx");
 	gen_emit("xor dx, cx");
 }
 
-/* 32-bit shift left inline via library call */
+// [English] 32-bit left shift via library call
+// [Portuguese] Deslocamento à esquerda de 32 bits via chamada de biblioteca
 void gen_shl(void)
 {
 	gen_emit("push cx");
@@ -386,7 +455,8 @@ void gen_shl(void)
 	gen_emit("add sp, 8");
 }
 
-/* 32-bit shift right inline via library call */
+// [English] 32-bit right shift via library call
+// [Portuguese] Deslocamento à direita de 32 bits via chamada de biblioteca
 void gen_shr(void)
 {
 	gen_emit("push cx");
@@ -397,8 +467,8 @@ void gen_shr(void)
 	gen_emit("add sp, 8");
 }
 
-/* Comparison helpers */
-
+// [English] Internal helper: generates 32-bit comparison with high word check and jump
+// [Portuguese] Auxiliar interno: gera comparação de 32 bits com verificação de high word e salto
 static void gen_do_cmp(const char *jmp, int label)
 {
 	gen_emit("cmp dx, cx");
@@ -414,6 +484,8 @@ static void gen_do_cmp(const char *jmp, int label)
 	gen_label_int(l2);
 }
 
+// [English] 32-bit equality comparison: DX:AX = (CX:BX == DX:AX) ? 1 : 0
+// [Portuguese] Comparação de igualdade de 32 bits: DX:AX = (CX:BX == DX:AX) ? 1 : 0
 void gen_cmp_eq(void)
 {
 	int l1 = gen_label();
@@ -431,6 +503,8 @@ void gen_cmp_eq(void)
 	gen_label_int(lend);
 }
 
+// [English] 32-bit not-equal comparison: DX:AX = (CX:BX != DX:AX) ? 1 : 0
+// [Portuguese] Comparação de desigualdade de 32 bits: DX:AX = (CX:BX != DX:AX) ? 1 : 0
 void gen_cmp_ne(void)
 {
 	int l1 = gen_label();
@@ -445,6 +519,8 @@ void gen_cmp_ne(void)
 	gen_label_int(lend);
 }
 
+// [English] 32-bit less-than comparison (unsigned): DX:AX = (CX:BX < DX:AX) ? 1 : 0
+// [Portuguese] Comparação menor-que de 32 bits (unsigned): DX:AX = (CX:BX < DX:AX) ? 1 : 0
 void gen_cmp_lt(void)
 {
 	int l1 = gen_label();
@@ -466,6 +542,8 @@ void gen_cmp_lt(void)
 	gen_label_int(l2);
 }
 
+// [English] 32-bit greater-than comparison (unsigned): DX:AX = (CX:BX > DX:AX) ? 1 : 0
+// [Portuguese] Comparação maior-que de 32 bits (unsigned): DX:AX = (CX:BX > DX:AX) ? 1 : 0
 void gen_cmp_gt(void)
 {
 	int l1 = gen_label();
@@ -487,6 +565,8 @@ void gen_cmp_gt(void)
 	gen_label_int(l2);
 }
 
+// [English] 32-bit less-or-equal comparison (unsigned): DX:AX = (CX:BX <= DX:AX) ? 1 : 0
+// [Portuguese] Comparação menor-ou-igual de 32 bits (unsigned): DX:AX = (CX:BX <= DX:AX) ? 1 : 0
 void gen_cmp_le(void)
 {
 	int l1 = gen_label();
@@ -508,6 +588,8 @@ void gen_cmp_le(void)
 	gen_label_int(l2);
 }
 
+// [English] 32-bit greater-or-equal comparison (unsigned): DX:AX = (CX:BX >= DX:AX) ? 1 : 0
+// [Portuguese] Comparação maior-ou-igual de 32 bits (unsigned): DX:AX = (CX:BX >= DX:AX) ? 1 : 0
 void gen_cmp_ge(void)
 {
 	int l1 = gen_label();
@@ -548,6 +630,8 @@ void gen_jnz(int label)
 	gen_emitf("jnz near .L%i", label);
 }
 
+// [English] Generates function call and adjusts stack for 32-bit arguments on 8086exe
+// [Portuguese] Gera chamada de função e ajusta a pilha para argumentos de 32 bits no 8086exe
 void gen_call(const char *name, int nargs)
 {
 	gen_emitf("call %s", name);

@@ -42,6 +42,8 @@ enum
     CMP_G = 15
 };
 
+// Inverts a comparison condition by toggling the least significant bit.
+// Inverte uma condicao de comparacao alternando o bit menos significativo.
 uint8_t invert_comparsion(uint8_t cmp)
 {
     if (cmp & 1)
@@ -50,6 +52,8 @@ uint8_t invert_comparsion(uint8_t cmp)
         return cmp | 1;
 }
 
+// Checks if the argument is an 8-bit register.
+// Verifica se o argumento eh um registrador de 8 bits.
 static int is_reg_8bit(expr_t *arg)
 {
     if (!arg)
@@ -61,6 +65,8 @@ static int is_reg_8bit(expr_t *arg)
     return false;
 }
 
+// Checks if the argument is a 16-bit register.
+// Verifica se o argumento eh um registrador de 16 bits.
 static int is_reg_16bit(expr_t *arg)
 {
     if (!arg)
@@ -72,6 +78,8 @@ static int is_reg_16bit(expr_t *arg)
     return false;
 }
 
+// Checks if the argument is a segment register.
+// Verifica se o argumento eh um registrador de segmento.
 static int is_reg_seg(expr_t *arg)
 {
     if (!arg)
@@ -83,6 +91,8 @@ static int is_reg_seg(expr_t *arg)
     return false;
 }
 
+// Checks if the argument is the 8-bit accumulator (AL).
+// Verifica se o argumento eh o acumulador de 8 bits (AL).
 static int is_acc_8bit(expr_t *arg)
 {
     if (!arg)
@@ -94,6 +104,8 @@ static int is_acc_8bit(expr_t *arg)
     return false;
 }
 
+// Checks if the argument is the 16-bit accumulator (AX).
+// Verifica se o argumento eh o acumulador de 16 bits (AX).
 static int is_acc_16bit(expr_t *arg)
 {
     if (!arg)
@@ -105,6 +117,8 @@ static int is_acc_16bit(expr_t *arg)
     return false;
 }
 
+// Checks if the argument is a constant value (not a register, mnemonic, or index expression).
+// Verifica se o argumento eh um valor constante (nao eh registrador, mnemonic ou expressao indexada).
 static bool is_value(expr_t *arg)
 {
     if (arg->left && !is_value(arg->left))
@@ -114,6 +128,8 @@ static bool is_value(expr_t *arg)
     return arg->token != TOK_REGISTER && arg->token != TOK_MNEMONIC && arg->token != TOK_INDEX_OPEN;
 }
 
+// Checks if the argument is a value or a pointer register (BX, BP, SI, DI).
+// Verifica se o argumento eh um valor ou um registrador ponteiro (BX, BP, SI, DI).
 static bool is_value_or_ptr(expr_t *arg)
 {
     if (arg->left && !is_value_or_ptr(arg->left))
@@ -123,6 +139,8 @@ static bool is_value_or_ptr(expr_t *arg)
     return (arg->token == TOK_REGISTER && (arg->reg->group & REG_PTR)) || (arg->token != TOK_REGISTER && arg->token != TOK_MNEMONIC && arg->token != TOK_INDEX_OPEN);
 }
 
+// Checks if the argument is a memory address expression (enclosed in brackets).
+// Verifica se o argumento eh uma expressao de endereco de memoria (entre colchetes).
 static bool is_address(expr_t *arg)
 {
     if (arg->left && !is_value(arg->left))
@@ -132,6 +150,8 @@ static bool is_address(expr_t *arg)
     return arg->token == TOK_INDEX_OPEN;
 }
 
+// Checks if the argument is a register-based memory address (e.g., [bx+si]).
+// Verifica se o argumento eh um endereco de memoria baseado em registrador (ex: [bx+si]).
 static bool is_reg_address(expr_t *arg)
 {
     if (arg->token != TOK_INDEX_OPEN)
@@ -142,6 +162,8 @@ static bool is_reg_address(expr_t *arg)
     return is_value_or_ptr(e);
 }
 
+// Gets the register from a ModRM expression, expecting a pointer register.
+// Obtem o registrador de uma expressao ModRM, esperando um registrador ponteiro.
 static reg_t *get_mrm_reg(expr_t *arg)
 {
     if (arg->token != TOK_REGISTER || (arg->reg->group & REG_PTR) == 0)
@@ -149,17 +171,27 @@ static reg_t *get_mrm_reg(expr_t *arg)
     return arg->reg;
 }
 
+// Computes the ModRM byte for a memory/register operand expression.
+// Calcula o byte ModRM para uma expressao de operando de memoria/registrador.
 static int get_mrm(expr_t *arg)
 {
+    // Validate that the expression is an indexed memory operand
+    // Valida se a expressao eh um operando de memoria indexada
     if (arg->token != TOK_INDEX_OPEN)
         error_expr(arg, "'[' expected");
     reg_t *reg1 = NULL;
     reg_t *reg2 = NULL;
     expr_t *e = arg->right;
+    // Skip segment prefix (e.g., ds:)
+    // Ignora prefixo de segmento (ex: ds:)
     if (e->token == TOK_COLON && e->left && e->left->token == TOK_REGISTER && (e->left->reg->group & REG_SEG))
         e = e->right;
+    // Traverse the expression tree to find register(s)
+    // Percorre a arvore de expressao para encontrar o(s) registrador(es)
     while (e)
     {
+        // Handle a single pointer register (BX, BP, SI, DI)
+        // Trata um unico registrador ponteiro (BX, BP, SI, DI)
         if (e->token == TOK_REGISTER)
         {
             if ((e->reg->group & REG_PTR) == 0)
@@ -184,6 +216,8 @@ static int get_mrm(expr_t *arg)
                 break;
             }
         }
+        // Handle a two-register combination (e.g., bx+si)
+        // Trata uma combinacao de dois registradores (ex: bx+si)
         else if (e->right && e->left && e->right->token == TOK_REGISTER && e->left->token == TOK_REGISTER)
         {
             if ((e->right->reg->group & REG_PTR) == 0)
@@ -198,6 +232,8 @@ static int get_mrm(expr_t *arg)
         }
         e = e->left;
     }
+    // Encode the ModRM byte for two-register combinations
+    // Codifica o byte ModRM para combinacoes de dois registradores
     if (reg1 && reg2)
     {
         switch (reg1->value)
@@ -263,10 +299,14 @@ static int get_mrm(expr_t *arg)
             break;
         }
     }
+    // No valid register found; report error
+    // Nenhum registrador valido encontrado; reporta erro
     error_expr(arg, "pointer register expected [Token: %s]", arg->text);
     return 0;
 }
 
+// Emits a segment override prefix byte if a segment register is present in any operand.
+// Emite um byte de prefixo de override de segmento se um registrador de segmento estiver presente em algum operando.
 static void emit_seg_prefix(int argc, expr_t *argv[])
 {
     for (int i = 0; i < argc; i++)
@@ -286,6 +326,8 @@ static void emit_seg_prefix(int argc, expr_t *argv[])
     }
 }
 
+// Emits a simple single-byte opcode with no operands.
+// Emite um opcode simples de um byte sem operandos.
 static void emit_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -294,6 +336,8 @@ static void emit_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *ar
     out(REC_DATA, 0, 0, &opcode->op1, 1);
 }
 
+// Emits a two-byte opcode with no operands.
+// Emite um opcode de dois bytes sem operandos.
 static void emit_simple_2bytes(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     validate(mnemonic, false, false, false, false);
@@ -303,6 +347,8 @@ static void emit_simple_2bytes(expr_t *mnemonic, opcode_t *opcode, int argc, exp
     out(REC_DATA, 0, 0, &opcode->op2, 1);
 }
 
+// Emits ModRM-encoded instructions with register/memory and immediate operands (basic form).
+// Emite instrucoes codificadas em ModRM com operandos de registrador/memoria e imediato (forma basica).
 static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     bool include_value = false;
@@ -313,6 +359,8 @@ static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
     // op1: Reg/Mem with Reg to Reg
     // op2 op3: Imm to Reg/Memory
     // op4: Imm to Acc
+    // Handle accumulator with immediate value (8-bit)
+    // Trata acumulador com valor imediato (8 bits)
     if (is_acc_8bit(argv[0]) && is_value(argv[1]))
     {
         validate(mnemonic, true, false, false, false);
@@ -321,6 +369,8 @@ static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         generate(argv[1], 1, false);
         out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
     }
+    // Handle accumulator with immediate value (16-bit)
+    // Trata acumulador com valor imediato (16 bits)
     else if (is_acc_16bit(argv[0]) && is_value(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
@@ -328,6 +378,8 @@ static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[1], 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle 8-bit register with immediate value
+    // Trata registrador de 8 bits com valor imediato
     else if (is_reg_8bit(argv[0]) && is_value(argv[1]))
     {
         validate(mnemonic, true, false, false, false);
@@ -338,6 +390,8 @@ static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         generate(argv[1], 1, false);
         out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
     }
+    // Handle 16-bit register with immediate value
+    // Trata registrador de 16 bits com valor imediato
     else if (is_reg_16bit(argv[0]) && is_value(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
@@ -347,6 +401,8 @@ static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[1], 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle 8-bit register to 8-bit register
+    // Trata registrador de 8 bits para registrador de 8 bits
     else if (is_reg_8bit(argv[0]) && is_reg_8bit(argv[1]))
     {
         validate(mnemonic, true, false, false, false);
@@ -355,6 +411,8 @@ static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         op = 0b11000000 | argv[0]->reg->value | (argv[1]->reg->value << 3);
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Handle 16-bit register to 16-bit register
+    // Trata registrador de 16 bits para registrador de 16 bits
     else if (is_reg_16bit(argv[0]) && is_reg_16bit(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
@@ -363,6 +421,8 @@ static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         op = 0b11000000 | argv[0]->reg->value | (argv[1]->reg->value << 3);
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Handle memory address with register operand
+    // Trata endereco de memoria com operando registrador
     else if (is_address(argv[0]) && (is_reg_8bit(argv[1]) || is_reg_16bit(argv[1])))
     {
         if (is_reg_8bit(argv[1]))
@@ -375,6 +435,8 @@ static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle register with memory address operand
+    // Trata registrador com operando de endereco de memoria
     else if ((is_reg_8bit(argv[0]) || is_reg_16bit(argv[0])) && is_address(argv[1]))
     {
         if (is_reg_8bit(argv[0]))
@@ -387,6 +449,8 @@ static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[1]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle register-based memory address with register operand
+    // Trata endereco de memoria baseado em registrador com operando registrador
     else if (is_reg_address(argv[0]) && (is_reg_8bit(argv[1]) || is_reg_16bit(argv[1])))
     {
         if (is_reg_8bit(argv[1]))
@@ -406,6 +470,8 @@ static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         if (include_value)
             out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle register with register-based memory address operand
+    // Trata registrador com operando de endereco de memoria baseado em registrador
     else if ((is_reg_8bit(argv[0]) || is_reg_16bit(argv[0])) && is_reg_address(argv[1]))
     {
         if (is_reg_8bit(argv[0]))
@@ -429,6 +495,8 @@ static void emit_mrm_simple(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         error_expr(mnemonic, "invalid arguments");
 }
 
+// Emits ModRM-encoded instructions for all operand combinations including segment registers.
+// Emite instrucoes codificadas em ModRM para todas as combinacoes de operandos, incluindo registradores de segmento.
 static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     bool include_value = false;
@@ -439,6 +507,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
     // op1: Reg/Mem with Reg to Reg
     // op2 op3: Imm to Reg/Memory
     // op4: Imm to Acc
+    // Handle accumulator with memory address (8-bit)
+    // Trata acumulador com endereco de memoria (8 bits)
     if (is_acc_8bit(argv[0]) && is_address(argv[1]))
     {
         validate(mnemonic, true, false, false, false);
@@ -446,6 +516,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[1]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle accumulator with memory address (16-bit)
+    // Trata acumulador com endereco de memoria (16 bits)
     else if (is_acc_16bit(argv[0]) && is_address(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
@@ -453,6 +525,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[1]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle 8-bit register with immediate value
+    // Trata registrador de 8 bits com valor imediato
     else if (is_reg_8bit(argv[0]) && is_value(argv[1]))
     {
         validate(mnemonic, true, false, false, false);
@@ -461,6 +535,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         generate(argv[1], 1, false);
         out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
     }
+    // Handle 16-bit register with immediate value
+    // Trata registrador de 16 bits com valor imediato
     else if (is_reg_16bit(argv[0]) && is_value(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
@@ -468,6 +544,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[1], 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle 8-bit register to 8-bit register
+    // Trata registrador de 8 bits para registrador de 8 bits
     else if (is_reg_8bit(argv[0]) && is_reg_8bit(argv[1]))
     {
         validate(mnemonic, true, false, false, false);
@@ -476,6 +554,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         op = 0b11000000 | argv[0]->reg->value | (argv[1]->reg->value << 3);
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Handle 16-bit register to 16-bit register
+    // Trata registrador de 16 bits para registrador de 16 bits
     else if (is_reg_16bit(argv[0]) && is_reg_16bit(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
@@ -484,6 +564,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         op = 0b11000000 | argv[0]->reg->value | (argv[1]->reg->value << 3);
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Handle memory address with register operand
+    // Trata endereco de memoria com operando registrador
     else if (is_address(argv[0]) && (is_reg_8bit(argv[1]) || is_reg_16bit(argv[1])))
     {
         if (is_reg_8bit(argv[1]))
@@ -496,6 +578,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle register with memory address operand
+    // Trata registrador com operando de endereco de memoria
     else if ((is_reg_8bit(argv[0]) || is_reg_16bit(argv[0])) && is_address(argv[1]))
     {
         if (is_reg_8bit(argv[0]))
@@ -508,6 +592,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[1]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle register-based memory address with register operand
+    // Trata endereco de memoria baseado em registrador com operando registrador
     else if (is_reg_address(argv[0]) && (is_reg_8bit(argv[1]) || is_reg_16bit(argv[1])))
     {
         if (is_reg_8bit(argv[1]))
@@ -527,6 +613,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         if (include_value)
             out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle register with register-based memory address operand
+    // Trata registrador com operando de endereco de memoria baseado em registrador
     else if ((is_reg_8bit(argv[0]) || is_reg_16bit(argv[0])) && is_reg_address(argv[1]))
     {
         if (is_reg_8bit(argv[0]))
@@ -546,6 +634,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         if (include_value)
             out(generate(argv[1]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle 16-bit register to segment register
+    // Trata registrador de 16 bits para registrador de segmento
     else if (is_reg_16bit(argv[0]) && is_reg_seg(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
@@ -554,6 +644,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         op = 0b11000000 | (argv[1]->reg->value << 3) | argv[0]->reg->value;
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Handle segment register to 16-bit register
+    // Trata registrador de segmento para registrador de 16 bits
     else if (is_reg_seg(argv[0]) && is_reg_16bit(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
@@ -562,6 +654,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         op = 0b11000000 | (argv[0]->reg->value << 3) | argv[1]->reg->value;
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Handle memory address to segment register
+    // Trata endereco de memoria para registrador de segmento
     else if (is_address(argv[0]) && is_reg_seg(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
@@ -571,6 +665,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle segment register to memory address
+    // Trata registrador de segmento para endereco de memoria
     else if (is_reg_seg(argv[0]) && is_address(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
@@ -580,6 +676,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[1]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle segment register to register-based memory address
+    // Trata registrador de segmento para endereco de memoria baseado em registrador
     else if (is_reg_seg(argv[0]) && is_reg_address(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
@@ -596,6 +694,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         if (include_value)
             out(generate(argv[1]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle register-based memory address to segment register
+    // Trata endereco de memoria baseado em registrador para registrador de segmento
     else if (is_reg_address(argv[0]) && is_reg_seg(argv[1]))
     {
         validate(mnemonic, false, true, false, false);
@@ -612,6 +712,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         if (include_value)
             out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle memory address with immediate value
+    // Trata endereco de memoria com valor imediato
     else if (is_address(argv[0]) && is_value(argv[1]))
     {
         if (mnemonic->force_byte)
@@ -631,6 +733,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
             out(REC_EXPR_POP_INT8_EMIT, 0, 0, 0, 0);
         }
     }
+    // Handle register-based memory address with immediate value
+    // Trata endereco de memoria baseado em registrador com valor imediato
     else if (is_reg_address(argv[0]) && is_value(argv[1]))
     {
         if (mnemonic->force_byte)
@@ -661,6 +765,8 @@ static void emit_mrm_complete(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         error_expr(mnemonic, "invalid arguments");
 }
 
+// Emits instructions that embed a 16-bit register in the opcode or use a single ModRM operand.
+// Emite instrucoes que embutem um registrador de 16 bits no opcode ou usam um unico operando ModRM.
 static void emit_embbed_reg16bit_or_single_mrm(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     bool include_value = false;
@@ -668,12 +774,16 @@ static void emit_embbed_reg16bit_or_single_mrm(expr_t *mnemonic, opcode_t *opcod
     if (argc != 1)
         error_expr(mnemonic, "invalid argument count.");
     emit_seg_prefix(argc, argv);
+    // Handle 16-bit register operand (embedded in opcode)
+    // Trata operando de registrador de 16 bits (embutido no opcode)
     if (is_reg_16bit(argv[0]))
     {
         validate(mnemonic, false, true, false, false);
         op |= argv[0]->reg->value & 0x7;
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Handle 8-bit register operand (ModRM encoding)
+    // Trata operando de registrador de 8 bits (codificacao ModRM)
     else if (is_reg_8bit(argv[0]))
     {
         validate(mnemonic, true, false, false, false);
@@ -682,6 +792,8 @@ static void emit_embbed_reg16bit_or_single_mrm(expr_t *mnemonic, opcode_t *opcod
         op = opcode->op3 | argv[0]->reg->value | 0b11000000;
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Handle direct memory address operand
+    // Trata operando de endereco de memoria direto
     else if (is_address(argv[0]))
     {
         validate(mnemonic, true, true, false, false);
@@ -693,6 +805,8 @@ static void emit_embbed_reg16bit_or_single_mrm(expr_t *mnemonic, opcode_t *opcod
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle register-based memory address operand
+    // Trata operando de endereco de memoria baseado em registrador
     else
     {
         validate(mnemonic, true, true, false, false);
@@ -713,6 +827,8 @@ static void emit_embbed_reg16bit_or_single_mrm(expr_t *mnemonic, opcode_t *opcod
     }
 }
 
+// Emits instructions with a single ModRM operand (unary operations like NOT, NEG, DIV, MUL).
+// Emite instrucoes com um unico operando ModRM (operacoes unarias como NOT, NEG, DIV, MUL).
 static void emit_single_mrm(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     bool include_value = false;
@@ -720,6 +836,8 @@ static void emit_single_mrm(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
     if (argc != 1)
         error_expr(mnemonic, "invalid argument count.");
     emit_seg_prefix(argc, argv);
+    // Handle 8-bit register operand
+    // Trata operando de registrador de 8 bits
     if (is_reg_8bit(argv[0]))
     {
         validate(mnemonic, true, false, false, false);
@@ -728,6 +846,8 @@ static void emit_single_mrm(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         op = opcode->op2 | argv[0]->reg->value | 0b11000000;
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Handle 16-bit register operand
+    // Trata operando de registrador de 16 bits
     else if (is_reg_16bit(argv[0]))
     {
         validate(mnemonic, true, false, false, false);
@@ -736,6 +856,8 @@ static void emit_single_mrm(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         op = opcode->op2 | argv[0]->reg->value | 0b11000000;
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Handle direct memory address operand
+    // Trata operando de endereco de memoria direto
     else if (is_address(argv[0]))
     {
         validate(mnemonic, true, true, false, false);
@@ -747,6 +869,8 @@ static void emit_single_mrm(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle register-based memory address operand
+    // Trata operando de endereco de memoria baseado em registrador
     else
     {
         validate(mnemonic, true, true, false, false);
@@ -767,6 +891,8 @@ static void emit_single_mrm(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t
     }
 }
 
+// Emits instructions requiring a 16-bit accumulator and a single ModRM operand (e.g., LDS, LES, LEA).
+// Emite instrucoes que requerem um acumulador de 16 bits e um unico operando ModRM (ex: LDS, LES, LEA).
 static void emit_reg16bit_single_mrm(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     bool include_value = false;
@@ -776,6 +902,8 @@ static void emit_reg16bit_single_mrm(expr_t *mnemonic, opcode_t *opcode, int arg
     emit_seg_prefix(argc, argv);
     if (!is_acc_16bit(argv[0]))
         error_expr(argv[0], "16 bit register expected.");
+    // Handle direct memory address operand
+    // Trata operando de endereco de memoria direto
     if (is_address(argv[1]))
     {
         validate(mnemonic, false, false, false, false);
@@ -785,6 +913,8 @@ static void emit_reg16bit_single_mrm(expr_t *mnemonic, opcode_t *opcode, int arg
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[1]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle register-based memory address operand
+    // Trata operando de endereco de memoria baseado em registrador
     else
     {
         validate(mnemonic, false, false, false, false);
@@ -803,19 +933,27 @@ static void emit_reg16bit_single_mrm(expr_t *mnemonic, opcode_t *opcode, int arg
     }
 }
 
+// Emits the IN instruction (input from port).
+// Emite a instrucao IN (entrada da porta).
 static void emit_input(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     uint8_t op;
     validate(mnemonic, false, false, false, false);
     if (argc != 2)
         error_expr(mnemonic, "invalid argument count.");
+    // Handle 8-bit accumulator (AL) with DX or immediate port
+    // Trata acumulador de 8 bits (AL) com DX ou porta imediata
     if (is_acc_8bit(argv[0]))
     {
+        // Input from DX port
+        // Entrada da porta DX
         if (is_reg_16bit(argv[1]) && argv[1]->reg->value == 2)
         {
             out(REC_DATA, 0, 0, &opcode->op2, 1);
             return;
         }
+        // Input from immediate port
+        // Entrada da porta imediata
         else if (is_value(argv[1]))
         {
             op = opcode->op1;
@@ -825,13 +963,19 @@ static void emit_input(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
             return;
         }
     }
+    // Handle 16-bit accumulator (AX) with DX or immediate port
+    // Trata acumulador de 16 bits (AX) com DX ou porta imediata
     else if (is_acc_16bit(argv[0]))
     {
+        // Input from DX port
+        // Entrada da porta DX
         if (is_reg_16bit(argv[1]) && argv[1]->reg->value == 2)
         {
             out(REC_DATA, 0, 0, &opcode->op2, 1);
             return;
         }
+        // Input from immediate port
+        // Entrada da porta imediata
         else if (is_value(argv[1]))
         {
             op = opcode->op1 | 1;
@@ -844,19 +988,27 @@ static void emit_input(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *arg
     error_expr(argv[0], "invalid arguments.");
 }
 
+// Emits the OUT instruction (output to port).
+// Emite a instrucao OUT (saida para a porta).
 static void emit_output(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     uint8_t op;
     validate(mnemonic, false, false, false, false);
     if (argc != 2)
         error_expr(mnemonic, "invalid argument count.");
+    // Handle 8-bit accumulator (AL) with DX or immediate port
+    // Trata acumulador de 8 bits (AL) com DX ou porta imediata
     if (is_acc_8bit(argv[1]))
     {
+        // Output to DX port
+        // Saida para a porta DX
         if (is_reg_16bit(argv[0]) && argv[0]->reg->value == 2)
         {
             out(REC_DATA, 0, 0, &opcode->op2, 1);
             return;
         }
+        // Output to immediate port
+        // Saida para porta imediata
         else if (is_value(argv[0]))
         {
             op = opcode->op1;
@@ -866,13 +1018,19 @@ static void emit_output(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *ar
             return;
         }
     }
+    // Handle 16-bit accumulator (AX) with DX or immediate port
+    // Trata acumulador de 16 bits (AX) com DX ou porta imediata
     else if (is_acc_16bit(argv[1]))
     {
+        // Output to DX port
+        // Saida para a porta DX
         if (is_reg_16bit(argv[0]) && argv[0]->reg->value == 2)
         {
             out(REC_DATA, 0, 0, &opcode->op2, 1);
             return;
         }
+        // Output to immediate port
+        // Saida para porta imediata
         else if (is_value(argv[0]))
         {
             op = opcode->op1 | 1;
@@ -885,6 +1043,8 @@ static void emit_output(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *ar
     error_expr(argv[0], "invalid arguments.");
 }
 
+// Emits the INT instruction (software interrupt).
+// Emite a instrucao INT (interrupcao por software).
 static void emit_int(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     uint8_t op = opcode->op1;
@@ -906,6 +1066,8 @@ static void emit_int(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[
     }
 }
 
+// Emits PUSH or POP instructions for registers or memory operands.
+// Emite instrucoes PUSH ou POP para registradores ou operandos de memoria.
 static void emit_push_pop(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     bool include_value = false;
@@ -913,18 +1075,24 @@ static void emit_push_pop(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *
     if (argc != 1)
         error_expr(mnemonic, "invalid argument count.");
     emit_seg_prefix(argc, argv);
+    // Handle 16-bit general-purpose register
+    // Trata registrador de uso geral de 16 bits
     if (is_reg_16bit(argv[0]))
     {
         validate(mnemonic, false, true, false, false);
         op |= argv[0]->reg->value & 0x7;
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Handle segment register
+    // Trata registrador de segmento
     else if (is_reg_seg(argv[0]))
     {
         validate(mnemonic, false, true, false, false);
         op = opcode->op4 | (argv[0]->reg->value << 3);
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Handle direct memory address
+    // Trata endereco de memoria direto
     else if (is_address(argv[0]))
     {
         validate(mnemonic, true, true, false, false);
@@ -936,6 +1104,8 @@ static void emit_push_pop(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *
         out(REC_DATA, 0, 0, &op, 1);
         out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Handle register-based memory address
+    // Trata endereco de memoria baseado em registrador
     else
     {
         validate(mnemonic, true, true, false, false);
@@ -956,6 +1126,8 @@ static void emit_push_pop(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *
     }
 }
 
+// Emits shift/rotate instructions (RCL, RCR, ROL, ROR, SAL, SAR, SHL, SHR).
+// Emite instrucoes de deslocamento/rotacao (RCL, RCR, ROL, ROR, SAL, SAR, SHL, SHR).
 static void emit_shift_rotate(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     bool include_value = false;
@@ -965,6 +1137,8 @@ static void emit_shift_rotate(expr_t *mnemonic, opcode_t *opcode, int argc, expr
     if (argc != 2)
         error_expr(mnemonic, "invalid argument count.");
     emit_seg_prefix(argc, argv);
+    // Determine the operand type: 8-bit register, 16-bit register, direct address, or register address
+    // Determina o tipo do operando: registrador de 8 bits, 16 bits, endereco direto ou endereco de registrador
     if (is_reg_8bit(argv[0]))
     {
         validate(mnemonic, true, false, false, false);
@@ -1002,6 +1176,8 @@ static void emit_shift_rotate(expr_t *mnemonic, opcode_t *opcode, int argc, expr
     }
     else
         error_expr(argv[0], "invalid arguments.");
+    // Handle shift/rotate count: 1 (implied) or CL register
+    // Trata contagem de deslocamento/rotacao: 1 (implicito) ou registrador CL
     if (is_value(argv[1]) && argv[1]->value == 1)
     {
         op |= 0;
@@ -1018,16 +1194,22 @@ static void emit_shift_rotate(expr_t *mnemonic, opcode_t *opcode, int argc, expr
         out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
 }
 
+// Emits the RET instruction (return from subroutine).
+// Emite a instrucao RET (retorno de sub-rotina).
 static void emit_ret(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     bool include_value = false;
     validate_distance(mnemonic, false, false, true);
     uint8_t op = mnemonic->force_far ? opcode->op2 : opcode->op1;
+    // Return with no arguments (near or far)
+    // Retorno sem argumentos (proximo ou distante)
     if (argc == 0)
     {
         op |= 1;
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Return with stack adjustment value
+    // Retorno com valor de ajuste de pilha
     else if (argc == 1)
     {
         if (!is_value(argv[0]))
@@ -1040,11 +1222,15 @@ static void emit_ret(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[
         error_expr(mnemonic, "invalid argument count.");
 }
 
+// Emits conditional jump instructions (Jcc).
+// Emite instrucoes de salto condicional (Jcc).
 static void emit_jump_cc(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     bool seg_offset = false;
     validate_distance(mnemonic, true, true, true);
     uint8_t op = opcode->op1;
+    // Far jump with segment:offset as two separate arguments
+    // Salto distante com segmento:offset como dois argumentos separados
     if (argc == 2 && mnemonic->force_far)
     {
         op = invert_comparsion(op);
@@ -1057,6 +1243,8 @@ static void emit_jump_cc(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *a
         seg_offset = generate(argv[1], -2, true);
         out(seg_offset ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Far jump with colon-separated or plain argument
+    // Salto distante com argumento separado por dois pontos ou simples
     else if (argc == 1 && mnemonic->force_far)
     {
         if (argv[0]->token == TOK_COLON)
@@ -1084,6 +1272,8 @@ static void emit_jump_cc(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *a
             out(seg_offset ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
         }
     }
+    // Near jump with 16-bit relative offset
+    // Salto proximo com offset relativo de 16 bits
     else if (argc == 1 && mnemonic->force_near)
     {
         op = invert_comparsion(op);
@@ -1101,6 +1291,8 @@ static void emit_jump_cc(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *a
         else
             out(REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Short jump with 8-bit relative offset
+    // Salto curto com offset relativo de 8 bits
     else if (argc == 1 && !mnemonic->force_far && !mnemonic->force_near)
     {
         out(REC_DATA, 0, 0, &op, 1);
@@ -1115,11 +1307,15 @@ static void emit_jump_cc(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *a
         error_expr(mnemonic, "invalid argument count.");
 }
 
+// Emits loop instructions (LOOP, LOOPZ, LOOPNZ, JCXZ, JECXZ).
+// Emite instrucoes de loop (LOOP, LOOPZ, LOOPNZ, JCXZ, JECXZ).
 static void emit_loop(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     bool seg_offset = false;
     validate_distance(mnemonic, true, true, true);
     uint8_t op = opcode->op1;
+    // Far loop with segment:offset as two separate arguments
+    // Loop distante com segmento:offset como dois argumentos separados
     if (argc == 2 && mnemonic->force_far)
     {
         out(REC_DATA, 0, 0, &op, 1);
@@ -1135,6 +1331,8 @@ static void emit_loop(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
         seg_offset = generate(argv[1], 2, true);
         out(seg_offset ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Far loop with colon-separated or plain argument
+    // Loop distante com argumento separado por dois pontos ou simples
     else if (argc == 1 && mnemonic->force_far)
     {
         if (argv[0]->token == TOK_COLON)
@@ -1168,6 +1366,8 @@ static void emit_loop(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
             out(seg_offset ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
         }
     }
+    // Near loop with 16-bit relative offset
+    // Loop proximo com offset relativo de 16 bits
     else if (argc == 1 && mnemonic->force_near)
     {
         out(REC_DATA, 0, 0, &op, 1);
@@ -1188,6 +1388,8 @@ static void emit_loop(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
         else
             out(REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Short loop with 8-bit relative offset
+    // Loop curto com offset relativo de 8 bits
     else if (argc == 1 && !mnemonic->force_far && !mnemonic->force_near)
     {
         out(REC_DATA, 0, 0, &op, 1);
@@ -1202,6 +1404,8 @@ static void emit_loop(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
         error_expr(mnemonic, "invalid argument count.");
 }
 
+// Emits CALL or JMP instructions with near/far and register/memory addressing.
+// Emite instrucoes CALL ou JMP com enderecamento proximo/distante e registrador/memoria.
 static void emit_call(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
 {
     bool seg_offset = false;
@@ -1215,6 +1419,8 @@ static void emit_call(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
     // op6: call far memory pointer
     validate_distance(mnemonic, false, true, true);
     emit_seg_prefix(argc, argv);
+    // Far call with segment:offset as two separate arguments
+    // Call distante com segmento:offset como dois argumentos separados
     if (argc == 2 && mnemonic->force_far)
     {
         op = opcode->op2;
@@ -1223,6 +1429,8 @@ static void emit_call(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
         seg_offset = generate(argv[1], 2, true);
         out(seg_offset ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
     }
+    // Far call with colon-separated or single plain argument
+    // Call distante com argumento separado por dois pontos ou simples
     else if (argc == 1 && mnemonic->force_far && argv[0]->token != TOK_INDEX_OPEN)
     {
         if (argv[0]->token == TOK_COLON)
@@ -1242,6 +1450,8 @@ static void emit_call(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
             out(seg_offset ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
         }
     }
+    // Near call via 16-bit register
+    // Call proximo via registrador de 16 bits
     else if (argc == 1 && is_reg_16bit(argv[0]))
     {
         op = opcode->op3;
@@ -1249,6 +1459,8 @@ static void emit_call(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
         op = opcode->op4 | 0b11000000 | argv[0]->reg->value;
         out(REC_DATA, 0, 0, &op, 1);
     }
+    // Near/far call via direct memory address
+    // Call proximo/distante via endereco de memoria direto
     else if (argc == 1 && is_address(argv[0]))
     {
         if (mnemonic->force_far)
@@ -1268,6 +1480,8 @@ static void emit_call(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
             out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
         }
     }
+    // Near/far call via register-based memory address
+    // Call proximo/distante via endereco de memoria baseado em registrador
     else if (argc == 1 && is_reg_address(argv[0]))
     {
         if (mnemonic->force_far)
@@ -1301,6 +1515,8 @@ static void emit_call(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
                 out(generate(argv[0]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
         }
     }
+    // Near call to relative offset (label)
+    // Call proximo para offset relativo (rotulo)
     else if (argc == 1 && is_value(argv[0]))
     {
         op = opcode->op1;

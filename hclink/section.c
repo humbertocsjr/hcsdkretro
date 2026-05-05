@@ -5,11 +5,15 @@ static int _sections_next = 0;
 static section_t *_section_first = 0;
 static int _sections_align = 16;
 
+// [English] Return the first section in the linked list
+// [Portuguese] Retorna a primeira seção na lista encadeada
 section_t *section_first()
 {
     return _section_first;
 }
 
+// [English] Set the default alignment for all existing sections
+// [Portuguese] Define o alinhamento padrão para todas as seções existentes
 void section_set_default_align(int align)
 {
     if (align < 0)
@@ -23,6 +27,8 @@ void section_set_default_align(int align)
     }
 }
 
+// [English] Reset the size and position of all sections to their start positions
+// [Portuguese] Reinicia o tamanho e a posição de todas as seções para suas posições iniciais
 void section_reset_sizes()
 {
     for (int i = 0; i < _sections_next; i++)
@@ -32,6 +38,8 @@ void section_reset_sizes()
     }
 }
 
+// [English] Find a section by name in the sections array
+// [Portuguese] Encontra uma seção pelo nome no array de seções
 section_t *section_find(char *name)
 {
     if (!name)
@@ -44,12 +52,16 @@ section_t *section_find(char *name)
     return NULL;
 }
 
+// [English] Create a new section with a given name, placing it after a previous section
+// [Portuguese] Cria uma nova seção com um nome dado, colocando-a após uma seção anterior
 section_t *section_new(char *name, char *prev_section, rectype_t section)
 {
     if (_sections_next >= SECTIONS_MAX)
         error("section list overflow.");
     section_t *s = malloc(sizeof(section_t) + strlen(name));
     section_t *prev;
+    // [English] Find the previous section to link after it
+    // [Portuguese] Encontra a seção anterior para vincular após ela
     if (prev_section)
     {
         prev = section_find(prev_section);
@@ -60,6 +72,8 @@ section_t *section_new(char *name, char *prev_section, rectype_t section)
     {
         prev = _section_first;
     }
+    // [English] Initialize the new section with default values
+    // [Portuguese] Inicializa a nova seção com valores padrão
     memset(s, 0, sizeof(section_t));
     s->align = _sections_align;
     s->next = prev ? prev->next : NULL;

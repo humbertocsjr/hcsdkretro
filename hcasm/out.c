@@ -3,6 +3,8 @@
 FILE *_out = NULL;
 FILE *_dump = NULL;
 
+// [English] Open output file (.obj) and optional human-readable dump file
+// [Portuguese] Abre arquivo de saída (.obj) e arquivo opcional de dump legível
 void out_open(char *name, char *dump_name)
 {
     _out = fopen(name, "wb");
@@ -16,6 +18,8 @@ void out_open(char *name, char *dump_name)
     }
 }
 
+// [English] Close both output and dump files
+// [Portuguese] Fecha ambos os arquivos de saída e dump
 void out_close()
 {
     fclose(_out);
@@ -23,26 +27,40 @@ void out_close()
         fclose(_dump);
 }
 
+// [English] Write a single byte to the output file
+// [Portuguese] Escreve um único byte no arquivo de saída
 void outb(int value)
 {
     fwrite(&value, 1, 1, _out);
 }
 
+// [English] Write two bytes (little-endian) to the output file
+// [Portuguese] Escreve dois bytes (little-endian) no arquivo de saída
 void outw(int value)
 {
     fwrite(&value, 1, 2, _out);
 }
 
+// [English] Write a typed record to the object file.
+// [Portuguese] Escreve um registro tipado no arquivo objeto.
+// [English] Each record: [type_byte] [data_size] [value_16bit] [aux_16bit] [data...]
+// [Portuguese] Cada registro: [byte_tipo] [tamanho_dados] [valor_16bits] [aux_16bits] [dados...]
+// [English] If dump is enabled, print a human-readable description.
+// [Portuguese] Se dump estiver habilitado, imprime uma descrição legível.
 void out(rectype_t type, int16_t value, uint16_t aux, void *data, uint8_t data_size)
 {
     outb(type);
     outb(data_size);
     outw(value);
     outw(aux);
+    // [English] Write variable-length data payload
+    // [Portuguese] Escreve carga de dados de tamanho variável
     for (int i = 0; i < data_size; i++)
     {
         outb(((char *)data)[i]);
     }
+    // [English] Dump human-readable description if requested
+    // [Portuguese] Despeja descrição legível se solicitado
     if (_dump)
     {
         bool print_hex = false;
@@ -142,6 +160,8 @@ void out(rectype_t type, int16_t value, uint16_t aux, void *data, uint8_t data_s
             print_hex = true;
             break;
         }
+        // [English] Print hex dump of data payload
+        // [Portuguese] Imprime dump hexadecimal da carga de dados
         if (print_hex)
         {
             for (int i = 0; i < data_size; i++)

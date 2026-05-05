@@ -8,6 +8,8 @@ static section_t *_curr_section = NULL;
 int (*format_adjust_value)(int value, int position, rectype_t section) = NULL;
 void (*format_record_reloc)(int position, rectype_t section) = NULL;
 
+// [English] Print a formatted error message with source location (file:line:column)
+// [Portuguese] Imprime uma mensagem de erro formatada com localização da fonte (arquivo:linha:coluna)
 void process_error(char *fmt, ...)
 {
     va_list args;
@@ -25,6 +27,8 @@ void process_error(char *fmt, ...)
     exit(1);
 }
 
+// [English] Process a single object file: read records and execute them for a given section and step
+// [Portuguese] Processa um único arquivo objeto: lê registros e os executa para uma dada seção e etapa
 void process_obj(step_t step, rectype_t section, object_file_t *obj)
 {
     record_t rec;
@@ -39,10 +43,14 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
     _filename = obj->name;
     _line = 0;
     _column = 0;
+    // [English] Main record processing loop
+    // [Portuguese] Loop principal de processamento de registros
     while (obj_read(obj, &rec))
     {
         switch ((rectype_t)rec.header.type)
         {
+        // [English] Section: Handle section type selection
+        // [Portuguese] Seção: Gerencia seleção de tipo de seção
         case REC_SECTION_TEXT:
             _curr_section = section_find("text");
             break;
@@ -52,6 +60,9 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
         case REC_SECTION_BSS:
             _curr_section = section_find("bss");
             break;
+
+        // [English] Section: Expression stack management (reset and push operations)
+        // [Portuguese] Seção: Gerenciamento da pilha de expressão (reset e operações push)
         case REC_EXPR_RESET:
             stack_reset();
             break;
@@ -99,6 +110,9 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
                 }
             }
             break;
+
+        // [English] Section: Binary arithmetic and bitwise operations
+        // [Portuguese] Seção: Operações aritméticas binárias e bitwise
         case REC_EXPR_ADD:
             val2 = stack_pop();
             val1 = stack_pop();
@@ -153,6 +167,9 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
             val1 = stack_pop();
             stack_push(val1 << val2);
             break;
+
+        // [English] Section: Pop operations - store constants or emit bytes/words to output
+        // [Portuguese] Seção: Operações pop - armazenar constantes ou emitir bytes/words na saída
         case REC_EXPR_POP_TO_CONST:
             val1 = stack_pop();
             consts_set(obj, (char *)rec.data, val1);
@@ -209,6 +226,9 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
             _curr_section->size += 2;
             const_is_offset = false;
             break;
+
+        // [English] Section: Repeat block (loop) handling
+        // [Portuguese] Seção: Gerenciamento de bloco de repetição (loop)
         case REC_EXPR_POP_REPEAT_TIMES:
             repeat_pos = obj->next_rec;
             repeat_count = stack_pop();
@@ -218,6 +238,9 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
             if (--repeat_count > 0)
                 fsetpos(obj->file, &repeat_pos);
             break;
+
+        // [English] Section: Constant and label definitions
+        // [Portuguese] Seção: Definições de constantes e rótulos
         case REC_CONST_LABEL:
             consts_set(obj, (char *)rec.data, _curr_section->position);
             consts_set_offset(obj, (char *)rec.data);
@@ -229,18 +252,27 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
         case REC_CONST_AS_GLOBAL_LABEL:
             consts_set_global(obj, (char *)rec.data);
             break;
+
+        // [English] Section: CPU type detection records
+        // [Portuguese] Seção: Registros de detecção de tipo de CPU
         case REC_CPU_8080:
         case REC_CPU_8085:
         case REC_CPU_8086:
         case REC_CPU_Z80:
             _cpu = rec.header.type;
             break;
+
+        // [English] Section: File and position metadata records
+        // [Portuguese] Seção: Registros de metadados de arquivo e posição
         case REC_FILENAME:
             break;
         case REC_POSITION:
             _line = rec.header.value;
             _column = rec.header.aux;
             break;
+
+        // [English] Section: Data emission and reservation
+        // [Portuguese] Seção: Emissão e reserva de dados
         case REC_DATA:
             if (step == STEP_GENERATE && _curr_section->section == section)
             {
@@ -262,6 +294,9 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
             _curr_section->position += rec.header.value;
             _curr_section->size += rec.header.value;
             break;
+
+        // [English] Section: Unknown record type - report error
+        // [Portuguese] Seção: Tipo de registro desconhecido - reporta erro
         default:
             process_error("NOT IMPLEMENTED RECORD TYPE: 0x%X (%i)", rec.header.type, rec.header.type);
             break;
@@ -269,10 +304,14 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
     }
 }
 
+// [English] Process all object files for a given section type, returning final position
+// [Portuguese] Processa todos os arquivos objeto para um dado tipo de seção, retornando a posição final
 size_t process_objs(step_t step, rectype_t section)
 {
     object_file_t *obj = _objs;
     section_t *curr_section;
+    // [English] Register global constants for section boundaries
+    // [Portuguese] Registra constantes globais para limites de seção
     consts_set_global(_objs, "__text_start__");
     consts_set_global(_objs, "__data_start__");
     consts_set_global(_objs, "__bss_start__");
@@ -305,6 +344,8 @@ size_t process_objs(step_t step, rectype_t section)
     consts_set_section(_objs, "_etext", REC_SECTION_TEXT);
     consts_set_section(_objs, "_edata", REC_SECTION_DATA);
     consts_set_section(_objs, "_ebss", REC_SECTION_DATA);
+    // [English] Select the current section based on type
+    // [Portuguese] Seleciona a seção atual baseada no tipo
     switch (section)
     {
     case REC_SECTION_TEXT:
@@ -324,6 +365,8 @@ size_t process_objs(step_t step, rectype_t section)
         break;
     }
     section_reset_sizes();
+    // [English] Process each object file in the linked list
+    // [Portuguese] Processa cada arquivo objeto na lista encadeada
     while (obj)
     {
         process_obj(step, section, obj);
@@ -332,12 +375,16 @@ size_t process_objs(step_t step, rectype_t section)
     return curr_section->position;
 }
 
+// [English] Mark referenced object files as used in the link (dependency tracking)
+// [Portuguese] Marca arquivos objeto referenciados como usados no link (rastreamento de dependências)
 void process_filter(object_file_t *obj)
 {
     record_t rec;
     object_file_t *ref;
     obj_reset(obj);
     obj->use_in_link = true;
+    // [English] Scan all records for constant references to other objects
+    // [Portuguese] Examina todos os registros em busca de referências de constantes a outros objetos
     while (obj_read(obj, &rec))
     {
         switch (rec.header.type)
@@ -349,6 +396,8 @@ void process_filter(object_file_t *obj)
             if (ref != NULL && ref != obj)
             {
                 verbose("Reference: %s [%s -> %s]\n", (char *)rec.data, obj->name, ref->name);
+                // [English] Recursively mark the referenced object
+                // [Portuguese] Marca recursivamente o objeto referenciado
                 if (!ref->use_in_link)
                 {
                     process_filter(ref);
@@ -361,6 +410,8 @@ void process_filter(object_file_t *obj)
     }
 }
 
+// [English] Find and keep the object file containing the _start label
+// [Portuguese] Encontra e mantém o arquivo objeto que contém o rótulo _start
 static void process_keep_start(void)
 {
     object_file_t *obj = _objs;
@@ -368,6 +419,8 @@ static void process_keep_start(void)
     {
         record_t rec;
         obj_reset(obj);
+        // [English] Search for the _start global label in each object
+        // [Portuguese] Procura pelo rótulo global _start em cada objeto
         while (obj_read(obj, &rec))
         {
             if (rec.header.type == REC_CONST_AS_GLOBAL_LABEL)
@@ -384,6 +437,8 @@ static void process_keep_start(void)
     }
 }
 
+// [English] Remove object files that were filtered out (not referenced) from the linked list
+// [Portuguese] Remove arquivos objeto que foram filtrados (não referenciados) da lista encadeada
 void process_remove_filtered(object_file_t *obj)
 {
     if (obj && obj->next)
@@ -398,6 +453,8 @@ void process_remove_filtered(object_file_t *obj)
     }
 }
 
+// [English] Main processing entry point: iterates until constants stabilize or filter completes
+// [Portuguese] Ponto de entrada principal de processamento: itera até constantes estabilizarem ou filtro completar
 void process(step_t step)
 {
     _curr_section = section_find("text");
@@ -407,6 +464,8 @@ void process(step_t step)
         consts_reset_changed();
         if (step == STEP_FILTER)
         {
+            // [English] Filter phase: mark referenced objects and remove unused ones
+            // [Portuguese] Fase de filtro: marca objetos referenciados e remove os não usados
             process_filter(_objs);
             process_keep_start();
             process_remove_filtered(_objs);
@@ -421,12 +480,16 @@ void process(step_t step)
     } while (step == STEP_PROCESS_FILES && consts_is_changed());
 }
 
+// [English] Reorder object list so the file containing _start is first (for correct initialization)
+// [Portuguese] Reordena a lista de objetos para que o arquivo contendo _start seja o primeiro
 void reorder_start_first(void)
 {
     object_file_t *obj = _objs;
     object_file_t *found = NULL;
     char *found_name = NULL;
 
+    // [English] Search for the object containing the _start label
+    // [Portuguese] Procura pelo objeto contendo o rótulo _start
     while (obj)
     {
         record_t rec;
@@ -448,9 +511,13 @@ void reorder_start_first(void)
         obj = obj->next;
     }
 
+    // [English] If not found or already first, nothing to do
+    // [Portuguese] Se não encontrado ou já é o primeiro, nada a fazer
     if (!found || found == _objs)
         return;
 
+    // [English] Unlink found object and move it to the head of the list
+    // [Portuguese] Desvincula o objeto encontrado e o move para o início da lista
     object_file_t *prev = _objs;
     while (prev && prev->next != found)
         prev = prev->next;

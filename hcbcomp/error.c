@@ -1,5 +1,9 @@
 #include "bcomp.h"
 
+// [English] Prints a formatted error message with the source file location
+// (filename:line:column) and terminates the compiler with exit code 1
+// [Portuguese] Imprime uma mensagem de erro formatada com a localização no
+// arquivo fonte (arquivo:linha:coluna) e encerra o compilador com código de saída 1
 void error(const char *fmt, ...)
 {
     va_list args;

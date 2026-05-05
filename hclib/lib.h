@@ -1,11 +1,15 @@
-// BSD 4-Clause License
+// [English] BSD 4-Clause License
+// [Portuguese] Licenca BSD 4-Clausulas
 // 
-// Copyright (c) 2025,2026, Humberto Costa dos Santos Junior
-// All rights reserved.
+// [English] Copyright (c) 2025,2026, Humberto Costa dos Santos Junior
+// [Portuguese] Copyright (c) 2025,2026, Humberto Costa dos Santos Junior
+// [English] All rights reserved.
+// [Portuguese] Todos os direitos reservados.
 
 #pragma once
 
-// --== headers ==--
+// [English] --== headers ==--
+// [Portuguese] --== headers ==--
 
 #include <stdio.h>
 #include <stdint.h>
@@ -18,7 +22,8 @@
 #include "../include/obj.h"
 #include "../include/version.h"
 
-// --== Common ==--
+// [English] --== Common ==--
+// [Portuguese] --== Common ==--
 
 typedef struct object_t
 {
@@ -26,7 +31,9 @@ typedef struct object_t
     char name[1];
 } object_t;
 
-// --== error.c ==-- 
+// [English] --== error.c ==--
+// [Portuguese] --== error.c ==--
 
-// Emit error
+// [English] Emit error
+// [Portuguese] Emite um erro
 void error(char *fmt, ...);

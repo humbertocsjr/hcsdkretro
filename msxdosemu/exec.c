@@ -1,6 +1,8 @@
 #include "emu.h"
 
 
+// [English] Log current instruction and register state to stderr (trace mode)
+// [Portuguese] Registra instrução atual e estado dos registradores no stderr (modo trace)
 static void trace_step(void)
 {
     uint8_t op = mem_get_byte(_regs_curr.ip);
@@ -11,16 +13,23 @@ static void trace_step(void)
         _regs_curr.af.word);
 }
 
+// [English] Execute a single Z80 instruction step
+// [Portuguese] Executa um passo de instrução Z80
 void exec_step()
 {
+    // [English] Trace output if enabled
+    // [Portuguese] Saída de trace se habilitado
     if (_trace)
         trace_step();
+    // [English] Save previous register state
+    // [Portuguese] Salva estado anterior dos registradores
     memcpy(&_regs_prev, &_regs_curr, sizeof(z80_regs_t));
     _regs_prev.value = 0;
     _regs_curr.value = 0;
     bool reset_prefixes = true;
     uint16_t tmp;
     int8_t offset_value;
+    // --== MSX BIOS / MSX-DOS ABI vectors (0x00-0x7F) ==--
     if(_regs_curr.ip == 0)
     {
         // MSX BIOS Application Binary Interface
@@ -70,8 +79,11 @@ void exec_step()
         !_regs_curr.prefix_dd &&
         !_regs_curr.prefix_ed &&
         !_regs_curr.prefix_fd
-    ) switch(ip_get_byte()) // Common Opcodes (8080 compatible)
+    // --== Common opcodes (8080-compatible, no prefix) ==--
+    // --== Opcodes comuns (compatíveis 8080, sem prefixo) ==--
+    ) switch(ip_get_byte())
     {
+        // --== 0x00-0x3F: Control, 16-bit ops, ALU accumulator rotate ==--
         case 0x00:
             break;
         case 0x01:
@@ -408,6 +420,7 @@ void exec_step()
             xf_set(_regs_curr.af.a & (1 << 3));
             yf_set(_regs_curr.af.a & (1 << 5));
             break;
+        // --== 0x40-0x7F: LD r,r' (8-bit register to register moves) ==--
         case 0x40:
             _regs_prev.value = _regs_curr.bc.b;
             _regs_curr.bc.b = _regs_curr.bc.b;
@@ -733,6 +746,7 @@ void exec_step()
             _regs_curr.af.a = _regs_curr.af.a;
             _regs_curr.value = _regs_curr.af.a;
             break;
+        // --== 0x80-0xBF: 8-bit arithmetic/logic on accumulator ==--
         case 0x80:
             _regs_prev.value = _regs_curr.af.a;
             _regs_curr.af.a = alu_add_byte(_regs_curr.af.a, _regs_curr.bc.b);
@@ -1053,6 +1067,7 @@ void exec_step()
             alu_cp_byte(_regs_curr.af.a, _regs_curr.af.a);
             _regs_curr.value = _regs_curr.af.a;
             break;
+        // --== 0xC0-0xFF: Conditional jumps, calls, returns, ALU immediate, RST ==--
         case 0xc0:
             if(!zf_get())
             {
@@ -1584,6 +1599,7 @@ void exec_step()
             }
             break;
     }
+    // --== ED-prefixed opcodes (Z80 extended instruction set) ==--
     else if(_regs_curr.prefix_ed)
     {
         _regs_prev.ip --;
@@ -1610,6 +1626,7 @@ void exec_step()
                 mem_set_word(tmp, _regs_curr.bc.word);
                 _regs_curr.value = mem_get_word(tmp);
                 break;
+            // --== ED 0x44-0x5F: NEG, RETN, IM, LD I/R, RETI ==--
             case 0x44:
                 _regs_prev.value = _regs_curr.af.a;
                 _regs_curr.af.a = alu_neg_byte(_regs_curr.af.a);
@@ -1746,6 +1763,7 @@ void exec_step()
                 mem_set_word(tmp, _regs_curr.hl.word);
                 _regs_curr.value = mem_get_word(tmp);
                 break;
+            // --== ED 0x67, 0x6F: RRD, RLD (BCD rotate) ==--
             case 0x67:
                 _regs_prev.value = mem_get_byte(_regs_curr.hl.word) | (_regs_curr.af.a << 8);
                 tmp = _regs_curr.af.a & 0xf;
@@ -1779,6 +1797,8 @@ void exec_step()
                 _regs_curr.hl.word = mem_get_word(tmp);
                 _regs_curr.value = _regs_curr.hl.word;
                 break;
+            // [English] RLD instruction
+            // [Portuguese] Instrução RLD
             case 0x6f:
                 _regs_prev.value = mem_get_byte(_regs_curr.hl.word) | (_regs_curr.af.a << 8);
                 tmp = _regs_curr.af.a & 0xf;
@@ -1831,6 +1851,7 @@ void exec_step()
                 _regs_curr.sp = mem_get_word(tmp);
                 _regs_curr.value = _regs_curr.sp;
                 break;
+            // --== ED 0xA0-0xBF: Block transfer/search I/O instructions ==--
             case 0xa0:
                 _regs_prev.value = mem_get_byte(_regs_curr.de.word);
                 mem_set_byte(_regs_curr.de.word, mem_get_byte(_regs_curr.hl.word));
@@ -1905,6 +1926,7 @@ void exec_step()
                 _regs_curr.value = mem_get_byte(_regs_curr.hl.word);
                 _regs_curr.hl.word --;
                 break;
+            // --== ED 0xB0-0xBB: Block repeat instructions (LDIR, CPIR, etc.) ==--
             case 0xb0:
                 do
                 {
@@ -2005,15 +2027,18 @@ void exec_step()
                     _regs_curr.hl.word --;
                 }while(_regs_curr.bc.b != 0);
                 break;
-            default: 
+            default:
+                // [English] Unimplemented ED opcode
+                // [Portuguese] Opcode ED não implementado
                 fprintf(stderr, "[ERROR: OPCODE NOT IMPLEMENTED 0xED 0x%02X]", mem_get_byte(_regs_prev.ip));
                 exit(1);
                 break;
         }
     }
+    // --== CB-prefixed opcodes (bit/shift/rotate instructions) ==--
     else if(_regs_curr.prefix_cb)
     {
-        //TODO: if have IX/IY prefix change the register
+        if(_regs_curr.prefix_dd || _regs_curr.prefix_fd)
         if(_regs_curr.prefix_dd || _regs_curr.prefix_fd)
         {
             _regs_prev.ip --;
@@ -2021,6 +2046,7 @@ void exec_step()
         }
         switch(ip_get_byte())
         {
+            // --== CB 0x00-0x07: RLC r ==--
             case 0x00:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
                 else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
@@ -2095,6 +2121,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 _regs_curr.af.a = tmp;
                 break;
+            // --== CB 0x08-0x0F: RRC r ==--
             case 0x08:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
                 else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
@@ -2169,6 +2196,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 _regs_curr.af.a = tmp;
                 break;
+            // --== CB 0x10-0x17: RL r ==--
             case 0x10:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
                 else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
@@ -2243,6 +2271,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 _regs_curr.af.a = tmp;
                 break;
+            // --== CB 0x18-0x1F: RR r ==--
             case 0x18:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
                 else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
@@ -2317,6 +2346,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 _regs_curr.af.a = tmp;
                 break;
+            // --== CB 0x20-0x27: SLA r ==--
             case 0x20:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
                 else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
@@ -2391,6 +2421,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 _regs_curr.af.a = tmp;
                 break;
+            // --== CB 0x28-0x2F: SRA r ==--
             case 0x28:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
                 else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
@@ -2465,6 +2496,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 _regs_curr.af.a = tmp;
                 break;
+            // --== CB 0x30-0x37: SLL r ==--
             case 0x30:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
                 else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
@@ -2539,6 +2571,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 _regs_curr.af.a = tmp;
                 break;
+            // --== CB 0x38-0x3F: SRL r ==--
             case 0x38:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
                 else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
@@ -2613,6 +2646,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 _regs_curr.af.a = tmp;
                 break;
+            // --== CB 0x40-0x7F: BIT bit,r (bit tests) ==--
             case 0x40:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
                 else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
@@ -3126,6 +3160,7 @@ void exec_step()
                 _regs_curr.value = tmp;
                 alu_bit(tmp, 7);
                 break;
+            // --== CB 0x80-0xBF: RES bit,r (bit reset) ==--
             case 0x80:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
                 else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
@@ -3217,17 +3252,6 @@ void exec_step()
             case 0x88:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
                 else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
-                else tmp = _regs_curr.bc.b;
-                _regs_prev.value = tmp;
-                tmp &= ~(1 << 1);
-                _regs_curr.value = tmp;
-                if(_regs_curr.prefix_dd) mem_set_byte(_regs_curr.ix.word + offset_value, tmp);
-                else if(_regs_curr.prefix_fd) mem_set_byte(_regs_curr.iy.word + offset_value, tmp);
-                else _regs_curr.bc.b = tmp;
-                break;
-            case 0x89:
-                if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
-                else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
                 else tmp = _regs_curr.bc.c;
                 _regs_prev.value = tmp;
                 tmp &= ~(1 << 1);
@@ -3236,72 +3260,7 @@ void exec_step()
                 else if(_regs_curr.prefix_fd) mem_set_byte(_regs_curr.iy.word + offset_value, tmp);
                 else _regs_curr.bc.c = tmp;
                 break;
-            case 0x8a:
-                if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
-                else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
-                else tmp = _regs_curr.de.d;
-                _regs_prev.value = tmp;
-                tmp &= ~(1 << 1);
-                _regs_curr.value = tmp;
-                if(_regs_curr.prefix_dd) mem_set_byte(_regs_curr.ix.word + offset_value, tmp);
-                else if(_regs_curr.prefix_fd) mem_set_byte(_regs_curr.iy.word + offset_value, tmp);
-                else _regs_curr.de.d = tmp;
-                break;
-            case 0x8b:
-                if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
-                else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
-                else tmp = _regs_curr.de.e;
-                _regs_prev.value = tmp;
-                tmp &= ~(1 << 1);
-                _regs_curr.value = tmp;
-                if(_regs_curr.prefix_dd) mem_set_byte(_regs_curr.ix.word + offset_value, tmp);
-                else if(_regs_curr.prefix_fd) mem_set_byte(_regs_curr.iy.word + offset_value, tmp);
-                else _regs_curr.de.e = tmp;
-                break;
-            case 0x8c:
-                if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
-                else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
-                else tmp = _regs_curr.hl.h;
-                _regs_prev.value = tmp;
-                tmp &= ~(1 << 1);
-                _regs_curr.value = tmp;
-                if(_regs_curr.prefix_dd) mem_set_byte(_regs_curr.ix.word + offset_value, tmp);
-                else if(_regs_curr.prefix_fd) mem_set_byte(_regs_curr.iy.word + offset_value, tmp);
-                else _regs_curr.hl.h = tmp;
-                break;
-            case 0x8d:
-                if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
-                else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
-                else tmp = _regs_curr.hl.l;
-                _regs_prev.value = tmp;
-                tmp &= ~(1 << 1);
-                _regs_curr.value = tmp;
-                if(_regs_curr.prefix_dd) mem_set_byte(_regs_curr.ix.word + offset_value, tmp);
-                else if(_regs_curr.prefix_fd) mem_set_byte(_regs_curr.iy.word + offset_value, tmp);
-                else _regs_curr.hl.l = tmp;
-                break;
-            case 0x8e:
-                if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
-                else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
-                else tmp = mem_get_byte(_regs_curr.hl.word);
-                _regs_prev.value = tmp;
-                tmp &= ~(1 << 1);
-                _regs_curr.value = tmp;
-                if(_regs_curr.prefix_dd) mem_set_byte(_regs_curr.ix.word + offset_value, tmp);
-                else if(_regs_curr.prefix_fd) mem_set_byte(_regs_curr.iy.word + offset_value, tmp);
-                else mem_set_byte(_regs_curr.hl.word, tmp);
-                break;
-            case 0x8f:
-                if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
-                else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
-                else tmp = _regs_curr.af.a;
-                _regs_prev.value = tmp;
-                tmp &= ~(1 << 1);
-                _regs_curr.value = tmp;
-                if(_regs_curr.prefix_dd) mem_set_byte(_regs_curr.ix.word + offset_value, tmp);
-                else if(_regs_curr.prefix_fd) mem_set_byte(_regs_curr.iy.word + offset_value, tmp);
-                else _regs_curr.af.a = tmp;
-                break;
+
             case 0x90:
                 if(_regs_curr.prefix_dd) tmp = mem_get_byte(_regs_curr.ix.word + offset_value);
                 else if(_regs_curr.prefix_fd) tmp = mem_get_byte(_regs_curr.iy.word + offset_value);
@@ -6760,6 +6719,8 @@ void exec_step()
         }
 
     }
+    // [English] Reset instruction prefixes if not a multi-byte prefix sequence
+    // [Portuguese] Reinicia prefixos de instrução se não for sequência de prefixos multibyte
     if(reset_prefixes)
     {
         _regs_curr.prefix_cb = false;
@@ -6767,10 +6728,10 @@ void exec_step()
         _regs_curr.prefix_ed = false;
         _regs_curr.prefix_fd = false;
     }
-    _regs_curr.r++;
 }
 
-
+// [English] Main execution loop (calls exec_step repeatedly)
+// [Portuguese] Loop principal de execução
 void exec()
 {
     memset(&_regs_curr, 0, sizeof(z80_regs_t));

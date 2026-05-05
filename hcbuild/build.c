@@ -15,7 +15,8 @@ char *dirname(char *path);
 #endif
 #endif
 
-// --== Configuration state (CLI + env overrides) ==--
+// [English] --== Configuration state (CLI + env overrides) ==--
+// [Portuguese] --== Estado de configuracao (CLI + env sobreposicoes) ==--
 static char cfg_sdk_path[1024] = "";
 static char cfg_asm_path[1024] = "";
 static char cfg_link_path[1024] = "";
@@ -30,6 +31,8 @@ obj_t *_objs = NULL;
 obj_t *_last_obj = NULL;
 char *_path = "";
 
+// [English] Remove file extension
+// [Portuguese] Remove a extensao do arquivo
 void remove_ext(char *filename)
 {
     char *last_dot = strrchr(filename, '.');
@@ -38,6 +41,8 @@ void remove_ext(char *filename)
     }
 }
 
+// [English] Get file extension
+// [Portuguese] Obtem a extensao do arquivo
 char *get_ext(char *filename)
 {
     char *last_dot = strrchr(filename, '.');
@@ -47,6 +52,8 @@ char *get_ext(char *filename)
     return "";
 }
 
+// [English] Append include path to linked list
+// [Portuguese] Adiciona caminho de include a lista ligada
 static void append_include_path(const char *path)
 {
     include_path_t *node = malloc(sizeof(include_path_t));
@@ -56,10 +63,14 @@ static void append_include_path(const char *path)
     cfg_cli_include_paths = node;
 }
 
+// [English] Resolve configuration from CLI args, env vars, and project file
+// [Portuguese] Resolve configuracao a partir de args CLI, vars de ambiente e arquivo de projeto
 static void resolve_config(void)
 {
     char *env;
 
+    // [English] Resolve SDK path
+    // [Portuguese] Resolve caminho do SDK
     if (!cfg_sdk_path[0]) {
         env = getenv("HC_SDK_PATH");
         if (env) {
@@ -72,6 +83,8 @@ static void resolve_config(void)
         }
     }
 
+    // [English] Resolve tool paths from SDK path
+    // [Portuguese] Resolve caminhos das ferramentas a partir do SDK
     if (!cfg_asm_path[0] && cfg_sdk_path[0]) {
         strncpy(cfg_asm_path, cfg_sdk_path, sizeof(cfg_asm_path) - 1);
         cfg_asm_path[sizeof(cfg_asm_path) - 1] = '\0';
@@ -85,6 +98,8 @@ static void resolve_config(void)
         cfg_lib_path[sizeof(cfg_lib_path) - 1] = '\0';
     }
 
+    // [English] Resolve output directory
+    // [Portuguese] Resolve diretorio de saida
     if (!cfg_output_dir[0]) {
         env = getenv("HC_OUTPUT_DIR");
         if (env) {
@@ -98,11 +113,15 @@ static void resolve_config(void)
     }
 }
 
+// [English] Append string to command buffer
+// [Portuguese] Adiciona string ao buffer de comando
 static void cmd_puts(char *buf, size_t size, const char *s)
 {
     strncat(buf, s, size - strlen(buf) - 1);
 }
 
+// [English] Append base path with separator
+// [Portuguese] Adiciona caminho base com separador
 static void cmd_put_base(char *buf, size_t size, const char *base)
 {
     if (base && base[0]) {
@@ -115,6 +134,8 @@ static void cmd_put_base(char *buf, size_t size, const char *base)
     }
 }
 
+// [English] Append tool name (adds .exe on DOS/Windows)
+// [Portuguese] Adiciona nome da ferramenta (adiciona .exe no DOS/Windows)
 static void cmd_put_tool(char *buf, size_t size, const char *s)
 {
     cmd_puts(buf, size, s);
@@ -123,6 +144,8 @@ static void cmd_put_tool(char *buf, size_t size, const char *s)
     #endif
 }
 
+// [English] Resolve output file path (prepend output dir)
+// [Portuguese] Resolve caminho do arquivo de saida (prefixa diretorio de saida)
 static void resolve_output_path(char *out, size_t out_size, const char *filename)
 {
     if (filename[0] == PATHSEPARATOR) {
@@ -139,6 +162,8 @@ static void resolve_output_path(char *out, size_t out_size, const char *filename
     strncat(out, filename, out_size - strlen(out) - 1);
 }
 
+// [English] Resolve source file path (prepend project dir)
+// [Portuguese] Resolve caminho do arquivo fonte (prefixa diretorio do projeto)
 static void resolve_source_path(char *out, size_t out_size, const char *filename)
 {
     if (filename[0] != PATHSEPARATOR) {
@@ -155,6 +180,8 @@ static void resolve_source_path(char *out, size_t out_size, const char *filename
     }
 }
 
+// [English] Display help
+// [Portuguese] Exibe ajuda
 void help(void)
 {
     printf("HC Builder for Retro Computing v%d.%d R%d\n", VERSION, SUBVERSION, REVISION);
@@ -181,6 +208,8 @@ void help(void)
     exit(1);
 }
 
+// [English] Compile all source files in a section
+// [Portuguese] Compila todos os arquivos fonte de uma secao
 void make_files(section_t *section)
 {
     int st;
@@ -196,11 +225,16 @@ void make_files(section_t *section)
     const char *asm_dir = cfg_asm_path[0] ? cfg_asm_path : cfg_sdk_path;
 
     if (!section) return;
+
+    // [English] Iterate over each file key-value
+    // [Portuguese] Itera sobre cada par chave-valor de arquivo
     keyvalue_t *kv = section->keys;
     while (kv) {
         ok = false;
         resolve_source_path(source_name, sizeof(source_name), kv->key);
 
+        // [English] Build output filenames (obj, dump)
+        // [Portuguese] Monta nomes de arquivos de saida (obj, dump)
         snprintf(obj_name, sizeof(obj_name), "%s", source_name);
         remove_ext(obj_name);
         strncat(obj_name, ".obj", sizeof(obj_name) - strlen(obj_name) - 1);
@@ -209,18 +243,24 @@ void make_files(section_t *section)
         remove_ext(dump_name);
         strncat(dump_name, ".dump", sizeof(dump_name) - strlen(dump_name) - 1);
 
+        // [English] Validate extension
+        // [Portuguese] Valida extensao
         const char *ext = get_ext(source_name);
         if (!strcmp(ext, ".__s")) {
             fprintf(stderr, "error: invalid file extension: %s\n", source_name);
             exit(1);
         }
 
+        // [English] Compile B language files
+        // [Portuguese] Compila arquivos da linguagem B
         if (!strcmp(ext, ".b") || !strcmp(ext, ".B")) {
             ok = true;
             snprintf(temp_name, sizeof(temp_name), "%s", source_name);
             remove_ext(temp_name);
             strncat(temp_name, ".__s", sizeof(temp_name) - strlen(temp_name) - 1);
 
+            // [English] Build B compiler command
+            // [Portuguese] Monta comando do compilador B
             cmd[0] = '\0';
             cmd_put_base(cmd, sizeof(cmd), asm_dir);
             #ifdef DOS_HOST
@@ -236,6 +276,8 @@ void make_files(section_t *section)
             cmd_put_tool(cmd, sizeof(cmd), "");
             #endif
 
+            // [English] Add include paths
+            // [Portuguese] Adiciona caminhos de include
             for (include_path_t *inc = cfg_cli_include_paths; inc; inc = inc->next) {
                 snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -I %s", inc->path);
             }
@@ -249,20 +291,26 @@ void make_files(section_t *section)
             }
             snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " -o %s %s", temp_name, source_name);
 
+            // [English] Execute B compiler
+            // [Portuguese] Executa compilador B
             if (verbose) printf("%s\n", cmd);
             st = system(cmd);
             if (st) exit(-1);
             strncpy(source_name, temp_name, sizeof(source_name) - 1);
         }
 
+        // [English] Assemble assembly files
+        // [Portuguese] Monta arquivos assembly
         ext = get_ext(source_name);
         if (!strcmp(ext, ".s") || !strcmp(ext, ".S") || !strcmp(ext, ".__s")) {
             ok = true;
+
+            // [English] Build assembler command
+            // [Portuguese] Monta comando do montador
             cmd[0] = '\0';
             cmd_put_base(cmd, sizeof(cmd), asm_dir);
             #ifdef DOS_HOST
             cmd_puts(cmd, sizeof(cmd), "hcasm-");
-            /* 8086exe uses the same assembler as 8086 */
             if (!strcmp(section->subsection, "8086exe"))
                 cmd_puts(cmd, sizeof(cmd), "8086");
             else
@@ -283,10 +331,14 @@ void make_files(section_t *section)
             }
             snprintf(cmd + strlen(cmd), sizeof(cmd) - strlen(cmd), " %s", source_name);
 
+            // [English] Execute assembler
+            // [Portuguese] Executa montador
             if (verbose) printf("%s\n", cmd);
             st = system(cmd);
             if (st) exit(-1);
 
+            // [English] Track generated object
+            // [Portuguese] Rastreia objeto gerado
             obj_t *obj = malloc(sizeof(obj_t) + strlen(obj_name));
             strcpy(obj->name, obj_name);
             obj->next = NULL;
@@ -297,10 +349,14 @@ void make_files(section_t *section)
             _last_obj = obj;
         }
 
+        // [English] Clean up temporary files
+        // [Portuguese] Limpa arquivos temporarios
         if (!strcmp(ext, ".__s")) {
             if (!keep) remove(source_name);
         }
 
+        // [English] Error if extension not recognized
+        // [Portuguese] Erro se extensao nao reconhecida
         if (!ok) {
             fprintf(stderr, "error: extension not supported: %s\n", source_name);
             exit(1);
@@ -309,6 +365,8 @@ void make_files(section_t *section)
     }
 }
 
+// [English] Remove compiled files for a section
+// [Portuguese] Remove arquivos compilados de uma secao
 void clean_files(section_t *section)
 {
     char obj_name[1024];
@@ -332,6 +390,8 @@ void clean_files(section_t *section)
     }
 }
 
+// [English] Link object files into executable/library
+// [Portuguese] Liga arquivos-objeto em executavel/biblioteca
 void make_link(section_t *section, char *config)
 {
     int st;
@@ -349,11 +409,15 @@ void make_link(section_t *section, char *config)
     const char *lib_dir = cfg_lib_path[0] ? cfg_lib_path : cfg_sdk_path;
     bool verbose = cfg_cli_verbose || get_value_bool("config", "", "verbose");
 
+    // [English] Validate section
+    // [Portuguese] Valida secao
     if (!section) {
         fprintf(stderr, "error: link configuration not found: %s\n", config);
         exit(1);
     }
 
+    // [English] Read configuration values
+    // [Portuguese] Le valores de configuracao
     out_file = get_value(section->name, section->subsection, "filename");
     sym_file = get_value(section->name, section->subsection, "symbols");
     format = get_value(section->name, section->subsection, "format");
@@ -367,6 +431,8 @@ void make_link(section_t *section, char *config)
 
     resolve_output_path(output_path, sizeof(output_path), out_file);
 
+    // [English] Calculate command buffer size
+    // [Portuguese] Calcula tamanho do buffer de comando
     obj_t *obj = _objs;
     size_t cmd_size = 8192;
     cmd_size += strlen(output_path) + strlen(sym_file) + strlen(text_offset)
@@ -377,6 +443,8 @@ void make_link(section_t *section, char *config)
     }
     cmd = malloc(cmd_size);
 
+    // [English] Build librarian command (format = lib)
+    // [Portuguese] Monta comando do bibliotecario (formato = lib)
     if (!strcmp(format, "lib")) {
         cmd[0] = '\0';
         cmd_put_base(cmd, cmd_size, lib_dir);
@@ -384,6 +452,8 @@ void make_link(section_t *section, char *config)
         cmd_put_tool(cmd, cmd_size, "");
         cmd_puts(cmd, cmd_size, " ");
         cmd_puts(cmd, cmd_size, output_path);
+    // [English] Build linker command
+    // [Portuguese] Monta comando do linker
     } else {
         cmd[0] = '\0';
         cmd_put_base(cmd, cmd_size, link_dir);
@@ -397,6 +467,8 @@ void make_link(section_t *section, char *config)
         cmd_put_tool(cmd, cmd_size, "");
         #endif
 
+        // [English] Append linker arguments
+        // [Portuguese] Anexa argumentos do linker
         snprintf(cmd + strlen(cmd), cmd_size - strlen(cmd), " -o %s", output_path);
 
         if (strlen(text_offset)) {
@@ -419,18 +491,24 @@ void make_link(section_t *section, char *config)
         }
     }
 
+    // [English] Append all object files
+    // [Portuguese] Anexa todos os arquivos-objeto
     obj = _objs;
     while (obj) {
         snprintf(cmd + strlen(cmd), cmd_size - strlen(cmd), " %s", obj->name);
         obj = obj->next;
     }
 
+    // [English] Execute link command
+    // [Portuguese] Executa comando de ligacao
     if (verbose) printf("%s\n", cmd);
     st = system(cmd);
     if (st) exit(-1);
     free(cmd);
 }
 
+// [English] Remove linked output files
+// [Portuguese] Remove arquivos de saida da ligacao
 void clean_link(section_t *section, char *config)
 {
     char *out_file = NULL;
@@ -451,6 +529,8 @@ void clean_link(section_t *section, char *config)
     }
 }
 
+// [English] Add library object files to list
+// [Portuguese] Adiciona arquivos-objeto de biblioteca a lista
 void make_libs(section_t *section)
 {
     char obj_name[2048];
@@ -470,6 +550,8 @@ void make_libs(section_t *section)
     }
 }
 
+// [English] Parse CLI arguments
+// [Portuguese] Analisa argumentos da linha de comando
 static void parse_args(int argc, char **argv, char **project_file, char **command, char **config)
 {
     int i;
@@ -519,6 +601,8 @@ static void parse_args(int argc, char **argv, char **project_file, char **comman
             fprintf(stderr, "error: unknown option: %s\n", argv[i]);
             help();
         }
+        // [English] Positional arguments (project, command, config)
+        // [Portuguese] Argumentos posicionais (projeto, comando, config)
         else {
             if (!*project_file) *project_file = argv[i];
             else if (!*command) *command = argv[i];
@@ -531,12 +615,18 @@ static void parse_args(int argc, char **argv, char **project_file, char **comman
     }
 }
 
+// [English] Entry point
+// [Portuguese] Ponto de entrada
+// [English] Parses arguments, resolves config, runs make or clean command
+// [Portuguese] Analisa argumentos, resolve configuracao, executa comando make ou clean
 int main(int argc, char **argv)
 {
     char *project_file = NULL;
     char *command = NULL;
     char *config = NULL;
 
+    // [English] Parse and resolve
+    // [Portuguese] Analisa e resolve
     parse_args(argc, argv, &project_file, &command, &config);
 
     if (!project_file || !command) help();
@@ -548,7 +638,11 @@ int main(int argc, char **argv)
     _path = strdup(project_file);
     _path = dirname(_path);
 
+    // [English] Execute command
+    // [Portuguese] Executa comando
     if (!strcmp(command, "make")) {
+        // [English] Process libraries and files
+        // [Portuguese] Processa bibliotecas e arquivos
         make_libs(get_section("lib", "start"));
         make_libs(get_section("libs", "start"));
         make_files(get_section("files", "8080"));
@@ -561,6 +655,8 @@ int main(int argc, char **argv)
         make_link(get_section("link", config), config);
     }
     else if (!strcmp(command, "clean")) {
+        // [English] Clean files and links
+        // [Portuguese] Limpa arquivos e ligacoes
         clean_files(get_section("files", "8080"));
         clean_files(get_section("files", "8085"));
         clean_files(get_section("files", "8086"));
