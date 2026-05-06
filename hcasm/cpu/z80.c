@@ -1101,7 +1101,7 @@ static void emit_im(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[]
 
     // Validate argument is a constant value (0, 1, or 2) and emit the corresponding opcode.
     // Valida que o argumento é um valor constante (0, 1 ou 2) e emite o opcode correspondente.
-    if (is_value_only(argv[0]) && argv[0]->token != TOK_VALUE && argv[0]->value < 3)
+    if (is_value_only(argv[0]) && argv[0]->token == TOK_VALUE && argv[0]->value < 3)
     {
         op = opcode->op4;
         out(REC_DATA, 0, 0, &op, 1);

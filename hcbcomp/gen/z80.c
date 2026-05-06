@@ -842,8 +842,8 @@ static int z80_match_push_var_pop_ex(peep_line_t *w, peep_line_t *repl)
     return n;
 }
 
-// [English] Z80 Pattern 15: replaces full increment sequence (19 instr) with "inc word [ix+N]"
-// [Portuguese] Padrão Z80 15: substitui sequência completa de incremento (19 instr) por "inc word [ix+N]"
+// [English] Z80 Pattern 15: replaces full increment sequence (21 instr) with "inc word [ix+N]"
+// [Portuguese] Padrão Z80 15: substitui sequência completa de incremento (21 instr) por "inc word [ix+N]"
 static int z80_match_inc_local_full(peep_line_t *w, peep_line_t *repl)
 {
     if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "ix")) return 0;
@@ -880,13 +880,16 @@ static int z80_match_inc_local_full(peep_line_t *w, peep_line_t *repl)
     if (strcmp(w[17].args[0], "hl")) return 0;
     if (!peep_op_args(&w[18], "ld", 2) || strcmp(w[18].args[0], "[hl]")) return 0;
     if (strcmp(w[18].args[1], "d")) return 0;
+    if (!peep_op_args(&w[19], "pop", 1) || strcmp(w[19].args[0], "de")) return 0;
+    if (!peep_op_is(&w[20], "ex") || w[20].nargs != 2) return 0;
+    if (strcmp(w[20].args[0], "de") || strcmp(w[20].args[1], "hl")) return 0;
     int n = 0;
     peep_emit_repl(repl, &n, "\tinc word [ix%+d]", off);
     return n;
 }
 
-// [English] Z80 Pattern 16: replaces full decrement sequence (21 instr) with "dec word [ix+N]"
-// [Portuguese] Padrão Z80 16: substitui sequência completa de decremento (21 instr) por "dec word [ix+N]"
+// [English] Z80 Pattern 16: replaces full decrement sequence (23 instr) with "dec word [ix+N]"
+// [Portuguese] Padrão Z80 16: substitui sequência completa de decremento (23 instr) por "dec word [ix+N]"
 static int z80_match_dec_local_full(peep_line_t *w, peep_line_t *repl)
 {
     if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "ix")) return 0;
@@ -927,6 +930,9 @@ static int z80_match_dec_local_full(peep_line_t *w, peep_line_t *repl)
     if (strcmp(w[19].args[0], "hl")) return 0;
     if (!peep_op_args(&w[20], "ld", 2) || strcmp(w[20].args[0], "[hl]")) return 0;
     if (strcmp(w[20].args[1], "d")) return 0;
+    if (!peep_op_args(&w[21], "pop", 1) || strcmp(w[21].args[0], "de")) return 0;
+    if (!peep_op_is(&w[22], "ex") || w[22].nargs != 2) return 0;
+    if (strcmp(w[22].args[0], "de") || strcmp(w[22].args[1], "hl")) return 0;
     int n = 0;
     peep_emit_repl(repl, &n, "\tdec word [ix%+d]", off);
     return n;
@@ -1025,11 +1031,11 @@ int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
         int n = z80_match_add_imm_to_var(window, repl);
         if (n > 0) return n;
     }
-    if (wcount == 19) {
+    if (wcount == 21) {
         int n = z80_match_inc_local_full(window, repl);
         if (n > 0) return n;
     }
-    if (wcount == 21) {
+    if (wcount == 23) {
         int n = z80_match_dec_local_full(window, repl);
         if (n > 0) return n;
     }
