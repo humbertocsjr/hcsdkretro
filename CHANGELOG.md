@@ -1,5 +1,46 @@
 # Changelog
 
+## v2.1 R6 - May 2026
+
+### B Compiler (hcbcomp)
+
+#### Z80 Peephole Optimizations - Bug Fixes
+- **Pattern 15** (`z80_match_inc_local_full`): fixed to match complete 21-instruction sequence (was 19)
+  - Added missing final instructions: `pop de` and `ex de, hl` from `gen_pop_sec()` and `gen_exchange()`
+  - Eliminates leftover `pop de; ex de, hl` after optimized `inc word [ix+N]`
+- **Pattern 16** (`z80_match_dec_local_full`): fixed to match complete 23-instruction sequence (was 21)
+  - Added missing final instructions: `pop de` and `ex de, hl` from `gen_pop_sec()` and `gen_exchange()`
+  - Eliminates leftover `pop de; ex de, hl` after optimized `dec word [ix+N]`
+- **Dispatcher updated**: `wcount` checks changed from 19/21 to 21/23 in `gen_peep_replace()`
+
+#### Example - Before Fix
+```asm
+inc word [ix-2]
+pop de          ; ← leftover (useless)
+ex de, hl       ; ← leftover (useless)
+push ix         ; ← next code
+```
+
+#### Example - After Fix
+```asm
+inc word [ix-2]
+push ix         ; ← next code (no leftovers)
+```
+
+### Assembler (hcasm)
+
+#### Z80 IM Instruction Fix
+- **Bug fix in `emit_im()`**: corrected token validation condition
+  - Changed `argv[0]->token != TOK_VALUE` to `argv[0]->token == TOK_VALUE`
+  - Instructions `IM 0`, `IM 1`, `IM 2` now assemble correctly
+- **Test impact**: `asm/z80/all_opcodes` now passes (was failing due to IM instruction error)
+
+### Validation & Testing
+- **43/43 tests passing** (was 42/43)
+- **Zero regressions** - all B language and assembler tests pass across all platforms
+
+---
+
 ## v2.1 R5 - May 2026
 
 ### B Compiler (hcbcomp)

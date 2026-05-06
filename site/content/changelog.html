@@ -12,6 +12,28 @@
 <TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Changelog</B></FONT></TD></TR>
 </TABLE>
 
+<H3>v2.1 R6 &mdash; May 2026</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="20%">Area</TH><TH>Changes</TH></TR>
+
+<TR><TD VALIGN="TOP"><B>Z80 Peephole Fixes</B></TD>
+<TD>
+<TT>Pattern 15 (inc)</TT>: fixed to match 21 instructions (was 19) &mdash; added final <TT>pop de; ex de, hl</TT>.<BR>
+<TT>Pattern 16 (dec)</TT>: fixed to match 23 instructions (was 21) &mdash; added final <TT>pop de; ex de, hl</TT>.<BR>
+Eliminates leftover <TT>pop de; ex de, hl</TT> after optimized <TT>inc/dec word [ix+N]</TT>.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Assembler Fix</B></TD>
+<TD>
+<TT>Z80 emit_im()</TT>: corrected token validation (<TT>!= TOK_VALUE</TT> &rarr; <TT>== TOK_VALUE</TT>).<BR>
+Instructions <TT>IM 0</TT>, <TT>IM 1</TT>, <TT>IM 2</TT> now assemble correctly.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Test Suite</B></TD>
+<TD><B>43/43 tests passing</B> (was 42/43). <TT>asm/z80/all_opcodes</TT> now passes. Zero regressions.</TD></TR>
+</TABLE>
+
 <H3>v2.1 R5 &mdash; May 2026</H3>
 
 <TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
