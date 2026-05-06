@@ -4,6 +4,7 @@ static int current_label = 0;
 static int func_nlocals = 0;
 static int func_nparams = 0;
 static int func_has_return = 0;
+static int func_has_return_at_end = 0;
 static int break_label = -1;
 
 // [English] Expects the current token to be of type t, then advances to the next token.
@@ -1300,6 +1301,8 @@ static void function_definition(const char *name)
 
     func_nlocals = 0;
     func_nparams = 0;
+    func_has_return = 0;
+    func_has_return_at_end = 0;
     break_label = -1;
 
     parse_params();
@@ -1319,12 +1322,17 @@ static void function_definition(const char *name)
     // Parse remaining statements / Analisa comandos restantes
     while (tok != TOK_RBRACE && tok != TOK_EOF)
     {
+        int is_return = (tok == TOK_RETURN);
         parse_statement();
+        func_has_return_at_end = is_return;
     }
 
     expect(TOK_RBRACE);
-    gen_comment("function %s epilogue", name);
-    gen_epilogue();
+    if (!func_has_return_at_end)
+    {
+        gen_comment("function %s epilogue", name);
+        gen_epilogue();
+    }
 }
 
 // [English] Parses the entire compilation unit (top level).

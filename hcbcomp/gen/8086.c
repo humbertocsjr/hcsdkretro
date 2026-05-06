@@ -467,7 +467,10 @@ void gen_call(const char *name, int nargs)
     gen_emitf("call %s", name);
     if (nargs > 0)
     {
-        gen_emitf("add sp, %i", nargs * 2);
+        if (nargs == 1)
+            gen_emit("pop cx");
+        else
+            gen_emitf("add sp, %i", nargs * 2);
     }
 }
 

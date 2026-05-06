@@ -91,9 +91,17 @@ void gen_prologue(const char *name, int nlocals)
     gen_emit("add ix, sp");
     if (nlocals > 0)
     {
-        gen_emitf("ld hl, -%i", nlocals * 2);
-        gen_emit("add hl, sp");
-        gen_emit("ld sp, hl");
+        if (nlocals <= 2)
+        {
+            for (int i = 0; i < nlocals * 2; i++)
+                gen_emit("dec sp");
+        }
+        else
+        {
+            gen_emitf("ld hl, -%i", nlocals * 2);
+            gen_emit("add hl, sp");
+            gen_emit("ld sp, hl");
+        }
     }
 }
 
@@ -186,10 +194,9 @@ void gen_load_local(int offset)
 // [Portuguese] Computa o endereço de uma variável local em HL usando IX+offset
 void gen_local_addr(int offset)
 {
-    gen_emitf("ld hl, %i", -(offset * 2 + 2));
-    gen_emit("ex de, hl");
     gen_emit("push ix");
-    gen_emit("pop hl");
+    gen_emit("pop de");
+    gen_emitf("ld hl, %i", -(offset * 2 + 2));
     gen_emit("add hl, de");
 }
 
@@ -213,10 +220,9 @@ void gen_load_param(int offset)
 // [Portuguese] Computa o endereço de um parâmetro em HL usando IX+offset
 void gen_param_addr(int offset)
 {
-    gen_emitf("ld hl, %i", offset * 2 + 4);
-    gen_emit("ex de, hl");
     gen_emit("push ix");
-    gen_emit("pop hl");
+    gen_emit("pop de");
+    gen_emitf("ld hl, %i", offset * 2 + 4);
     gen_emit("add hl, de");
 }
 
@@ -618,23 +624,21 @@ void gen_call(const char *name, int nargs)
 void gen_data_final(void) {}
 
 // [English] Z80 Pattern 1: optimizes local variable load with computed offset into direct IX load.
-// Replaces 9 instructions with 2 direct IX loads: ld l,[ix+N]; ld h,[ix+N+1]
+// Replaces 8 instructions with 2 direct IX loads: ld l,[ix+N]; ld h,[ix+N+1]
 // [Portuguese] Padrão Z80 1: otimiza carga de variável local com deslocamento computado para carga direta por IX.
 static int z80_match_local_load(peep_line_t *w, peep_line_t *repl)
 {
-    if (w[0].nargs != 2) return 0;
-    if (!peep_op_is(&w[0], "ld")) return 0;
-    if (strcmp(w[0].args[0], "hl")) return 0;
+    if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "ix")) return 0;
+    if (!peep_op_args(&w[1], "pop", 1) || strcmp(w[1].args[0], "de")) return 0;
+    if (w[2].nargs != 2) return 0;
+    if (!peep_op_is(&w[2], "ld") || strcmp(w[2].args[0], "hl")) return 0;
     int off;
-    if (!peep_parse_arg_int(w[0].args[1], &off)) return 0;
-    if (!peep_op_is(&w[1], "ex") || strcmp(w[1].args[0], "de") || strcmp(w[1].args[1], "hl")) return 0;
-    if (!peep_op_is(&w[2], "push") || strcmp(w[2].args[0], "ix")) return 0;
-    if (!peep_op_is(&w[3], "pop") || strcmp(w[3].args[0], "hl")) return 0;
-    if (!peep_op_is(&w[4], "add") || strcmp(w[4].args[0], "hl") || strcmp(w[4].args[1], "de")) return 0;
-    if (!peep_op_is(&w[5], "ld") || strcmp(w[5].args[0], "a") || strcmp(w[5].args[1], "[hl]")) return 0;
-    if (!peep_op_is(&w[6], "inc") || strcmp(w[6].args[0], "hl")) return 0;
-    if (!peep_op_is(&w[7], "ld") || strcmp(w[7].args[0], "h") || strcmp(w[7].args[1], "[hl]")) return 0;
-    if (!peep_op_is(&w[8], "ld") || strcmp(w[8].args[0], "l") || strcmp(w[8].args[1], "a")) return 0;
+    if (!peep_parse_arg_int(w[2].args[1], &off)) return 0;
+    if (!peep_op_is(&w[3], "add") || strcmp(w[3].args[0], "hl") || strcmp(w[3].args[1], "de")) return 0;
+    if (!peep_op_is(&w[4], "ld") || strcmp(w[4].args[0], "a") || strcmp(w[4].args[1], "[hl]")) return 0;
+    if (!peep_op_is(&w[5], "inc") || strcmp(w[5].args[0], "hl")) return 0;
+    if (!peep_op_is(&w[6], "ld") || strcmp(w[6].args[0], "h") || strcmp(w[6].args[1], "[hl]")) return 0;
+    if (!peep_op_is(&w[7], "ld") || strcmp(w[7].args[0], "l") || strcmp(w[7].args[1], "a")) return 0;
     int n = 0;
     peep_emit_repl(repl, &n, "\tld l, [ix%+d]", off);
     peep_emit_repl(repl, &n, "\tld h, [ix%+d]", off + 1);
@@ -645,18 +649,17 @@ static int z80_match_local_load(peep_line_t *w, peep_line_t *repl)
 // [Portuguese] Padrão Z80 2: ordem alternativa de registradores para carga de variável local (usa e/d em vez de a).
 static int z80_match_local_load2(peep_line_t *w, peep_line_t *repl)
 {
-    if (w[0].nargs != 2) return 0;
-    if (!peep_op_is(&w[0], "ld") || strcmp(w[0].args[0], "hl")) return 0;
+    if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "ix")) return 0;
+    if (!peep_op_args(&w[1], "pop", 1) || strcmp(w[1].args[0], "de")) return 0;
+    if (w[2].nargs != 2) return 0;
+    if (!peep_op_is(&w[2], "ld") || strcmp(w[2].args[0], "hl")) return 0;
     int off;
-    if (!peep_parse_arg_int(w[0].args[1], &off)) return 0;
-    if (!peep_op_is(&w[1], "ex") || strcmp(w[1].args[0], "de") || strcmp(w[1].args[1], "hl")) return 0;
-    if (!peep_op_is(&w[2], "push") || strcmp(w[2].args[0], "ix")) return 0;
-    if (!peep_op_is(&w[3], "pop") || strcmp(w[3].args[0], "hl")) return 0;
-    if (!peep_op_is(&w[4], "add") || strcmp(w[4].args[0], "hl") || strcmp(w[4].args[1], "de")) return 0;
-    if (!peep_op_is(&w[5], "ld") || strcmp(w[5].args[0], "e") || strcmp(w[5].args[1], "[hl]")) return 0;
-    if (!peep_op_is(&w[6], "inc") || strcmp(w[6].args[0], "hl")) return 0;
-    if (!peep_op_is(&w[7], "ld") || strcmp(w[7].args[0], "d") || strcmp(w[7].args[1], "[hl]")) return 0;
-    if (!peep_op_is(&w[8], "ex") || strcmp(w[8].args[0], "de") || strcmp(w[8].args[1], "hl")) return 0;
+    if (!peep_parse_arg_int(w[2].args[1], &off)) return 0;
+    if (!peep_op_is(&w[3], "add") || strcmp(w[3].args[0], "hl") || strcmp(w[3].args[1], "de")) return 0;
+    if (!peep_op_is(&w[4], "ld") || strcmp(w[4].args[0], "e") || strcmp(w[4].args[1], "[hl]")) return 0;
+    if (!peep_op_is(&w[5], "inc") || strcmp(w[5].args[0], "hl")) return 0;
+    if (!peep_op_is(&w[6], "ld") || strcmp(w[6].args[0], "d") || strcmp(w[6].args[1], "[hl]")) return 0;
+    if (!peep_op_is(&w[7], "ex") || strcmp(w[7].args[0], "de") || strcmp(w[7].args[1], "hl")) return 0;
     int n = 0;
     peep_emit_repl(repl, &n, "\tld l, [ix%+d]", off);
     peep_emit_repl(repl, &n, "\tld h, [ix%+d]", off + 1);
@@ -746,6 +749,30 @@ static int z80_match_ex_sp(peep_line_t *w, int wcount, peep_line_t *repl)
     return n;
 }
 
+// [English] Z80 Pattern 7: replaces "ex de,hl; ld hl,N; add hl,sp; ld sp,hl; ex de,hl" with N×inc sp (N even, ≤6).
+// Eliminates the 5-instruction call argument cleanup for small call footprints.
+// [Portuguese] Padrão Z80 7: substitui sequência de limpeza de argumentos de chamada por N×inc sp.
+static int z80_match_call_cleanup(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_is(&w[0], "ex") || w[0].nargs != 2) return 0;
+    if (strcmp(w[0].args[0], "de") || strcmp(w[0].args[1], "hl")) return 0;
+    if (!peep_op_args(&w[1], "ld", 2)) return 0;
+    if (strcmp(w[1].args[0], "hl")) return 0;
+    if (!peep_op_is(&w[2], "add") || w[2].nargs != 2) return 0;
+    if (strcmp(w[2].args[0], "hl") || strcmp(w[2].args[1], "sp")) return 0;
+    if (!peep_op_args(&w[3], "ld", 2)) return 0;
+    if (strcmp(w[3].args[0], "sp") || strcmp(w[3].args[1], "hl")) return 0;
+    if (!peep_op_is(&w[4], "ex") || w[4].nargs != 2) return 0;
+    if (strcmp(w[4].args[0], "de") || strcmp(w[4].args[1], "hl")) return 0;
+    int val;
+    if (!peep_parse_arg_int(w[1].args[1], &val)) return 0;
+    if (val <= 0 || val > 6 || (val & 1)) return 0;
+    int n = 0;
+    for (int i = 0; i < val; i++)
+        peep_emit_repl(repl, &n, "\tinc sp");
+    return n;
+}
+
 // [English] Z80-specific peephole pattern dispatcher.
 // [Portuguese] Despachante de padrões peephole específicos Z80.
 int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
@@ -754,7 +781,7 @@ int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
         int n = z80_match_ex_sp(window, wcount, repl);
         if (n > 0) return n;
     }
-    if (wcount == 9) {
+    if (wcount == 8) {
         int n = z80_match_local_load(window, repl);
         if (n > 0) return n;
         n = z80_match_local_load2(window, repl);
@@ -762,6 +789,10 @@ int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
     }
     if (wcount == 12) {
         int n = z80_match_local_store_imm(window, repl);
+        if (n > 0) return n;
+    }
+    if (wcount == 5) {
+        int n = z80_match_call_cleanup(window, repl);
         if (n > 0) return n;
     }
     if (wcount == 3) {

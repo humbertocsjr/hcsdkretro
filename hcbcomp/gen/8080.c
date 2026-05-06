@@ -90,9 +90,10 @@ void gen_prologue(const char *name, int nlocals)
     gen_emit("inx h");
     gen_emit("push h");
     gen_emit("pop b");
-    for (int i = 0; i < nlocals; i++) {
+    if (nlocals > 0) {
         gen_emit("lxi h, 0");
-        gen_emit("push h");
+        for (int i = 0; i < nlocals; i++)
+            gen_emit("push h");
     }
 }
 
@@ -390,10 +391,8 @@ void gen_shr(void)
 #define GEN_CMPCODE \
     gen_emit("mov a, l"); \
     gen_emit("sub e"); \
-    gen_emit("mov l, a"); \
     gen_emit("mov a, h"); \
-    gen_emit("sbb d"); \
-    gen_emit("mov h, a")
+    gen_emit("sbb d")
 
 // [English] 16-bit equality comparison: HL = (HL == DE) ? 1 : 0
 // [Portuguese] Comparação de igualdade de 16 bits: HL = (HL == DE) ? 1 : 0
