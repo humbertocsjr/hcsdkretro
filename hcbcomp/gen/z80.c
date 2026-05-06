@@ -135,6 +135,13 @@ void gen_pop_sec(void)
     gen_emit("pop de");
 }
 
+// [English] Exchanges primary (HL) and secondary (DE) registers
+// [Portuguese] Troca os registradores primário (HL) e secundário (DE)
+void gen_exchange(void)
+{
+    gen_emit("ex de, hl");
+}
+
 // [English] Loads an immediate 16-bit value into HL
 // [Portuguese] Carrega um valor imediato de 16 bits em HL
 void gen_load_imm(int val)

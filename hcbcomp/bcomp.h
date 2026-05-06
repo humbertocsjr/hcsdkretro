@@ -184,6 +184,7 @@ void gen_return(void);
 
 void gen_push_prim(void);
 void gen_pop_sec(void);
+void gen_exchange(void);
 
 void gen_load_imm(int val);
 void gen_load_label(int label);

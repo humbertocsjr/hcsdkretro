@@ -155,6 +155,14 @@ void gen_pop_sec(void)
 	gen_emit("pop cx");
 }
 
+// [English] Exchanges 32-bit primary (DX:AX) and secondary (CX:BX) registers
+// [Portuguese] Troca os registradores primário (DX:AX) e secundário (CX:BX) de 32 bits
+void gen_exchange(void)
+{
+	gen_emit("xchg ax, bx");
+	gen_emit("xchg dx, cx");
+}
+
 // [English] Loads a 32-bit immediate value into DX:AX
 // [Portuguese] Carrega um valor imediato de 32 bits em DX:AX
 void gen_load_imm(int val)

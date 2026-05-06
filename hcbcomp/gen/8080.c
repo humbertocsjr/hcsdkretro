@@ -116,6 +116,7 @@ void gen_return(void) { gen_epilogue(); }
 
 void gen_push_prim(void) { gen_emit("push h"); }
 void gen_pop_sec(void) { gen_emit("pop d"); }
+void gen_exchange(void) { gen_emit("xchg"); }
 void gen_load_imm(int val) { gen_emitf("lxi h, %i", val); }
 void gen_load_label(int label) { fprintf(outfile, "\tlxi h, .L%i\n", label); }
 void gen_load_var(const char *name) { gen_emitf("lhld %s", name); }

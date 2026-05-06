@@ -116,6 +116,11 @@ void gen_pop_sec(void)
     gen_emit("pop bx");
 }
 
+void gen_exchange(void)
+{
+    gen_emit("xchg ax, bx");
+}
+
 void gen_load_imm(int val)
 {
     gen_emitf("mov ax, %i", val);

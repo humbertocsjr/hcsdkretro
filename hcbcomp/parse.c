@@ -496,11 +496,14 @@ static int postfix_func(void)
             gen_push_prim();
             convert_rvalue(&kind);
             gen_push_prim();
+            gen_push_prim();
             gen_load_imm(1);
             gen_pop_sec();
             gen_add();
             gen_pop_sec();
             gen_store_to_addr();
+            gen_pop_sec();
+            gen_exchange();
             next();
             kind = VAL_RVALUE;
         }
@@ -511,11 +514,14 @@ static int postfix_func(void)
             gen_push_prim();
             convert_rvalue(&kind);
             gen_push_prim();
+            gen_push_prim();
             gen_load_imm(1);
             gen_pop_sec();
             gen_sub();
             gen_pop_sec();
             gen_store_to_addr();
+            gen_pop_sec();
+            gen_exchange();
             next();
             kind = VAL_RVALUE;
         }
