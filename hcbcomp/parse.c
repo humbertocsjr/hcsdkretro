@@ -493,6 +493,7 @@ static int postfix_func(void)
         // Postfix increment / Incremento pós-fixado
         else if (tok == TOK_INC)
         {
+            gen_push_prim();
             convert_rvalue(&kind);
             gen_push_prim();
             gen_load_imm(1);
@@ -507,6 +508,7 @@ static int postfix_func(void)
         // Postfix decrement / Decremento pós-fixado
         else if (tok == TOK_DEC)
         {
+            gen_push_prim();
             convert_rvalue(&kind);
             gen_push_prim();
             gen_load_imm(1);
