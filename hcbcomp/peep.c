@@ -29,12 +29,8 @@ int peep_parse_line(peep_line_t *pl, const char *raw)
 
     const char *p = raw;
 
-    // Skip leading whitespace / Pula espaços iniciais
-    if (*p == '\t') p++;
-    else if (*p == ' ' && *(p+1) == ' ' && *(p+2) == ' ') p += 3;
-    else { pl->is_inst = 0; return 0; }
-
-    p = skip_space(p);
+    // Skip leading whitespace (tabs and spaces) / Pula espaços iniciais (tabs e espaços)
+    while (*p == '\t' || *p == ' ') p++;
 
     // Label detection / Detecção de rótulo
     if (isalpha(*p) || *p == '_' || *p == '.') {

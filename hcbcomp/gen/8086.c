@@ -602,6 +602,174 @@ static int i86_match_mov_ax_zero(peep_line_t *w, peep_line_t *repl)
     return n;
 }
 
+// [English] 8086 Pattern 6: replaces "push ax; mov ax,IMM; pop bx; add ax,bx" with "add ax,IMM".
+// [Portuguese] Padrão 8086 6: substitui push ax/mov ax,IMM/pop bx/add ax,bx por add ax,IMM.
+static int i86_match_add_imm(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "ax")) return 0;
+    if (!peep_op_args(&w[1], "mov", 2) || strcmp(w[1].args[0], "ax")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[1].args[1], &imm)) return 0;
+    if (!peep_op_args(&w[2], "pop", 1) || strcmp(w[2].args[0], "bx")) return 0;
+    if (!peep_op_is(&w[3], "add") || w[3].nargs != 2) return 0;
+    if (strcmp(w[3].args[0], "ax") || strcmp(w[3].args[1], "bx")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tadd ax, %d", imm);
+    return n;
+}
+
+// [English] 8086 Pattern 7: replaces "push ax; mov ax,IMM; pop bx; sub ax,bx" with "sub ax,IMM" (with sign adjustment).
+// [Portuguese] Padrão 8086 7: substitui sequência de subtração com imediato.
+static int i86_match_sub_imm(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "ax")) return 0;
+    if (!peep_op_args(&w[1], "mov", 2) || strcmp(w[1].args[0], "ax")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[1].args[1], &imm)) return 0;
+    if (!peep_op_args(&w[2], "pop", 1) || strcmp(w[2].args[0], "bx")) return 0;
+    if (!peep_op_is(&w[3], "sub") || w[3].nargs != 2) return 0;
+    if (strcmp(w[3].args[0], "ax") || strcmp(w[3].args[1], "bx")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tsub ax, %d", imm);
+    return n;
+}
+
+// [English] 8086 Pattern 8: replaces "push ax; mov ax,IMM; pop bx; cmp bx,ax" with "cmp ax,IMM".
+// [Portuguese] Padrão 8086 8: substitui sequência de comparação com imediato.
+static int i86_match_cmp_imm(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "ax")) return 0;
+    if (!peep_op_args(&w[1], "mov", 2) || strcmp(w[1].args[0], "ax")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[1].args[1], &imm)) return 0;
+    if (!peep_op_args(&w[2], "pop", 1) || strcmp(w[2].args[0], "bx")) return 0;
+    if (!peep_op_is(&w[3], "cmp") || w[3].nargs != 2) return 0;
+    if (strcmp(w[3].args[0], "bx") || strcmp(w[3].args[1], "ax")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tcmp ax, %d", imm);
+    return n;
+}
+
+// [English] 8086 Pattern 9: replaces "push ax; mov ax,1; pop bx; add ax,bx" with "inc ax".
+// [Portuguese] Padrão 8086 9: substitui add ax,1 por inc ax.
+static int i86_match_inc_ax(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "ax")) return 0;
+    if (!peep_op_args(&w[1], "mov", 2) || strcmp(w[1].args[0], "ax")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[1].args[1], &imm)) return 0;
+    if (imm != 1) return 0;
+    if (!peep_op_args(&w[2], "pop", 1) || strcmp(w[2].args[0], "bx")) return 0;
+    if (!peep_op_is(&w[3], "add") || w[3].nargs != 2) return 0;
+    if (strcmp(w[3].args[0], "ax") || strcmp(w[3].args[1], "bx")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tinc ax");
+    return n;
+}
+
+// [English] 8086 Pattern 10: replaces "push ax; mov ax,1; pop bx; sub ax,bx" with "dec ax".
+// [Portuguese] Padrão 8086 10: substitui sub ax,1 por dec ax.
+static int i86_match_dec_ax(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "ax")) return 0;
+    if (!peep_op_args(&w[1], "mov", 2) || strcmp(w[1].args[0], "ax")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[1].args[1], &imm)) return 0;
+    if (imm != 1) return 0;
+    if (!peep_op_args(&w[2], "pop", 1) || strcmp(w[2].args[0], "bx")) return 0;
+    if (!peep_op_is(&w[3], "sub") || w[3].nargs != 2) return 0;
+    if (strcmp(w[3].args[0], "ax") || strcmp(w[3].args[1], "bx")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tdec ax");
+    return n;
+}
+
+// [English] 8086 Pattern 11: replaces "lea ax,[bp+OFF]; push ax; mov bx,ax; mov ax,[bx]; add ax,1; pop bx; mov [bx],ax"
+// with "inc word [bp+OFF]" for local variable increment.
+// [Portuguese] Padrão 8086 11: otimiza incremento de variável local para inc word [bp+OFF].
+static int i86_match_inc_local(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "lea", 2) || strcmp(w[0].args[0], "ax")) return 0;
+    const char *bp_expr = w[0].args[1];
+    if (strncmp(bp_expr, "[bp", 3)) return 0;
+    if (!peep_op_args(&w[1], "push", 1) || strcmp(w[1].args[0], "ax")) return 0;
+    if (!peep_op_args(&w[2], "mov", 2)) return 0;
+    if (strcmp(w[2].args[1], "ax")) return 0;
+    char basereg[8];
+    strcpy(basereg, w[2].args[0]);
+    if (!peep_op_args(&w[3], "mov", 2) || strcmp(w[3].args[0], "ax")) return 0;
+    {
+        char expected[32];
+        snprintf(expected, sizeof(expected), "[%s]", basereg);
+        if (strcmp(w[3].args[1], expected)) return 0;
+    }
+    if (!peep_op_is(&w[4], "add") || w[4].nargs != 2) return 0;
+    if (strcmp(w[4].args[0], "ax")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[4].args[1], &imm)) return 0;
+    if (imm != 1) return 0;
+    if (!peep_op_args(&w[5], "pop", 1) || strcmp(w[5].args[0], "bx")) return 0;
+    if (!peep_op_args(&w[6], "mov", 2)) return 0;
+    {
+        char expected[32];
+        snprintf(expected, sizeof(expected), "[%s]", basereg);
+        if (strcmp(w[6].args[0], expected)) return 0;
+    }
+    if (strcmp(w[6].args[1], "ax")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tinc word %s", bp_expr);
+    return n;
+}
+
+// [English] 8086 Pattern 12: replaces similar sequence with "dec word [bp+OFF]" for decrement.
+// [Portuguese] Padrão 8086 12: otimiza decremento de variável local para dec word [bp+OFF].
+static int i86_match_dec_local(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "lea", 2) || strcmp(w[0].args[0], "ax")) return 0;
+    const char *bp_expr = w[0].args[1];
+    if (strncmp(bp_expr, "[bp", 3)) return 0;
+    if (!peep_op_args(&w[1], "push", 1) || strcmp(w[1].args[0], "ax")) return 0;
+    if (!peep_op_args(&w[2], "mov", 2) || strcmp(w[2].args[0], "ax")) return 0;
+    if (strcmp(w[2].args[1], bp_expr)) return 0;
+    if (!peep_op_is(&w[3], "sub") || w[3].nargs != 2) return 0;
+    if (strcmp(w[3].args[0], "ax")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[3].args[1], &imm)) return 0;
+    if (imm != 1) return 0;
+    if (!peep_op_args(&w[4], "pop", 1) || strcmp(w[4].args[0], "bx")) return 0;
+    if (!peep_op_args(&w[5], "mov", 2)) return 0;
+    if (strcmp(w[5].args[0], "[bx]")) return 0;
+    if (strcmp(w[5].args[1], "ax")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tdec word %s", bp_expr);
+    return n;
+}
+
+// [English] 8086 Pattern 13: replaces "lea ax,[bp+OFF]; push ax; mov ax,[bp+OFF]; add ax,1; pop bx; mov [bx],ax"
+// with "inc word [bp+OFF]" for simpler increment pattern.
+// [Portuguese] Padrão 8086 13: otimiza padrão mais simples de incremento para inc word [bp+OFF].
+static int i86_match_inc_local2(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "lea", 2) || strcmp(w[0].args[0], "ax")) return 0;
+    const char *bp_expr = w[0].args[1];
+    if (strncmp(bp_expr, "[bp", 3)) return 0;
+    if (!peep_op_args(&w[1], "push", 1) || strcmp(w[1].args[0], "ax")) return 0;
+    if (!peep_op_args(&w[2], "mov", 2) || strcmp(w[2].args[0], "ax")) return 0;
+    if (strcmp(w[2].args[1], bp_expr)) return 0;
+    if (!peep_op_is(&w[3], "add") || w[3].nargs != 2) return 0;
+    if (strcmp(w[3].args[0], "ax")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[3].args[1], &imm)) return 0;
+    if (imm != 1) return 0;
+    if (!peep_op_args(&w[4], "pop", 1) || strcmp(w[4].args[0], "bx")) return 0;
+    if (!peep_op_args(&w[5], "mov", 2)) return 0;
+    if (strcmp(w[5].args[0], "[bx]")) return 0;
+    if (strcmp(w[5].args[1], "ax")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tinc word %s", bp_expr);
+    return n;
+}
+
 // [English] 8086-specific peephole pattern dispatcher.
 // [Portuguese] Despachante de padrões peephole específicos 8086.
 int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
@@ -621,10 +789,28 @@ int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
         n = i86_match_lea_deref(window, repl);
         if (n > 0) return n;
     }
+    if (wcount == 4) {
+        n = i86_match_add_imm(window, repl);
+        if (n > 0) return n;
+        n = i86_match_sub_imm(window, repl);
+        if (n > 0) return n;
+        n = i86_match_cmp_imm(window, repl);
+        if (n > 0) return n;
+        n = i86_match_inc_ax(window, repl);
+        if (n > 0) return n;
+        n = i86_match_dec_ax(window, repl);
+        if (n > 0) return n;
+    }
     if (wcount == 5) {
         n = i86_match_lea_push_store(window, repl);
         if (n > 0) return n;
         n = i86_match_label_push_store(window, repl);
+        if (n > 0) return n;
+    }
+    if (wcount == 6) {
+        n = i86_match_inc_local2(window, repl);
+        if (n > 0) return n;
+        n = i86_match_dec_local(window, repl);
         if (n > 0) return n;
     }
     return 0;

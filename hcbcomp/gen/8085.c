@@ -457,10 +457,47 @@ static int i85_match_push_lxi_pop_xchg(peep_line_t *w, peep_line_t *repl)
     return n;
 }
 
+// [English] 8085 Pattern 3: replaces "xchg; lxi h,IMM; xchg; mov a,e; mov m,a; inx h; mov a,d; mov m,a"
+// with optimized immediate store using MVI instead of LXI+XCHG
+// [Portuguese] Padrão 8085 3: otimiza store de imediato em variável local usando MVI
+static int i85_match_imm_store(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_is(&w[0], "xchg") || w[0].nargs != 0) return 0;
+    if (!peep_op_args(&w[1], "lxi", 2) || strcmp(w[1].args[0], "h")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[1].args[1], &imm)) return 0;
+    if (!peep_op_is(&w[2], "xchg") || w[2].nargs != 0) return 0;
+    if (!peep_op_args(&w[3], "mov", 2)) return 0;
+    if (strcmp(w[3].args[0], "a")) return 0;
+    const char *srcl = w[3].args[1];
+    if (strcmp(srcl, "e") && strcmp(srcl, "l")) return 0;
+    if (!peep_op_args(&w[4], "mov", 2)) return 0;
+    if (strcmp(w[4].args[0], "m") || strcmp(w[4].args[1], "a")) return 0;
+    if (!peep_op_is(&w[5], "inx") || w[5].nargs != 1) return 0;
+    if (strcmp(w[5].args[0], "h")) return 0;
+    if (!peep_op_args(&w[6], "mov", 2)) return 0;
+    if (strcmp(w[6].args[0], "a")) return 0;
+    const char *srch = w[6].args[1];
+    if (strcmp(srch, "d") && strcmp(srch, "h")) return 0;
+    if (!peep_op_args(&w[7], "mov", 2)) return 0;
+    if (strcmp(w[7].args[0], "m") || strcmp(w[7].args[1], "a")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tmvi a, %d", imm & 0xFF);
+    peep_emit_repl(repl, &n, "\tmov m, a");
+    peep_emit_repl(repl, &n, "\tinx h");
+    peep_emit_repl(repl, &n, "\tmvi a, %d", (imm >> 8) & 0xFF);
+    peep_emit_repl(repl, &n, "\tmov m, a");
+    return n;
+}
+
 // [English] 8085 peephole pattern dispatcher.
 // [Portuguese] Despachante de padrões peephole 8085.
 int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
 {
+    if (wcount == 8) {
+        int n = i85_match_imm_store(window, repl);
+        if (n > 0) return n;
+    }
     if (wcount == 4) {
         int n = i85_match_push_lxi_pop_xchg(window, repl);
         if (n > 0) return n;

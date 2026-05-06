@@ -202,8 +202,8 @@ void gen_load_local(int offset)
 void gen_local_addr(int offset)
 {
     gen_emit("push ix");
-    gen_emit("pop de");
-    gen_emitf("ld hl, %i", -(offset * 2 + 2));
+    gen_emit("pop hl");
+    gen_emitf("ld de, %i", -(offset * 2 + 2));
     gen_emit("add hl, de");
 }
 
@@ -228,8 +228,8 @@ void gen_load_param(int offset)
 void gen_param_addr(int offset)
 {
     gen_emit("push ix");
-    gen_emit("pop de");
-    gen_emitf("ld hl, %i", offset * 2 + 4);
+    gen_emit("pop hl");
+    gen_emitf("ld de, %i", offset * 2 + 4);
     gen_emit("add hl, de");
 }
 
@@ -842,6 +842,124 @@ static int z80_match_push_var_pop_ex(peep_line_t *w, peep_line_t *repl)
     return n;
 }
 
+// [English] Z80 Pattern 13: replaces "ld l,[ix+N]; ld h,[ix+N+1]; inc hl; ld [ix+N],l; ld [ix+N+1],h"
+// with "inc word [ix+N]" for incrementing local variable.
+// [Portuguese] Padrão Z80 13: otimiza incremento de variável local para inc word [ix+N].
+static int z80_match_inc_local(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "ld", 2) || strcmp(w[0].args[0], "l")) return 0;
+    const char *a1 = w[0].args[1];
+    if (a1[0] != '[' || a1[1] != 'i' || a1[2] != 'x') return 0;
+    int off1 = (int)strtol(a1 + 3, NULL, 10);
+    if (off1 == 0 && a1[3] != '0') return 0;
+    if (!peep_op_args(&w[1], "ld", 2) || strcmp(w[1].args[0], "h")) return 0;
+    const char *a2 = w[1].args[1];
+    if (a2[0] != '[' || a2[1] != 'i' || a2[2] != 'x') return 0;
+    int off2 = (int)strtol(a2 + 3, NULL, 10);
+    if (off2 == 0 && a2[3] != '0') return 0;
+    if (off1 != off2 - 1) return 0;
+    if (!peep_op_is(&w[2], "add") || w[2].nargs != 2) return 0;
+    if (strcmp(w[2].args[0], "hl")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[2].args[1], &imm)) return 0;
+    if (imm != 1) return 0;
+    if (!peep_op_args(&w[3], "pop", 1) || strcmp(w[3].args[0], "de")) return 0;
+    if (!peep_op_args(&w[4], "ex", 2)) return 0;
+    if (strcmp(w[4].args[0], "de") || strcmp(w[4].args[1], "hl")) return 0;
+    if (!peep_op_args(&w[5], "ld", 2) || strcmp(w[5].args[0], "[hl]")) return 0;
+    if (strcmp(w[5].args[1], "e")) return 0;
+    if (!peep_op_is(&w[6], "inc") || w[6].nargs != 1) return 0;
+    if (strcmp(w[6].args[0], "hl")) return 0;
+    if (!peep_op_args(&w[7], "ld", 2) || strcmp(w[7].args[0], "[hl]")) return 0;
+    if (strcmp(w[7].args[1], "d")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tinc word [ix%+d]", off1);
+    return n;
+}
+
+// [English] Z80 Pattern 14: replaces similar sequence with "dec word [ix+N]" for decrement.
+// [Portuguese] Padrão Z80 14: otimiza decremento de variável local para dec word [ix+N].
+static int z80_match_dec_local(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "ld", 2) || strcmp(w[0].args[0], "l")) return 0;
+    const char *a1 = w[0].args[1];
+    if (a1[0] != '[' || a1[1] != 'i' || a1[2] != 'x') return 0;
+    int off1 = (int)strtol(a1 + 3, NULL, 10);
+    if (off1 == 0 && a1[3] != '0') return 0;
+    if (!peep_op_args(&w[1], "ld", 2) || strcmp(w[1].args[0], "h")) return 0;
+    const char *a2 = w[1].args[1];
+    if (a2[0] != '[' || a2[1] != 'i' || a2[2] != 'x') return 0;
+    int off2 = (int)strtol(a2 + 3, NULL, 10);
+    if (off2 == 0 && a2[3] != '0') return 0;
+    if (off1 != off2 - 1) return 0;
+    if (!peep_op_is(&w[2], "sub") || w[2].nargs != 2) return 0;
+    if (strcmp(w[2].args[0], "hl")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[2].args[1], &imm)) return 0;
+    if (imm != 1) return 0;
+    if (!peep_op_args(&w[3], "pop", 1) || strcmp(w[3].args[0], "de")) return 0;
+    if (!peep_op_args(&w[4], "ex", 2)) return 0;
+    if (strcmp(w[4].args[0], "de") || strcmp(w[4].args[1], "hl")) return 0;
+    if (!peep_op_args(&w[5], "ld", 2) || strcmp(w[5].args[0], "[hl]")) return 0;
+    if (strcmp(w[5].args[1], "e")) return 0;
+    if (!peep_op_is(&w[6], "inc") || w[6].nargs != 1) return 0;
+    if (strcmp(w[6].args[0], "hl")) return 0;
+    if (!peep_op_args(&w[7], "ld", 2) || strcmp(w[7].args[0], "[hl]")) return 0;
+    if (strcmp(w[7].args[1], "d")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tdec word [ix%+d]", off1);
+    return n;
+}
+
+// [English] Z80 Pattern 11: replaces "push ix; pop hl; ld de,N; add hl,de; push hl"
+// with "push ix; pop hl; ld de,N; add hl,de; push hl" - optimized address calculation
+// [Portuguese] Padrão Z80 11: otimiza cálculo de endereço seguido de push
+static int z80_match_addr_push(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "ix")) return 0;
+    if (!peep_op_args(&w[1], "pop", 1) || strcmp(w[1].args[0], "hl")) return 0;
+    if (!peep_op_args(&w[2], "ld", 2) || strcmp(w[2].args[0], "de")) return 0;
+    int off;
+    if (!peep_parse_arg_int(w[2].args[1], &off)) return 0;
+    if (!peep_op_is(&w[3], "add") || w[3].nargs != 2) return 0;
+    if (strcmp(w[3].args[0], "hl") || strcmp(w[3].args[1], "de")) return 0;
+    if (!peep_op_args(&w[4], "push", 1) || strcmp(w[4].args[0], "hl")) return 0;
+    // Replace with direct stack manipulation
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tpush ix");
+    peep_emit_repl(repl, &n, "\tpop hl");
+    peep_emit_repl(repl, &n, "\tld de, %d", off);
+    peep_emit_repl(repl, &n, "\tadd hl, de");
+    peep_emit_repl(repl, &n, "\tpush hl");
+    return n;
+}
+
+// [English] Z80 Pattern 12: replaces "push hl; ld de,IMM; ex de,hl; add hl,de; pop de; ex de,hl"
+// with simpler addition sequence when adding immediate to variable
+// [Portuguese] Padrão Z80 12: otimiza sequência de adição com imediato
+static int z80_match_add_imm_to_var(peep_line_t *w, peep_line_t *repl)
+{
+    if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "hl")) return 0;
+    if (!peep_op_args(&w[1], "ld", 2) || strcmp(w[1].args[0], "de")) return 0;
+    int imm;
+    if (!peep_parse_arg_int(w[1].args[1], &imm)) return 0;
+    if (!peep_op_is(&w[2], "ex") || w[2].nargs != 2) return 0;
+    if (strcmp(w[2].args[0], "de") || strcmp(w[2].args[1], "hl")) return 0;
+    if (!peep_op_is(&w[3], "add") || w[3].nargs != 2) return 0;
+    if (strcmp(w[3].args[0], "hl") || strcmp(w[3].args[1], "de")) return 0;
+    if (!peep_op_args(&w[4], "pop", 1) || strcmp(w[4].args[0], "de")) return 0;
+    if (!peep_op_is(&w[5], "ex") || w[5].nargs != 2) return 0;
+    if (strcmp(w[5].args[0], "de") || strcmp(w[5].args[1], "hl")) return 0;
+    int n = 0;
+    peep_emit_repl(repl, &n, "\tpush hl");
+    peep_emit_repl(repl, &n, "\tld hl, %d", imm);
+    peep_emit_repl(repl, &n, "\tadd hl, de");
+    peep_emit_repl(repl, &n, "\tex de, hl");
+    peep_emit_repl(repl, &n, "\tpop hl");
+    peep_emit_repl(repl, &n, "\tadd hl, de");
+    return n;
+}
+
 // [English] Z80-specific peephole pattern dispatcher.
 // [Portuguese] Despachante de padrões peephole específicos Z80.
 int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
@@ -871,6 +989,8 @@ int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
         if (n > 0) return n;
         n = z80_match_push_var_pop_ex(window, repl);
         if (n > 0) return n;
+        n = z80_match_addr_push(window, repl);
+        if (n > 0) return n;
     }
     if (wcount == 3) {
         int n = z80_match_inc_sp(window, repl);
@@ -878,6 +998,16 @@ int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
     }
     if (wcount == 2) {
         int n = z80_match_pushbc_pophl(window, repl);
+        if (n > 0) return n;
+    }
+    if (wcount == 6) {
+        int n = z80_match_add_imm_to_var(window, repl);
+        if (n > 0) return n;
+    }
+    if (wcount == 8) {
+        int n = z80_match_inc_local(window, repl);
+        if (n > 0) return n;
+        n = z80_match_dec_local(window, repl);
         if (n > 0) return n;
     }
     return 0;
