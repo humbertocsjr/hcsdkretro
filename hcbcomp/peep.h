@@ -5,7 +5,7 @@
 // [Portuguese] Estrutura para uma única linha de assembly analisada usada pelo otimizador peephole
 #define PEEP_MAX_LINE 512
 #define PEEP_MAX_ARGS 16
-#define PEEP_WINDOW   20
+#define PEEP_WINDOW   25
 
 typedef struct {
     char raw[PEEP_MAX_LINE];

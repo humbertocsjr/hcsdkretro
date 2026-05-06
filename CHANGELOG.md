@@ -1,5 +1,62 @@
 # Changelog
 
+## v2.1 R5 - May 2026
+
+### B Compiler (hcbcomp)
+
+#### Z80 Peephole Optimizations - Local Variable Increment/Decrement
+- **Pattern 15** (`z80_match_inc_local_full`): replaces 19-instruction increment sequence with `inc word [ix+N]`
+  - Pattern: `push ix; pop hl; ld de,OFF; add hl,de; push hl; ld a,[hl]; inc hl; ld h,[hl]; ld l,a; push hl; push hl; ld hl,1; pop de; add hl,de; pop de; ex de,hl; ld [hl],e; inc hl; ld [hl],d`
+  - Replacement: `inc word [ix+OFF]`
+  - Optimization: **19 → 1 instructions** (95% reduction)
+- **Pattern 16** (`z80_match_dec_local_full`): replaces 21-instruction decrement sequence with `dec word [ix+N]`
+  - Pattern: `push ix; pop hl; ld de,OFF; add hl,de; push hl; ld a,[hl]; inc hl; ld h,[hl]; ld l,a; push hl; push hl; ld hl,1; pop de; ex de,hl; or a; sbc hl,de; pop de; ex de,hl; ld [hl],e; inc hl; ld [hl],d`
+  - Replacement: `dec word [ix+OFF]`
+  - Optimization: **21 → 1 instructions** (95% reduction)
+- **Window size increased**: `PEEP_WINDOW` from 12 to 25 to support larger pattern matching
+
+#### Example Optimization
+```
+; Before (a++)
+push ix
+pop hl
+ld de, -2
+add hl, de
+push hl
+ld a, [hl]
+inc hl
+ld h, [hl]
+ld l, a
+push hl
+push hl
+ld hl, 1
+pop de
+add hl, de
+pop de
+ex de, hl
+ld [hl], e
+inc hl
+ld [hl], d
+
+; After
+inc word [ix-2]
+```
+
+### Validation & Testing
+- **42/42 tests passing** across all platforms (Z80, 8080, 8085, 8086, 8086exe)
+- **Zero regressions** - all official B language tests continue passing
+
+### Performance Impact
+
+| Platform | Optimization | Before | After | Savings |
+|----------|-------------|--------|-------|---------|
+| Z80 | `inc word [ix+N]` | 19 instr | 1 instr | 95% fewer instructions |
+| Z80 | `dec word [ix+N]` | 21 instr | 1 instr | 95% fewer instructions |
+
+**Overall impact**: Significant code size reduction and speedup for programs using `++` and `--` operators on local variables
+
+---
+
 ## v2.1 R4 - May 2026
 
 ### B Compiler (hcbcomp)

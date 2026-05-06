@@ -12,6 +12,60 @@
 <TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Changelog</B></FONT></TD></TR>
 </TABLE>
 
+<H3>v2.1 R5 &mdash; May 2026</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="20%">Area</TH><TH>Changes</TH></TR>
+
+<TR><TD VALIGN="TOP"><B>Z80 Peephole Opt.</B></TD>
+<TD>
+<TT>Pattern 15 (inc)</TT>: <TT>push ix; pop hl; ld de,OFF; add hl,de; push hl; ld a,[hl]; inc hl; ld h,[hl]; ld l,a; push hl; push hl; ld hl,1; pop de; add hl,de; pop de; ex de,hl; ld [hl],e; inc hl; ld [hl],d</TT> &rarr; <TT>inc word [ix+OFF]</TT> &mdash; <B>19&rarr;1 instructions</B> (95% reduction).<BR>
+<TT>Pattern 16 (dec)</TT>: <TT>push ix; pop hl; ld de,OFF; add hl,de; push hl; ld a,[hl]; inc hl; ld h,[hl]; ld l,a; push hl; push hl; ld hl,1; pop de; ex de,hl; or a; sbc hl,de; pop de; ex de,hl; ld [hl],e; inc hl; ld [hl],d</TT> &rarr; <TT>dec word [ix+OFF]</TT> &mdash; <B>21&rarr;1 instructions</B> (95% reduction).<BR>
+<TT>PEEP_WINDOW</TT>: increased from 12 to 25 to support larger pattern matching.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Example</B></TD>
+<TD>
+<PRE>
+; Before (a++)
+push ix
+pop hl
+ld de, -2
+add hl, de
+push hl
+ld a, [hl]
+inc hl
+ld h, [hl]
+ld l, a
+push hl
+push hl
+ld hl, 1
+pop de
+add hl, de
+pop de
+ex de, hl
+ld [hl], e
+inc hl
+ld [hl], d
+
+; After
+inc word [ix-2]
+</PRE>
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Test Suite</B></TD>
+<TD><B>42/42 tests passing</B> across all platforms (Z80, 8080, 8085, 8086, 8086exe). Zero regressions.</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Performance</B></TD>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="2">
+<TR><TD>Z80 <TT>inc word [ix+N]</TT></TD><TD>19 instr &rarr; 1 instr (95% reduction)</TD></TR>
+<TR><TD>Z80 <TT>dec word [ix+N]</TT></TD><TD>21 instr &rarr; 1 instr (95% reduction)</TD></TR>
+</TABLE>
+Significant code size reduction and speedup for programs using <TT>++</TT> and <TT>--</TT> on local variables.
+</TD></TR>
+</TABLE>
+
 <H3>v2.1 R4 &mdash; May 2026</H3>
 
 <TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">

@@ -842,18 +842,15 @@ static int z80_match_push_var_pop_ex(peep_line_t *w, peep_line_t *repl)
     return n;
 }
 
-// [English] Z80 Pattern 15: replaces full increment sequence for local variable (17 instr)
-// with "inc word [ix+N]" - matches: push ix; pop hl; ld de,OFF; add hl,de; push hl;
-// ld a,[hl]; inc hl; ld h,[hl]; ld l,a; push hl; ld de,1; add hl,de; pop de; ex de,hl;
-// ld [hl],e; inc hl; ld [hl],d
-// [Portuguese] Padrão Z80 15: substitui sequência completa de incremento (17 instr)
-// por "inc word [ix+N]"
+// [English] Z80 Pattern 15: replaces full increment sequence (19 instr) with "inc word [ix+N]"
+// [Portuguese] Padrão Z80 15: substitui sequência completa de incremento (19 instr) por "inc word [ix+N]"
 static int z80_match_inc_local_full(peep_line_t *w, peep_line_t *repl)
 {
     if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "ix")) return 0;
     if (!peep_op_args(&w[1], "pop", 1) || strcmp(w[1].args[0], "hl")) return 0;
     if (!peep_op_args(&w[2], "ld", 2) || strcmp(w[2].args[0], "de")) return 0;
-    // Don't check offset value - accept any offset
+    int off;
+    if (!peep_parse_arg_int(w[2].args[1], &off)) return 0;
     if (!peep_op_is(&w[3], "add") || w[3].nargs != 2) return 0;
     if (strcmp(w[3].args[0], "hl") || strcmp(w[3].args[1], "de")) return 0;
     if (!peep_op_args(&w[4], "push", 1) || strcmp(w[4].args[0], "hl")) return 0;
@@ -866,39 +863,37 @@ static int z80_match_inc_local_full(peep_line_t *w, peep_line_t *repl)
     if (!peep_op_args(&w[8], "ld", 2) || strcmp(w[8].args[0], "l")) return 0;
     if (strcmp(w[8].args[1], "a")) return 0;
     if (!peep_op_args(&w[9], "push", 1) || strcmp(w[9].args[0], "hl")) return 0;
-    if (!peep_op_args(&w[10], "ld", 2) || strcmp(w[10].args[0], "de")) return 0;
+    if (!peep_op_args(&w[10], "push", 1) || strcmp(w[10].args[0], "hl")) return 0;
+    if (!peep_op_args(&w[11], "ld", 2) || strcmp(w[11].args[0], "hl")) return 0;
     int imm;
-    if (!peep_parse_arg_int(w[10].args[1], &imm)) return 0;
+    if (!peep_parse_arg_int(w[11].args[1], &imm)) return 0;
     if (imm != 1) return 0;
-    if (!peep_op_is(&w[11], "add") || w[11].nargs != 2) return 0;
-    if (strcmp(w[11].args[0], "hl") || strcmp(w[11].args[1], "de")) return 0;
     if (!peep_op_args(&w[12], "pop", 1) || strcmp(w[12].args[0], "de")) return 0;
-    if (!peep_op_is(&w[13], "ex") || w[13].nargs != 2) return 0;
-    if (strcmp(w[13].args[0], "de") || strcmp(w[13].args[1], "hl")) return 0;
-    if (!peep_op_args(&w[14], "ld", 2) || strcmp(w[14].args[0], "[hl]")) return 0;
-    if (strcmp(w[14].args[1], "e")) return 0;
-    if (!peep_op_is(&w[15], "inc") || w[15].nargs != 1) return 0;
-    if (strcmp(w[15].args[0], "hl")) return 0;
+    if (!peep_op_is(&w[13], "add") || w[13].nargs != 2) return 0;
+    if (strcmp(w[13].args[0], "hl") || strcmp(w[13].args[1], "de")) return 0;
+    if (!peep_op_args(&w[14], "pop", 1) || strcmp(w[14].args[0], "de")) return 0;
+    if (!peep_op_is(&w[15], "ex") || w[15].nargs != 2) return 0;
+    if (strcmp(w[15].args[0], "de") || strcmp(w[15].args[1], "hl")) return 0;
     if (!peep_op_args(&w[16], "ld", 2) || strcmp(w[16].args[0], "[hl]")) return 0;
-    if (strcmp(w[16].args[1], "d")) return 0;
-    // Extract offset from instruction 2 for the replacement
-    int off;
-    if (!peep_parse_arg_int(w[2].args[1], &off)) off = -2; // default fallback
+    if (strcmp(w[16].args[1], "e")) return 0;
+    if (!peep_op_is(&w[17], "inc") || w[17].nargs != 1) return 0;
+    if (strcmp(w[17].args[0], "hl")) return 0;
+    if (!peep_op_args(&w[18], "ld", 2) || strcmp(w[18].args[0], "[hl]")) return 0;
+    if (strcmp(w[18].args[1], "d")) return 0;
     int n = 0;
     peep_emit_repl(repl, &n, "\tinc word [ix%+d]", off);
     return n;
 }
 
-// [English] Z80 Pattern 16: replaces full decrement sequence for local variable (17 instr)
-// with "dec word [ix+N]" - similar to Pattern 15 but for decrement
-// [Portuguese] Padrão Z80 16: substitui sequência completa de decremento (17 instr)
-// por "dec word [ix+N]"
+// [English] Z80 Pattern 16: replaces full decrement sequence (21 instr) with "dec word [ix+N]"
+// [Portuguese] Padrão Z80 16: substitui sequência completa de decremento (21 instr) por "dec word [ix+N]"
 static int z80_match_dec_local_full(peep_line_t *w, peep_line_t *repl)
 {
     if (!peep_op_args(&w[0], "push", 1) || strcmp(w[0].args[0], "ix")) return 0;
     if (!peep_op_args(&w[1], "pop", 1) || strcmp(w[1].args[0], "hl")) return 0;
     if (!peep_op_args(&w[2], "ld", 2) || strcmp(w[2].args[0], "de")) return 0;
-    // Don't check offset value - accept any offset
+    int off;
+    if (!peep_parse_arg_int(w[2].args[1], &off)) return 0;
     if (!peep_op_is(&w[3], "add") || w[3].nargs != 2) return 0;
     if (strcmp(w[3].args[0], "hl") || strcmp(w[3].args[1], "de")) return 0;
     if (!peep_op_args(&w[4], "push", 1) || strcmp(w[4].args[0], "hl")) return 0;
@@ -911,23 +906,27 @@ static int z80_match_dec_local_full(peep_line_t *w, peep_line_t *repl)
     if (!peep_op_args(&w[8], "ld", 2) || strcmp(w[8].args[0], "l")) return 0;
     if (strcmp(w[8].args[1], "a")) return 0;
     if (!peep_op_args(&w[9], "push", 1) || strcmp(w[9].args[0], "hl")) return 0;
-    if (!peep_op_args(&w[10], "ld", 2) || strcmp(w[10].args[0], "de")) return 0;
+    if (!peep_op_args(&w[10], "push", 1) || strcmp(w[10].args[0], "hl")) return 0;
+    if (!peep_op_args(&w[11], "ld", 2) || strcmp(w[11].args[0], "hl")) return 0;
     int imm;
-    if (!peep_parse_arg_int(w[10].args[1], &imm)) return 0;
-    if (imm != -1) return 0;
-    if (!peep_op_is(&w[11], "add") || w[11].nargs != 2) return 0;
-    if (strcmp(w[11].args[0], "hl") || strcmp(w[11].args[1], "de")) return 0;
+    if (!peep_parse_arg_int(w[11].args[1], &imm)) return 0;
+    if (imm != 1) return 0;
     if (!peep_op_args(&w[12], "pop", 1) || strcmp(w[12].args[0], "de")) return 0;
     if (!peep_op_is(&w[13], "ex") || w[13].nargs != 2) return 0;
     if (strcmp(w[13].args[0], "de") || strcmp(w[13].args[1], "hl")) return 0;
-    if (!peep_op_args(&w[14], "ld", 2) || strcmp(w[14].args[0], "[hl]")) return 0;
-    if (strcmp(w[14].args[1], "e")) return 0;
-    if (!peep_op_is(&w[15], "inc") || w[15].nargs != 1) return 0;
-    if (strcmp(w[15].args[0], "hl")) return 0;
-    if (!peep_op_args(&w[16], "ld", 2) || strcmp(w[16].args[0], "[hl]")) return 0;
-    if (strcmp(w[16].args[1], "d")) return 0;
-    int off;
-    if (!peep_parse_arg_int(w[2].args[1], &off)) off = -2; // default fallback
+    if (!peep_op_is(&w[14], "or") || w[14].nargs != 1) return 0;
+    if (strcmp(w[14].args[0], "a")) return 0;
+    if (!peep_op_is(&w[15], "sbc") || w[15].nargs != 2) return 0;
+    if (strcmp(w[15].args[0], "hl") || strcmp(w[15].args[1], "de")) return 0;
+    if (!peep_op_args(&w[16], "pop", 1) || strcmp(w[16].args[0], "de")) return 0;
+    if (!peep_op_is(&w[17], "ex") || w[17].nargs != 2) return 0;
+    if (strcmp(w[17].args[0], "de") || strcmp(w[17].args[1], "hl")) return 0;
+    if (!peep_op_args(&w[18], "ld", 2) || strcmp(w[18].args[0], "[hl]")) return 0;
+    if (strcmp(w[18].args[1], "e")) return 0;
+    if (!peep_op_is(&w[19], "inc") || w[19].nargs != 1) return 0;
+    if (strcmp(w[19].args[0], "hl")) return 0;
+    if (!peep_op_args(&w[20], "ld", 2) || strcmp(w[20].args[0], "[hl]")) return 0;
+    if (strcmp(w[20].args[1], "d")) return 0;
     int n = 0;
     peep_emit_repl(repl, &n, "\tdec word [ix%+d]", off);
     return n;
@@ -1026,11 +1025,15 @@ int gen_peep_replace(peep_line_t *window, int wcount, peep_line_t *repl)
         int n = z80_match_add_imm_to_var(window, repl);
         if (n > 0) return n;
     }
-    if (wcount == 17) {
+    if (wcount == 19) {
         int n = z80_match_inc_local_full(window, repl);
         if (n > 0) return n;
-        n = z80_match_dec_local_full(window, repl);
+    }
+    if (wcount == 21) {
+        int n = z80_match_dec_local_full(window, repl);
         if (n > 0) return n;
     }
     return 0;
 }
+
+// [English] Z80 Pattern 15: replaces full increment sequence (17 instr) with "inc word [ix+N]"
