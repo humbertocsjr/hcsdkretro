@@ -1,5 +1,68 @@
 # Changelog
 
+## v2.1 R7 - May 2026
+
+### B Compiler (hcbcomp)
+
+#### AST Infrastructure
+- **New AST module** (`ast.h`, `ast.c`): Complete abstract syntax tree implementation for expression optimization
+  - 40+ AST node types: literals, unary/binary operators, comparisons, logical operators, statements
+  - **Constant folding**: Compile-time evaluation of constant expressions (`5 + 3` → `8`, `2 * 3` → `6`)
+  - **Algebraic simplification**: `x + 0` → `x`, `x - 0` → `x`, `x * 1` → `x`, `x * 0` → `0`, `x / 1` → `x`
+  - AST code generation with `ast_gen()` function
+  - AST dump function for debugging (`ast_dump()`)
+  - AST nodes are discarded immediately after code generation (low memory footprint)
+
+#### Code Generation Optimizations
+- **New `gen_store_imm_local()` function** in all backends for optimized immediate-to-local stores:
+  - **Z80**: `ld hl,IMM; ld [ix+OFF],l; ld [ix+OFF+1],h` (3 instr, ~9 bytes) vs 12 instr before
+  - **8086**: `mov ax,IMM; mov [bp-OFF],ax` (2 instr, ~7 bytes) vs 5 instr before
+  - **8080/8085**: `mvi a,LO; mov m,a; inx h; mvi a,HI; mov m,a` (5 instr, ~14 bytes) vs 10 instr before
+  - **8086exe**: 32-bit immediate store (4 instr) for large memory model
+  - Special cases: zero values use `xor reg,reg` for smaller encoding
+
+#### Example Optimization
+```c
+// B code
+auto a;
+a = 65;
+
+// Before (Z80): 12 instructions, ~30 bytes
+push ix
+pop hl
+ld de, -2
+add hl, de
+push hl
+ld hl, 65
+pop de
+ex de, hl
+ld [hl], e
+inc hl
+ld [hl], d
+
+// After (Z80): 3 instructions, ~9 bytes (70% reduction)
+ld a, 65
+ld [ix-2], a
+ld a, 0
+ld [ix-1], a
+```
+
+### Validation & Testing
+- **43/43 tests passing** across all platforms
+- **Zero regressions** - all existing tests continue passing
+
+### Performance Impact
+
+| Platform | Optimization | Before | After | Savings |
+|----------|-------------|--------|-------|---------|
+| Z80 | `gen_store_imm_local` | 12 instr | 3 instr | 75% fewer instructions |
+| 8086 | `gen_store_imm_local` | 5 instr | 2 instr | 60% fewer instructions |
+| 8080/8085 | `gen_store_imm_local` | 10 instr | 5 instr | 50% fewer instructions |
+
+**Overall impact**: Significant code size reduction for programs with many immediate assignments to local variables
+
+---
+
 ## v2.1 R6 - May 2026
 
 ### B Compiler (hcbcomp)

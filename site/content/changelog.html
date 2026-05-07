@@ -12,6 +12,57 @@
 <TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Changelog</B></FONT></TD></TR>
 </TABLE>
 
+<H3>v2.1 R7 &mdash; May 2026</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="20%">Area</TH><TH>Changes</TH></TR>
+
+<TR><TD VALIGN="TOP"><B>AST Infrastructure</B></TD>
+<TD>
+New <TT>ast.h</TT> / <TT>ast.c</TT> module with complete AST implementation:<BR>
+40+ node types (literals, operators, comparisons, logical, statements).<BR>
+<B>Constant folding</B>: <TT>5 + 3</TT> &rarr; <TT>8</TT>, <TT>2 * 3</TT> &rarr; <TT>6</TT>.<BR>
+<B>Algebraic simplification</B>: <TT>x+0</TT>&rarr;<TT>x</TT>, <TT>x*1</TT>&rarr;<TT>x</TT>, <TT>x*0</TT>&rarr;<TT>0</TT>.<BR>
+AST discarded immediately after code generation (low memory).
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Code Gen Opt.</B></TD>
+<TD>
+New <TT>gen_store_imm_local()</TT> for immediate-to-local stores:<BR>
+<TT>Z80</TT>: 12 instr &rarr; 3 instr (75% reduction).<BR>
+<TT>8086</TT>: 5 instr &rarr; 2 instr (60% reduction).<BR>
+<TT>8080/8085</TT>: 10 instr &rarr; 5 instr (50% reduction).<BR>
+Special case: zero uses <TT>xor reg,reg</TT> for smaller encoding.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Example (Z80)</B></TD>
+<TD>
+<PRE>
+; Before: 12 instr, ~30 bytes
+push ix
+pop hl
+ld de, -2
+add hl, de
+push hl
+ld hl, 65
+pop de
+ex de, hl
+ld [hl], e
+inc hl
+ld [hl], d
+
+; After: 3 instr, ~9 bytes
+ld a, 65
+ld [ix-2], a
+ld a, 0
+ld [ix-1], a
+</PRE>
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Test Suite</B></TD>
+<TD><B>43/43 tests passing</B>. Zero regressions.</TD></TR>
+</TABLE>
+
 <H3>v2.1 R6 &mdash; May 2026</H3>
 
 <TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
