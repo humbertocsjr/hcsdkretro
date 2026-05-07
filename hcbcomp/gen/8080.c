@@ -136,6 +136,26 @@ void gen_store_local(int offset)
     gen_emit("mov m, d");
 }
 
+// [English] Stores an immediate 16-bit value to a local variable at BC-offset
+// Optimized: generates "mvi a,LO; mov m,a; inx h; mvi a,HI; mov m,a" (5 instr)
+// instead of computing address via stack operations (10+ instr)
+// [Portuguese] Armazena valor imediato de 16 bits em variável local no BC-offset
+// Otimizado: gera 5 instruções em vez de 10+ com operações de pilha
+void gen_store_imm_local(int val, int offset)
+{
+    int bo = -(offset * 2 + 4);
+    int lo = val & 0xFF;
+    int hi = (val >> 8) & 0xFF;
+    
+    gen_emitf("lxi h, %i", bo);
+    gen_emit("dad b");
+    gen_emitf("mvi a, %i", lo);
+    gen_emit("mov m, a");
+    gen_emit("inx h");
+    gen_emitf("mvi a, %i", hi);
+    gen_emit("mov m, a");
+}
+
 // [English] Loads HL from a local variable at given offset from BC
 // [Portuguese] Carrega HL de uma variável local no deslocamento fornecido de BC
 void gen_load_local(int offset)

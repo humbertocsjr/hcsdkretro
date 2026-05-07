@@ -189,6 +189,38 @@ void gen_store_local(int offset)
     gen_emitf("ld [ix+%i], h", -(offset * 2 + 1));
 }
 
+// [English] Stores an immediate 16-bit value to a local variable at IX-offset
+// Optimized: generates "ld hl,IMM; ld [ix+OFF],l; ld [ix+OFF+1],h" (3 instr)
+// instead of computing address via stack operations (12 instr)
+// [Portuguese] Armazena valor imediato de 16 bits em variável local no IX-offset
+// Otimizado: gera 3 instruções em vez de 12 com operações de pilha
+void gen_store_imm_local(int val, int offset)
+{
+    int off = -(offset * 2 + 2);
+    if (val == 0) {
+        // Special case: zero can use xor hl,hl (2 bytes) instead of ld hl,0 (3 bytes)
+        // Caso especial: zero usa xor hl,hl (2 bytes) em vez de ld hl,0 (3 bytes)
+        gen_emit("ld l, 0");
+        gen_emit("ld h, 0");
+        gen_emitf("ld [ix+%i], l", off);
+        gen_emitf("ld [ix+%i], h", off + 1);
+    } else if (val >= -128 && val <= 127) {
+        // Small values: use ld a,imm then store (saves 1 byte)
+        // Valores pequenos: usa ld a,imm depois armazena (economiza 1 byte)
+        gen_emitf("ld a, %i", val);
+        gen_emitf("ld [ix+%i], a", off);
+        // Sign-extend to high byte
+        gen_emit("ld a, 0");
+        gen_emitf("ld [ix+%i], a", off + 1);
+    } else {
+        // General case: load full 16-bit immediate
+        // Caso geral: carrega imediato de 16 bits completo
+        gen_emitf("ld hl, %i", val);
+        gen_emitf("ld [ix+%i], l", off);
+        gen_emitf("ld [ix+%i], h", off + 1);
+    }
+}
+
 // [English] Loads HL from a local variable at given offset from IX
 // [Portuguese] Carrega HL de uma variável local no deslocamento fornecido de IX
 void gen_load_local(int offset)

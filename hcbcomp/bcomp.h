@@ -160,6 +160,10 @@ void preproc_add_include_dir(const char *dir);
 
 void error(const char *fmt, ...);
 
+// AST / Árvore de Sintaxe Abstrata
+
+#include "ast.h"
+
 // Code generation / Geração de código
 
 int gen_label(void);
@@ -191,6 +195,7 @@ void gen_load_label(int label);
 void gen_load_var(const char *name);
 void gen_load_addr(const char *name);
 void gen_store_local(int offset);
+void gen_store_imm_local(int val, int offset);
 void gen_load_local(int offset);
 void gen_local_addr(int offset);
 void gen_store_param(int offset);

@@ -223,6 +223,27 @@ void gen_store_local(int offset)
 	gen_emitf("mov [bp-%i], dx", offset * 4 + 2);
 }
 
+// [English] Stores an immediate 32-bit value to a local variable at BP-offset
+// Optimized: generates "mov ax,LO; mov dx,HI; mov [bp-OFF],ax; mov [bp-OFF+2],dx"
+// [Portuguese] Armazena valor imediato de 32 bits em variável local no BP-offset
+void gen_store_imm_local(int val, int offset)
+{
+    int off_lo = offset * 4 + 4;
+    int off_hi = offset * 4 + 2;
+    int lo = val & 0xFFFF;
+    int hi = (val >> 16) & 0xFFFF;
+    
+    if (val == 0) {
+        gen_emit("xor ax, ax");
+        gen_emit("xor dx, dx");
+    } else {
+        gen_emitf("mov ax, %i", lo);
+        gen_emitf("mov dx, %i", hi);
+    }
+    gen_emitf("mov [bp-%i], ax", off_lo);
+    gen_emitf("mov [bp-%i], dx", off_hi);
+}
+
 // [English] Loads 32-bit DX:AX from a local variable at BP-offset
 // [Portuguese] Carrega DX:AX de 32 bits de uma variável local no deslocamento BP-offset
 void gen_load_local(int offset)

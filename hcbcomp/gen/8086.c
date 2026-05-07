@@ -145,6 +145,32 @@ void gen_store_local(int offset)
     gen_emitf("mov [bp-%i], ax", offset * 2 + 2);
 }
 
+// [English] Stores an immediate 16-bit value to a local variable at BP-offset
+// Optimized: generates "mov ax,IMM; mov [bp-OFF],ax" (2 instr)
+// instead of computing address via stack operations (5+ instr)
+// [Portuguese] Armazena valor imediato de 16 bits em variável local no BP-offset
+// Otimizado: gera 2 instruções em vez de 5+ com operações de pilha
+void gen_store_imm_local(int val, int offset)
+{
+    int off = offset * 2 + 2;
+    if (val == 0) {
+        // Special case: xor ax,ax is smaller than mov ax,0
+        // Caso especial: xor ax,ax é menor que mov ax,0
+        gen_emit("xor ax, ax");
+        gen_emitf("mov [bp-%i], ax", off);
+    } else if (val >= -128 && val <= 127) {
+        // Small values: use mov ax,imm16 (5 bytes total)
+        // Valores pequenos: usa mov ax,imm16 (5 bytes total)
+        gen_emitf("mov ax, %i", val);
+        gen_emitf("mov [bp-%i], ax", off);
+    } else {
+        // General case: load full 16-bit immediate
+        // Caso geral: carrega imediato de 16 bits completo
+        gen_emitf("mov ax, %i", val);
+        gen_emitf("mov [bp-%i], ax", off);
+    }
+}
+
 // [English] Loads AX from a local variable at BP-offset
 // [Portuguese] Carrega AX de uma variável local no deslocamento BP-offset
 void gen_load_local(int offset)
