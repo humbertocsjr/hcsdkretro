@@ -1,6 +1,8 @@
 section text
     global __div8
 __div8:
+    global __divs8
+__divs8:
     mov b, a
     xor e
     push psw

@@ -122,7 +122,7 @@ static void expand_line(const char *line, FILE *out, int depth)
         }
 
         // Whitespace or punctuation / Espaço em branco ou pontuação
-        if (*p <= ' ' || *p == ',' || *p == '(' || *p == ')' || *p == ';' || *p == '{' || *p == '}')
+        if (*p <= ' ' || *p == ',' || *p == '(' || *p == ')' || *p == ';' || *p == '{' || *p == '}' || *p == '[' || *p == ']')
         {
             if (wi > 0)
             {

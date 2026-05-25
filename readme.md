@@ -1,6 +1,6 @@
 # HC SDK for Retro Computing
 
-**Version 2.1 R3** - Multi-target cross-development toolchain for retro platforms.
+**Version 2.1 R8** - Multi-target cross-development toolchain for retro platforms.
 
 ## Overview
 

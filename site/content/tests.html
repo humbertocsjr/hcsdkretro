@@ -25,7 +25,8 @@
 <H3>Test Structure</H3>
 <PRE><FONT COLOR="#0000CC">tests/
   run_tests.sh            Test runner script
-  asm/z80/basic.s         Z80 instruction test
+  asm/z80/all_opcodes.s   Z80 full opcode test
+  asm/z80/basic.s         Z80 basic instruction test
   asm/z80/data_labels.s   Labels, sections, expressions
   asm/8080/basic.s        8080 instruction test
   asm/8085/basic.s        8085 instruction test
@@ -41,15 +42,15 @@
   b/08_advanced.b         Many args, nested calls, recursion
   b/09_compound.b         Compound assignment</FONT></PRE>
 
-<H3>Results (v2.1 R3)</H3>
+<H3>Results (v2.1 R8)</H3>
 <TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
 <TR BGCOLOR="#E0E0FF"><TH>Platform</TH><TH>Assembler</TH><TH>B Language</TH><TH>Total</TH></TR>
-<TR><TD>Z80</TD><TD ALIGN="CENTER">2/2</TD><TD ALIGN="CENTER">9/9</TD><TD ALIGN="CENTER"><B>11/11</B></TD></TR>
-<TR><TD>8080</TD><TD ALIGN="CENTER">1/1</TD><TD ALIGN="CENTER">8/8</TD><TD ALIGN="CENTER"><B>9/9</B></TD></TR>
+<TR><TD>Z80</TD><TD ALIGN="CENTER">3/3</TD><TD ALIGN="CENTER">9/9</TD><TD ALIGN="CENTER"><B>12/12</B></TD></TR>
+<TR><TD>8080</TD><TD ALIGN="CENTER">1/1</TD><TD ALIGN="CENTER">9/9</TD><TD ALIGN="CENTER"><B>10/10</B></TD></TR>
 <TR><TD>8085</TD><TD ALIGN="CENTER">1/1</TD><TD ALIGN="CENTER">&mdash;</TD><TD ALIGN="CENTER"><B>1/1</B></TD></TR>
-<TR><TD>8086</TD><TD ALIGN="CENTER">2/2</TD><TD ALIGN="CENTER">8/8</TD><TD ALIGN="CENTER"><B>10/10</B></TD></TR>
-<TR><TD>8086exe</TD><TD ALIGN="CENTER">&mdash;</TD><TD ALIGN="CENTER">8/8</TD><TD ALIGN="CENTER"><B>8/8</B></TD></TR>
-<TR BGCOLOR="#E0E0FF"><TD><B>Total</B></TD><TD ALIGN="CENTER"><B>6/6</B></TD><TD ALIGN="CENTER"><B>33/33</B></TD><TD ALIGN="CENTER"><B>39/39</B></TD></TR>
+<TR><TD>8086</TD><TD ALIGN="CENTER">2/2</TD><TD ALIGN="CENTER">9/9</TD><TD ALIGN="CENTER"><B>11/11</B></TD></TR>
+<TR><TD>8086exe</TD><TD ALIGN="CENTER">&mdash;</TD><TD ALIGN="CENTER">9/9</TD><TD ALIGN="CENTER"><B>9/9</B></TD></TR>
+<TR BGCOLOR="#E0E0FF"><TD><B>Total</B></TD><TD ALIGN="CENTER"><B>7/7</B></TD><TD ALIGN="CENTER"><B>36/36</B></TD><TD ALIGN="CENTER"><B>43/43</B></TD></TR>
 </TABLE>
 
 </BODY></HTML>

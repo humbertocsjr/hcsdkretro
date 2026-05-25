@@ -55,6 +55,9 @@ typedef enum ast_op_t
     // Function call / Chamada de função
     AST_CALL,
 
+    // Comma operator (for function arguments) / Operador vírgula (para argumentos de função)
+    AST_COMMA,
+
     // Array subscript / Subscrito de array
     AST_INDEX,
 
@@ -135,6 +138,7 @@ ast_node_t *ast_optimize(ast_node_t *node);
 // [English] AST code generation
 // [Portuguese] Geração de código a partir de AST
 void ast_gen(ast_node_t *node);
+void ast_gen_rvalue(ast_node_t *node);
 
 // [English] AST evaluation (returns 1 if can be evaluated at compile time)
 // [Portuguese] Avaliação de AST (retorna 1 se pode ser avaliada em tempo de compilação)

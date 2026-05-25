@@ -171,6 +171,14 @@ void gen_load_imm(int val)
 	gen_emitf("mov dx, %i", (val >> 16) & 0xFFFF);
 }
 
+// [English] Loads a 32-bit immediate value into CX:BX
+// [Portuguese] Carrega um valor imediato de 32 bits em CX:BX
+void gen_load_imm_sec(int val)
+{
+	gen_emitf("mov bx, %i", val & 0xFFFF);
+	gen_emitf("mov cx, %i", (val >> 16) & 0xFFFF);
+}
+
 // [English] Loads 32-bit VALUE of a global variable into DX:AX
 // [Portuguese] Carrega o VALOR de 32 bits de uma variável global em DX:AX
 void gen_load_var(const char *name)
@@ -252,6 +260,14 @@ void gen_load_local(int offset)
 	gen_emitf("mov dx, [bp-%i]", offset * 4 + 2);
 }
 
+// [English] Loads 32-bit CX:BX from a local variable at BP-offset
+// [Portuguese] Carrega CX:BX de 32 bits de uma variável local no deslocamento BP-offset
+void gen_load_local_sec(int offset)
+{
+	gen_emitf("mov bx, [bp-%i]", offset * 4 + 4);
+	gen_emitf("mov cx, [bp-%i]", offset * 4 + 2);
+}
+
 // [English] Computes far address of a local variable: LEA AX BP-offset, DX = SS
 // [Portuguese] Computa endereço far de variável local: LEA AX BP-offset, DX = SS
 void gen_local_addr(int offset)
@@ -274,6 +290,56 @@ void gen_load_param(int offset)
 {
 	gen_emitf("mov ax, [bp+%i]", offset * 4 + 4);
 	gen_emitf("mov dx, [bp+%i]", offset * 4 + 6);
+}
+
+// [English] Loads 32-bit CX:BX from a parameter at BP+offset
+// [Portuguese] Carrega CX:BX de 32 bits de um parâmetro no deslocamento BP+offset
+void gen_load_param_sec(int offset)
+{
+	gen_emitf("mov bx, [bp+%i]", offset * 4 + 4);
+	gen_emitf("mov cx, [bp+%i]", offset * 4 + 6);
+}
+
+// [English] Stores an immediate 32-bit value to a parameter at BP+offset
+// [Portuguese] Armazena valor imediato de 32 bits em parâmetro no BP+offset
+void gen_store_imm_param(int val, int offset)
+{
+	gen_emitf("mov ax, %i", val & 0xFFFF);
+	gen_emitf("mov dx, %i", (val >> 16) & 0xFFFF);
+	gen_emitf("mov [bp+%i], ax", offset * 4 + 4);
+	gen_emitf("mov [bp+%i], dx", offset * 4 + 6);
+}
+
+// [English] Increments a 32-bit local variable at BP-offset
+// [Portuguese] Incrementa uma variável local de 32 bits no deslocamento BP-offset
+void gen_inc_local(int offset)
+{
+	gen_emitf("inc word [bp-%i]", offset * 4 + 4);
+	gen_emitf("adc word [bp-%i], 0", offset * 4 + 2);
+}
+
+// [English] Decrements a 32-bit local variable at BP-offset
+// [Portuguese] Decrementa uma variável local de 32 bits no deslocamento BP-offset
+void gen_dec_local(int offset)
+{
+	gen_emitf("dec word [bp-%i]", offset * 4 + 4);
+	gen_emitf("adc word [bp-%i], 0", offset * 4 + 2);
+}
+
+// [English] Increments a 32-bit parameter at BP+offset
+// [Portuguese] Incrementa um parâmetro de 32 bits no deslocamento BP+offset
+void gen_inc_param(int offset)
+{
+	gen_emitf("inc word [bp+%i]", offset * 4 + 4);
+	gen_emitf("adc word [bp+%i], 0", offset * 4 + 6);
+}
+
+// [English] Decrements a 32-bit parameter at BP+offset
+// [Portuguese] Decrementa um parâmetro de 32 bits no deslocamento BP+offset
+void gen_dec_param(int offset)
+{
+	gen_emitf("dec word [bp+%i]", offset * 4 + 4);
+	gen_emitf("adc word [bp+%i], 0", offset * 4 + 6);
 }
 
 // [English] Computes far address of a parameter: LEA AX BP+offset, DX = SS
@@ -353,17 +419,6 @@ void gen_add(void)
 {
 	gen_emit("add ax, bx");
 	gen_emit("adc dx, cx");
-}
-
-// [English] 32-bit double (multiply by 2): DX:AX = DX:AX * 2
-// Note: this does add hl,hl twice which is DX:AX *= 4, not 2.
-// [Portuguese] Duplicação de 32 bits (multiplicar por 2): DX:AX = DX:AX * 2
-void gen_double(void)
-{
-	gen_emit("add ax, ax");
-	gen_emit("adc dx, dx");
-	gen_emit("add ax, ax");
-	gen_emit("adc dx, dx");
 }
 
 // [English] 32-bit subtraction: DX:AX = CX:BX - DX:AX

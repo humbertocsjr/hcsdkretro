@@ -126,6 +126,11 @@ void gen_load_imm(int val)
     gen_emitf("mov ax, %i", val);
 }
 
+void gen_load_imm_sec(int val)
+{
+    gen_emitf("mov bx, %i", val);
+}
+
 void gen_load_var(const char *name)
 {
     gen_emitf("mov ax, [%s]", name);
@@ -178,6 +183,13 @@ void gen_load_local(int offset)
     gen_emitf("mov ax, [bp-%i]", offset * 2 + 2);
 }
 
+// [English] Loads BX from a local variable at BP-offset
+// [Portuguese] Carrega BX de uma variável local no deslocamento BP-offset
+void gen_load_local_sec(int offset)
+{
+    gen_emitf("mov bx, [bp-%i]", offset * 2 + 2);
+}
+
 // [English] Computes address of a local variable: LEA AX, [BP-offset]
 // [Portuguese] Computa endereço de variável local: LEA AX, [BP-offset]
 void gen_local_addr(int offset)
@@ -197,6 +209,49 @@ void gen_store_param(int offset)
 void gen_load_param(int offset)
 {
     gen_emitf("mov ax, [bp+%i]", offset * 2 + 4);
+}
+
+// [English] Loads BX from a parameter at BP+offset
+// [Portuguese] Carrega BX de um parâmetro no deslocamento BP+offset
+void gen_load_param_sec(int offset)
+{
+    gen_emitf("mov bx, [bp+%i]", offset * 2 + 4);
+}
+
+// [English] Stores an immediate 16-bit value to a parameter at BP+offset
+// [Portuguese] Armazena valor imediato de 16 bits em parâmetro no BP+offset
+void gen_store_imm_param(int val, int offset)
+{
+    gen_emitf("mov ax, %i", val);
+    gen_emitf("mov [bp+%i], ax", offset * 2 + 4);
+}
+
+// [English] Increments a local variable at BP-offset
+// [Portuguese] Incrementa uma variável local no deslocamento BP-offset
+void gen_inc_local(int offset)
+{
+    gen_emitf("inc word [bp-%i]", offset * 2 + 2);
+}
+
+// [English] Decrements a local variable at BP-offset
+// [Portuguese] Decrementa uma variável local no deslocamento BP-offset
+void gen_dec_local(int offset)
+{
+    gen_emitf("dec word [bp-%i]", offset * 2 + 2);
+}
+
+// [English] Increments a parameter at BP+offset
+// [Portuguese] Incrementa um parâmetro no deslocamento BP+offset
+void gen_inc_param(int offset)
+{
+    gen_emitf("inc word [bp+%i]", offset * 2 + 4);
+}
+
+// [English] Decrements a parameter at BP+offset
+// [Portuguese] Decrementa um parâmetro no deslocamento BP+offset
+void gen_dec_param(int offset)
+{
+    gen_emitf("dec word [bp+%i]", offset * 2 + 4);
 }
 
 // [English] Computes address of a parameter: LEA AX, [BP+offset]
@@ -256,13 +311,6 @@ void gen_pokeb(void)
 void gen_add(void)
 {
     gen_emit("add ax, bx");
-}
-
-// [English] Doubles AX: AX = AX * 2
-// [Portuguese] Dobra AX: AX = AX * 2
-void gen_double(void)
-{
-    gen_emit("add ax, ax");
 }
 
 // [English] 16-bit subtraction: AX = BX - AX (after xchg)

@@ -149,6 +149,13 @@ void gen_load_imm(int val)
     gen_emitf("ld hl, %i", val);
 }
 
+// [English] Loads an immediate 16-bit value into DE
+// [Portuguese] Carrega um valor imediato de 16 bits em DE
+void gen_load_imm_sec(int val)
+{
+    gen_emitf("ld de, %i", val);
+}
+
 // [English] Loads HL with the 16-bit value stored at the named variable's address
 // [Portuguese] Carrega HL com o valor de 16 bits armazenado no endereço da variável nomeada
 void gen_load_var(const char *name)
@@ -210,7 +217,10 @@ void gen_store_imm_local(int val, int offset)
         gen_emitf("ld a, %i", val);
         gen_emitf("ld [ix+%i], a", off);
         // Sign-extend to high byte
-        gen_emit("ld a, 0");
+        if (val < 0)
+            gen_emit("ld a, -1");
+        else
+            gen_emit("ld a, 0");
         gen_emitf("ld [ix+%i], a", off + 1);
     } else {
         // General case: load full 16-bit immediate
@@ -227,6 +237,14 @@ void gen_load_local(int offset)
 {
     gen_emitf("ld l, [ix+%i]", -(offset * 2 + 2));
     gen_emitf("ld h, [ix+%i]", -(offset * 2 + 1));
+}
+
+// [English] Loads DE from a local variable at given offset from IX
+// [Portuguese] Carrega DE de uma variável local no deslocamento fornecido de IX
+void gen_load_local_sec(int offset)
+{
+    gen_emitf("ld e, [ix+%i]", -(offset * 2 + 2));
+    gen_emitf("ld d, [ix+%i]", -(offset * 2 + 1));
 }
 
 // [English] Computes the address of a local variable into HL using IX+offset
@@ -253,6 +271,70 @@ void gen_load_param(int offset)
 {
     gen_emitf("ld l, [ix+%i]", offset * 2 + 4);
     gen_emitf("ld h, [ix+%i]", offset * 2 + 5);
+}
+
+// [English] Loads DE from a parameter at given offset from IX
+// [Portuguese] Carrega DE de um parâmetro no deslocamento fornecido de IX
+void gen_load_param_sec(int offset)
+{
+    gen_emitf("ld e, [ix+%i]", offset * 2 + 4);
+    gen_emitf("ld d, [ix+%i]", offset * 2 + 5);
+}
+
+// [English] Stores an immediate 16-bit value to a parameter at IX+offset
+// Optimized: generates "ld hl,IMM; ld [ix+OFF],l; ld [ix+OFF+1],h"
+// [Portuguese] Armazena valor imediato de 16 bits em parâmetro no IX+offset
+void gen_store_imm_param(int val, int offset)
+{
+    int off = offset * 2 + 4;
+    if (val == 0) {
+        gen_emit("ld l, 0");
+        gen_emit("ld h, 0");
+        gen_emitf("ld [ix+%i], l", off);
+        gen_emitf("ld [ix+%i], h", off + 1);
+    } else if (val >= -128 && val <= 127) {
+        gen_emitf("ld a, %i", val);
+        gen_emitf("ld [ix+%i], a", off);
+        if (val < 0)
+            gen_emit("ld a, -1");
+        else
+            gen_emit("ld a, 0");
+        gen_emitf("ld [ix+%i], a", off + 1);
+    } else {
+        gen_emitf("ld hl, %i", val);
+        gen_emitf("ld [ix+%i], l", off);
+        gen_emitf("ld [ix+%i], h", off + 1);
+    }
+}
+
+// [English] Increments a local variable at given offset from IX
+// [Portuguese] Incrementa uma variável local no deslocamento fornecido de IX
+void gen_inc_local(int offset)
+{
+    int off = -(offset * 2 + 2);
+    gen_emitf("inc word [ix+%i]", off);
+}
+
+// [English] Decrements a local variable at given offset from IX
+// [Portuguese] Decrementa uma variável local no deslocamento fornecido de IX
+void gen_dec_local(int offset)
+{
+    int off = -(offset * 2 + 2);
+    gen_emitf("dec word [ix+%i]", off);
+}
+
+// [English] Increments a parameter at given offset from IX
+// [Portuguese] Incrementa um parâmetro no deslocamento fornecido de IX
+void gen_inc_param(int offset)
+{
+    gen_emitf("inc word [ix+%i]", offset * 2 + 4);
+}
+
+// [English] Decrements a parameter at given offset from IX
+// [Portuguese] Decrementa um parâmetro no deslocamento fornecido de IX
+void gen_dec_param(int offset)
+{
+    gen_emitf("dec word [ix+%i]", offset * 2 + 4);
 }
 
 // [English] Computes the address of a parameter into HL using IX+offset
@@ -306,13 +388,6 @@ void gen_store_to_addr(void)
 void gen_add(void)
 {
     gen_emit("add hl, de");
-}
-
-// [English] Doubles the 16-bit value in HL: HL = HL * 2
-// [Portuguese] Dobra o valor de 16 bits em HL: HL = HL * 2
-void gen_double(void)
-{
-    gen_emit("add hl, hl");
 }
 
 // [English] 16-bit subtraction: HL = DE - HL (performs HL = 0 - HL after ex de,hl)

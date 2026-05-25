@@ -1,4 +1,5 @@
 #include "bcomp.h"
+#include "ast.h"
 
 static int current_label = 0;
 static int func_nlocals = 0;
@@ -132,20 +133,37 @@ static int parse_args_rtl(long first_pos);
 // [English] Parses a primary expression: numbers, character constants, string literals,
 // and parenthesized expressions.
 // [Portuguese] Analisa uma expressão primária: números, constantes de caractere,
-// literais string e expressões entre parênteses.
-static int primary(void)
-{
-    int kind = VAL_RVALUE;
 
+// AST-based expression parsing / Análise de expressões baseada em AST
+
+static ast_node_t *parse_unary_ast(void);
+static ast_node_t *parse_term_ast(void);
+static ast_node_t *parse_additive_ast(void);
+static ast_node_t *parse_shift_ast(void);
+static ast_node_t *parse_relational_ast(void);
+static ast_node_t *parse_equality_ast(void);
+static ast_node_t *parse_bitwise_and_ast(void);
+static ast_node_t *parse_bitwise_xor_ast(void);
+static ast_node_t *parse_bitwise_or_ast(void);
+static ast_node_t *parse_logical_and_ast(void);
+static ast_node_t *parse_logical_or_ast(void);
+static ast_node_t *parse_conditional_ast(void);
+static ast_node_t *parse_assignment_ast(void);
+static ast_node_t *parse_expression_ast(void);
+
+static ast_node_t *parse_primary_ast(void)
+{
     if (tok == TOK_NUMBER)
     {
-        gen_load_imm(tok_value);
+        ast_node_t *node = ast_int(tok_value);
         next();
+        return node;
     }
     else if (tok == TOK_CHAR)
     {
-        gen_load_imm(tok_value);
+        ast_node_t *node = ast_char(tok_value);
         next();
+        return node;
     }
     else if (tok == TOK_STRING)
     {
@@ -160,826 +178,369 @@ static int primary(void)
         gen_text();
         gen_load_label(l);
         next();
-        kind = VAL_RVALUE;
+        return ast_string(tok_text);
     }
     else if (tok == TOK_LPAREN)
     {
         next();
-        kind = expression();
+        ast_node_t *node = parse_expression_ast();
         expect(TOK_RPAREN);
-    }
-    else
-    {
-        error("expression expected, got '%s'", tok_text);
-    }
-
-    return kind;
-}
-
-// [English] Parses postfix expressions: array subscript [], function call (),
-// increment ++ and decrement --
-// [Portuguese] Analisa expressões pós-fixadas: subscrito de array [], chamada de função (),
-// incremento ++ e decremento --
-static int postfix(void)
-{
-    int kind = primary();
-
-    while (1)
-    {
-        if (tok == TOK_LBRACKET)
-        {
-            // arr[index] -> *(arr + index * 2)
-            // arr is lvalue (address in HL)
-            convert_rvalue(&kind);
-            gen_push_prim();
-
-            next();
-            int idx_kind = expression();
-            convert_rvalue(&idx_kind);
-            expect(TOK_RBRACKET);
-
-            // HL = index, DE = address (from stack)
-            gen_pop_sec();
-
-            // index * 2 (word size)
-            gen_double();
-            gen_add();
-            kind = VAL_LVALUE;
-        }
-        else if (tok == TOK_LPAREN)
-        {
-            error("indirect function calls not yet supported");
-        }
-        else if (tok == TOK_INC)
-        {
-            convert_rvalue(&kind);
-            gen_push_prim();
-            gen_load_imm(1);
-            gen_pop_sec();
-            gen_add();
-            gen_pop_sec();
-            gen_store_to_addr();
-            gen_push_prim();
-            next();
-            kind = VAL_RVALUE;
-        }
-        else if (tok == TOK_DEC)
-        {
-            convert_rvalue(&kind);
-            gen_push_prim();
-            gen_load_imm(1);
-            gen_pop_sec();
-            gen_sub();
-            gen_pop_sec();
-            gen_store_to_addr();
-            gen_push_prim();
-            next();
-            kind = VAL_RVALUE;
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    return kind;
-}
-
-// For function call handling / Para tratamento de chamada de função
-static char last_func_name[256];
-static char deferred_load_name[256];
-
-// [English] Parses primary expressions with identifier tracking for function calls.
-// Identifiers are looked up in the symbol table and generate appropriate load code
-// (local, param, or global address). Saves the identifier name for function call resolution.
-// [Portuguese] Analisa expressões primárias com rastreamento de identificador para chamadas de função.
-// Identificadores são buscados na tabela de símbolos e geram código de carga apropriado
-// (local, parâmetro ou endereço global). Salva o nome do identificador para resolução de chamada de função.
-static int primary_func(void)
-{
-    int kind = VAL_RVALUE;
-
-    if (tok == TOK_NUMBER)
-    {
-        gen_load_imm(tok_value);
-        next();
-    }
-    else if (tok == TOK_CHAR)
-    {
-        gen_load_imm(tok_value);
-        next();
-    }
-    else if (tok == TOK_STRING)
-    {
-        int l = gen_label();
-        gen_data();
-        gen_label_int(l);
-        gen_bytes(tok_text);
-        if (!strcmp(target_cpu, "8086mz"))
-            gen_dword(0);
-        else
-            gen_word(0);
-        gen_text();
-        gen_load_label(l);
-        next();
-        kind = VAL_RVALUE;
+        return node;
     }
     else if (tok == TOK_IDENT)
     {
-        strncpy(last_func_name, tok_text, 255);
-        last_func_name[255] = '\0';
         symbol_t *sym = lookup(tok_text);
         if (!sym)
         {
-            symkind_t sk = SYM_EXTERN;
-            if (!strcmp(tok_text, "peekb") || !strcmp(tok_text, "pokeb") ||
-                !strcmp(tok_text, "peekw") || !strcmp(tok_text, "pokew"))
-                sk = SYM_FUNCTION;
-            sym = install(tok_text, sk, 0, SEG_DATA);
-            if (sk == SYM_EXTERN)
-                gen_extern(tok_text);
+            sym = install(tok_text, SYM_EXTERN, 0, SEG_DATA);
+            gen_extern(tok_text);
         }
+        ast_node_t *node = ast_ident(sym);
         next();
-
-        if (sym->kind == SYM_LOCAL)
-        {
-            gen_local_addr(sym->offset);
-            kind = VAL_LVALUE;
-        }
-        else if (sym->kind == SYM_PARAM)
-        {
-            gen_param_addr(sym->offset);
-            kind = VAL_LVALUE;
-        }
-        else
-        {
-            if (!(!strcmp(sym->name, "peekb") || !strcmp(sym->name, "pokeb") ||
-                  !strcmp(sym->name, "peekw") || !strcmp(sym->name, "pokew")))
-            {
-                strncpy(deferred_load_name, sym->name, 255);
-                deferred_load_name[255] = '\0';
-            }
-            kind = VAL_LVALUE;
-        }
-    }
-    else if (tok == TOK_LPAREN)
-    {
-        next();
-        kind = expression();
-        expect(TOK_RPAREN);
+        return node;
     }
     else
     {
         error("expression expected, got '%s'", tok_text);
+        return NULL;
     }
-
-    return kind;
 }
 
-// [English] Parses postfix expressions with full function call support, including
-// inline handling of peekb/pokeb/peekw/pokew built-in functions, array subscript,
-// and increment/decrement operators.
-// [Portuguese] Analisa expressões pós-fixadas com suporte completo a chamadas de função,
-// incluindo tratamento inline das funções embutidas peekb/pokeb/peekw/pokew,
-// subscrito de array e operadores de incremento/decremento.
-static int postfix_func(void)
+static ast_node_t *parse_postfix_ast(void)
 {
-    int kind = primary_func();
-    char funcname[256];
-    int has_func_name = 0;
-
-    // Check if this was a simple function name / Verifica se era um nome de função simples
-    if (kind == VAL_LVALUE && last_func_name[0])
-    {
-        symbol_t *sym = lookup(last_func_name);
-        if (sym && (sym->kind == SYM_EXTERN || sym->kind == SYM_FUNCTION))
-        {
-            strcpy(funcname, last_func_name);
-            has_func_name = 1;
-        }
-    }
-
-    // Emit deferred load address or discard if function call
-    if (deferred_load_name[0])
-    {
-        if (tok == TOK_LPAREN && has_func_name)
-            deferred_load_name[0] = '\0';
-        else
-        {
-            gen_load_addr(deferred_load_name);
-            deferred_load_name[0] = '\0';
-        }
-    }
-
+    ast_node_t *node = parse_primary_ast();
+    
     while (1)
     {
-
-        // Array subscript / Subscrito de array
         if (tok == TOK_LBRACKET)
         {
-            convert_rvalue(&kind);
-            gen_push_prim();
             next();
-            int idx_kind = expression();
-            convert_rvalue(&idx_kind);
+            ast_node_t *idx = parse_expression_ast();
             expect(TOK_RBRACKET);
-            gen_pop_sec();
-            gen_double();
-            gen_add();
-            kind = VAL_LVALUE;
-            has_func_name = 0;
+            node = ast_index(node, idx);
         }
-
-        // Function call / Chamada de função
         else if (tok == TOK_LPAREN)
         {
-            if (!has_func_name)
-                error("function call requires function name");
-
-            // Inline peekb / peekb inline
-            if (!strcmp(funcname, "peekb"))
-            {
-                next();
-                int pk = assignment();
-                convert_rvalue(&pk);
-                expect(TOK_RPAREN);
-                gen_comment("inline peekb");
-                gen_peekb();
-                kind = VAL_RVALUE;
-                has_func_name = 0;
-                last_func_name[0] = 0;
-                break;
-            }
-
-            // Inline peekw / peekw inline
-            if (!strcmp(funcname, "peekw"))
-            {
-                next();
-                int pk = assignment();
-                convert_rvalue(&pk);
-                expect(TOK_RPAREN);
-                gen_comment("inline peekw");
-                gen_deref();
-                kind = VAL_RVALUE;
-                has_func_name = 0;
-                last_func_name[0] = 0;
-                break;
-            }
-
-            // Inline pokeb / pokeb inline
-            if (!strcmp(funcname, "pokeb"))
-            {
-                next();
-                int pk = assignment();
-                convert_rvalue(&pk);
-                gen_push_prim();
-                expect(TOK_COMMA);
-                pk = assignment();
-                convert_rvalue(&pk);
-                expect(TOK_RPAREN);
-                gen_comment("inline pokeb");
-                gen_pop_sec();
-                gen_pokeb();
-                kind = VAL_RVALUE;
-                has_func_name = 0;
-                last_func_name[0] = 0;
-                break;
-            }
-
-            // Inline pokew / pokew inline
-            if (!strcmp(funcname, "pokew"))
-            {
-                next();
-                int pk = assignment();
-                convert_rvalue(&pk);
-                gen_push_prim();
-                expect(TOK_COMMA);
-                pk = assignment();
-                convert_rvalue(&pk);
-                expect(TOK_RPAREN);
-                gen_comment("inline pokew");
-                gen_pop_sec();
-                gen_store_to_addr();
-                kind = VAL_RVALUE;
-                has_func_name = 0;
-                last_func_name[0] = 0;
-                break;
-            }
-
-            // Regular function call / Chamada de função normal
-            long args_start;
-            {
-                int ch = lex_get_ch();
-                if (ch != EOF) ungetc(ch, lex_get_fp());
-            }
-            args_start = ftell(lex_get_fp());
-            lex_set_ch(' ');
             next();
-            gen_comment("call %s", funcname);
-            int nargs = 0;
+            ast_node_t *args = NULL;
             if (tok != TOK_RPAREN)
             {
-                nargs = parse_args_rtl(args_start);
+                args = parse_expression_ast();
+                while (tok == TOK_COMMA)
+                {
+                    next();
+                    ast_node_t *next_arg = parse_expression_ast();
+                    args = ast_binary(AST_COMMA, args, next_arg);
+                }
             }
             expect(TOK_RPAREN);
-
-            gen_comment("call %s(%i args)", funcname, nargs);
-            gen_call(funcname, nargs);
-            kind = VAL_RVALUE;
-            has_func_name = 0;
-            last_func_name[0] = 0;
+            node = ast_call(node, args);
         }
-
-        // Postfix increment / Incremento pós-fixado
         else if (tok == TOK_INC)
         {
-            gen_push_prim();
-            convert_rvalue(&kind);
-            gen_push_prim();
-            gen_push_prim();
-            gen_load_imm(1);
-            gen_pop_sec();
-            gen_add();
-            gen_pop_sec();
-            gen_store_to_addr();
-            gen_pop_sec();
-            gen_exchange();
             next();
-            kind = VAL_RVALUE;
+            node = ast_unary(AST_POST_INC, node);
         }
-
-        // Postfix decrement / Decremento pós-fixado
         else if (tok == TOK_DEC)
         {
-            gen_push_prim();
-            convert_rvalue(&kind);
-            gen_push_prim();
-            gen_push_prim();
-            gen_load_imm(1);
-            gen_pop_sec();
-            gen_sub();
-            gen_pop_sec();
-            gen_store_to_addr();
-            gen_pop_sec();
-            gen_exchange();
             next();
-            kind = VAL_RVALUE;
+            node = ast_unary(AST_POST_DEC, node);
         }
         else
         {
             break;
         }
     }
-
-    return kind;
+    
+    return node;
 }
 
-// [English] Parses unary expressions: dereference (*), address-of (&), negation (-),
-// bitwise not (~), logical not (!), prefix increment (++), prefix decrement (--),
-// and falls through to postfix expressions.
-// [Portuguese] Analisa expressões unárias: dereferência (*), endereço (&), negação (-),
-// não bitwise (~), não lógico (!), pré-incremento (++), pré-decremento (--),
-// e passa para expressões pós-fixadas.
-static int unary(void)
+static ast_node_t *parse_unary_ast(void)
 {
-    if (tok == TOK_STAR)
+    if (tok == TOK_MINUS)
     {
         next();
-        int kind = unary();
-        return VAL_LVALUE;
-    }
-    else if (tok == TOK_AMPERSAND)
-    {
-        next();
-        int kind = unary();
-        if (!kind)
-            error("lvalue required as operand of &");
-        return VAL_RVALUE;
-    }
-    else if (tok == TOK_MINUS)
-    {
-        next();
-        int kind = unary();
-        convert_rvalue(&kind);
-        gen_neg();
-        return VAL_RVALUE;
+        return ast_unary(AST_NEG, parse_unary_ast());
     }
     else if (tok == TOK_TILDE)
     {
         next();
-        int kind = unary();
-        convert_rvalue(&kind);
-        gen_not();
-        return VAL_RVALUE;
+        return ast_unary(AST_NOT, parse_unary_ast());
     }
     else if (tok == TOK_BANG)
     {
         next();
-        int kind = unary();
-        convert_rvalue(&kind);
-        gen_lnot();
-        return VAL_RVALUE;
+        return ast_unary(AST_LNOT, parse_unary_ast());
+    }
+    else if (tok == TOK_AMPERSAND)
+    {
+        next();
+        return ast_unary(AST_ADDR, parse_unary_ast());
+    }
+    else if (tok == TOK_STAR)
+    {
+        next();
+        return ast_unary(AST_DEREF, parse_unary_ast());
     }
     else if (tok == TOK_INC)
     {
         next();
-        int kind = unary();
-        if (!kind)
-            error("lvalue required as operand of ++");
-        gen_push_prim();
-        gen_deref();
-        gen_push_prim();
-        gen_load_imm(1);
-        gen_pop_sec();
-        gen_add();
-        gen_pop_sec();
-        gen_store_to_addr();
-        return VAL_RVALUE;
+        return ast_unary(AST_PRE_INC, parse_unary_ast());
     }
     else if (tok == TOK_DEC)
     {
         next();
-        int kind = unary();
-        if (!kind)
-            error("lvalue required as operand of --");
-        gen_push_prim();
-        gen_deref();
-        gen_push_prim();
-        gen_load_imm(1);
-        gen_pop_sec();
-        gen_sub();
-        gen_pop_sec();
-        gen_store_to_addr();
-        return VAL_RVALUE;
+        return ast_unary(AST_PRE_DEC, parse_unary_ast());
     }
     else
     {
-        return postfix_func();
+        return parse_postfix_ast();
     }
 }
 
-// [English] Parses multiplicative expressions: *, /, %
-// [Portuguese] Analisa expressões multiplicativas: *, /, %
-static int term(void)
+static ast_node_t *parse_term_ast(void)
 {
-    int kind = unary();
-
+    ast_node_t *node = parse_unary_ast();
+    
     while (tok == TOK_STAR || tok == TOK_SLASH || tok == TOK_PERCENT)
     {
-        convert_rvalue(&kind);
-        gen_push_prim();
-        int op = tok;
+        ast_op_t op;
+        if (tok == TOK_STAR) op = AST_MUL;
+        else if (tok == TOK_SLASH) op = AST_DIV;
+        else op = AST_MOD;
+        
         next();
-        int right_kind = unary();
-        convert_rvalue(&right_kind);
-        gen_pop_sec();
-
-        switch (op)
-        {
-        case TOK_STAR:
-            gen_mul();
-            break;
-        case TOK_SLASH:
-            gen_div();
-            break;
-        case TOK_PERCENT:
-            gen_mod();
-            break;
-        }
-        kind = VAL_RVALUE;
+        ast_node_t *right = parse_unary_ast();
+        node = ast_binary(op, node, right);
     }
-    return kind;
+    
+    return node;
 }
 
-// [English] Parses additive expressions: +, -
-// [Portuguese] Analisa expressões aditivas: +, -
-static int additive(void)
+static ast_node_t *parse_additive_ast(void)
 {
-    int kind = term();
-
+    ast_node_t *node = parse_term_ast();
+    
     while (tok == TOK_PLUS || tok == TOK_MINUS)
     {
-        convert_rvalue(&kind);
-        gen_push_prim();
-        int op = tok;
+        ast_op_t op = (tok == TOK_PLUS) ? AST_ADD : AST_SUB;
         next();
-        int right_kind = term();
-        convert_rvalue(&right_kind);
-        gen_pop_sec();
-
-        if (op == TOK_PLUS)
-            gen_add();
-        else
-            gen_sub();
-        kind = VAL_RVALUE;
+        ast_node_t *right = parse_term_ast();
+        node = ast_binary(op, node, right);
     }
-    return kind;
+    
+    return node;
 }
 
-// [English] Parses shift expressions: <<, >>
-// [Portuguese] Analisa expressões de deslocamento: <<, >>
-static int shift(void)
+static ast_node_t *parse_shift_ast(void)
 {
-    int kind = additive();
-
+    ast_node_t *node = parse_additive_ast();
+    
     while (tok == TOK_LSHIFT || tok == TOK_RSHIFT)
     {
-        convert_rvalue(&kind);
-        gen_push_prim();
-        int op = tok;
+        ast_op_t op = (tok == TOK_LSHIFT) ? AST_SHL : AST_SHR;
         next();
-        int right_kind = additive();
-        convert_rvalue(&right_kind);
-        gen_pop_sec();
-
-        if (op == TOK_LSHIFT)
-            gen_shl();
-        else
-            gen_shr();
-        kind = VAL_RVALUE;
+        ast_node_t *right = parse_additive_ast();
+        node = ast_binary(op, node, right);
     }
-    return kind;
+    
+    return node;
 }
 
-// [English] Parses relational expressions: <, >, <=, >=
-// [Portuguese] Analisa expressões relacionais: <, >, <=, >=
-static int relational(void)
+static ast_node_t *parse_relational_ast(void)
 {
-    int kind = shift();
-
+    ast_node_t *node = parse_shift_ast();
+    
     while (tok == TOK_LT || tok == TOK_GT || tok == TOK_LE || tok == TOK_GE)
     {
-        convert_rvalue(&kind);
-        gen_push_prim();
-        int op = tok;
+        ast_op_t op;
+        if (tok == TOK_LT) op = AST_LT;
+        else if (tok == TOK_GT) op = AST_GT;
+        else if (tok == TOK_LE) op = AST_LE;
+        else op = AST_GE;
+        
         next();
-        int right_kind = shift();
-        convert_rvalue(&right_kind);
-        gen_pop_sec();
-
-        switch (op)
-        {
-        case TOK_LT:
-            gen_cmp_lt();
-            break;
-        case TOK_GT:
-            gen_cmp_gt();
-            break;
-        case TOK_LE:
-            gen_cmp_le();
-            break;
-        case TOK_GE:
-            gen_cmp_ge();
-            break;
-        }
-        kind = VAL_RVALUE;
+        ast_node_t *right = parse_shift_ast();
+        node = ast_binary(op, node, right);
     }
-    return kind;
+    
+    return node;
 }
 
-// [English] Parses equality expressions: ==, !=
-// [Portuguese] Analisa expressões de igualdade: ==, !=
-static int equality(void)
+static ast_node_t *parse_equality_ast(void)
 {
-    int kind = relational();
-
+    ast_node_t *node = parse_relational_ast();
+    
     while (tok == TOK_EQ || tok == TOK_NE)
     {
-        convert_rvalue(&kind);
-        gen_push_prim();
-        int op = tok;
+        ast_op_t op = (tok == TOK_EQ) ? AST_EQ : AST_NE;
         next();
-        int right_kind = relational();
-        convert_rvalue(&right_kind);
-        gen_pop_sec();
-
-        if (op == TOK_EQ)
-            gen_cmp_eq();
-        else
-            gen_cmp_ne();
-        kind = VAL_RVALUE;
+        ast_node_t *right = parse_relational_ast();
+        node = ast_binary(op, node, right);
     }
-    return kind;
+    
+    return node;
 }
 
-// [English] Parses bitwise AND expressions: &
-// [Portuguese] Analisa expressões AND bitwise: &
-static int bitwise_and(void)
+static ast_node_t *parse_bitwise_and_ast(void)
 {
-    int kind = equality();
-
-    while (tok == TOK_AMPERSAND)
+    ast_node_t *node = parse_equality_ast();
+    
+    while (tok == TOK_AMPERSAND || tok == TOK_AND)
     {
-        convert_rvalue(&kind);
-        gen_push_prim();
         next();
-        int right_kind = equality();
-        convert_rvalue(&right_kind);
-        gen_pop_sec();
-        gen_and();
-        kind = VAL_RVALUE;
+        ast_node_t *right = parse_equality_ast();
+        node = ast_binary(AST_AND, node, right);
     }
-    return kind;
+    
+    return node;
 }
 
-// [English] Parses bitwise XOR expressions: ^
-// [Portuguese] Analisa expressões XOR bitwise: ^
-static int bitwise_xor(void)
+static ast_node_t *parse_bitwise_xor_ast(void)
 {
-    int kind = bitwise_and();
-
+    ast_node_t *node = parse_bitwise_and_ast();
+    
     while (tok == TOK_CARET)
     {
-        convert_rvalue(&kind);
-        gen_push_prim();
         next();
-        int right_kind = bitwise_and();
-        convert_rvalue(&right_kind);
-        gen_pop_sec();
-        gen_xor();
-        kind = VAL_RVALUE;
+        ast_node_t *right = parse_bitwise_and_ast();
+        node = ast_binary(AST_XOR, node, right);
     }
-    return kind;
+    
+    return node;
 }
 
-// [English] Parses bitwise OR expressions: |
-// [Portuguese] Analisa expressões OR bitwise: |
-static int bitwise_or(void)
+static ast_node_t *parse_bitwise_or_ast(void)
 {
-    int kind = bitwise_xor();
-
-    while (tok == TOK_PIPE)
+    ast_node_t *node = parse_bitwise_xor_ast();
+    
+    while (tok == TOK_PIPE || tok == TOK_OR)
     {
-        convert_rvalue(&kind);
-        gen_push_prim();
         next();
-        int right_kind = bitwise_xor();
-        convert_rvalue(&right_kind);
-        gen_pop_sec();
-        gen_or();
-        kind = VAL_RVALUE;
+        ast_node_t *right = parse_bitwise_xor_ast();
+        node = ast_binary(AST_OR, node, right);
     }
-    return kind;
+    
+    return node;
 }
 
-// [English] Parses logical AND expressions with short-circuit evaluation: &&
-// [Portuguese] Analisa expressões AND lógico com avaliação de curto-circuito: &&
-static int logical_and(void)
+static ast_node_t *parse_logical_and_ast(void)
 {
-    int kind = bitwise_or();
-
-    if (tok == TOK_AND)
-    {
-        convert_rvalue(&kind);
-        int l_false = gen_label();
-        int l_done = gen_label();
-        gen_comment("&& short-circuit");
-        gen_jz(l_false);
-
-        while (tok == TOK_AND)
-        {
-            next();
-            kind = bitwise_or();
-            convert_rvalue(&kind);
-            gen_jz(l_false);
-        }
-
-        gen_load_imm(1);
-        gen_jmp(l_done);
-        gen_label_int(l_false);
-        gen_load_imm(0);
-        gen_label_int(l_done);
-        return VAL_RVALUE;
-    }
-    return kind;
+    return parse_bitwise_or_ast();
 }
 
-// [English] Parses logical OR expressions with short-circuit evaluation: ||
-// [Portuguese] Analisa expressões OR lógico com avaliação de curto-circuito: ||
-static int logical_or(void)
+static ast_node_t *parse_logical_or_ast(void)
 {
-    int kind = logical_and();
-
-    if (tok == TOK_OR)
-    {
-        int l_true = gen_label();
-        int l_done = gen_label();
-        convert_rvalue(&kind);
-        gen_comment("|| short-circuit");
-        gen_jnz(l_true);
-
-        while (tok == TOK_OR)
-        {
-            next();
-            kind = logical_and();
-            convert_rvalue(&kind);
-            gen_jnz(l_true);
-        }
-
-        gen_load_imm(0);
-        gen_jmp(l_done);
-        gen_label_int(l_true);
-        gen_load_imm(1);
-        gen_label_int(l_done);
-        return VAL_RVALUE;
-    }
-    return kind;
+    return parse_logical_and_ast();
 }
 
-// [English] Parses conditional expressions (currently just a wrapper for logical_or)
-// [Portuguese] Analisa expressões condicionais (atualmente apenas um wrapper para logical_or)
-int conditional(void)
+static ast_node_t *parse_conditional_ast(void)
 {
-    return logical_or();
+    return parse_logical_or_ast();
 }
 
-// [English] Parses assignment expressions: =, +=, -=, *=, /=, %=, &=, |=, ^=
-// For simple assignment, pops the address and stores the value.
-// For compound assignment, reads the current value, applies the operation, then stores.
-// [Portuguese] Analisa expressões de atribuição: =, +=, -=, *=, /=, %=, &=, |=, ^=
-// Para atribuição simples, desempilha o endereço e armazena o valor.
-// Para atribuição composta, lê o valor atual, aplica a operação, então armazena.
-int assignment(void)
+static ast_node_t *parse_assignment_ast(void)
 {
-    int kind = conditional();
-
+    ast_node_t *node = parse_conditional_ast();
+    
     if (tok == TOK_ASSIGN)
     {
-        if (!kind)
-            error("lvalue required as left operand of assignment");
-        gen_push_prim();
         next();
-        int right_kind = assignment();
-        convert_rvalue(&right_kind);
-        gen_pop_sec();
-        gen_store_to_addr();
-        return VAL_RVALUE;
+        ast_node_t *right = parse_assignment_ast();
+        node = ast_binary(AST_ASSIGN, node, right);
     }
-
-    if (tok == TOK_ADD_ASSIGN || tok == TOK_SUB_ASSIGN ||
-        tok == TOK_MUL_ASSIGN || tok == TOK_DIV_ASSIGN ||
-        tok == TOK_MOD_ASSIGN || tok == TOK_AND_ASSIGN ||
-        tok == TOK_OR_ASSIGN || tok == TOK_XOR_ASSIGN)
+    else if (tok == TOK_ADD_ASSIGN)
     {
-        if (!kind)
-            error("lvalue required as left operand of compound assignment");
-
-        int op = tok;
-        gen_push_prim();
-        gen_deref();
-        gen_push_prim();
         next();
-        int right_kind = assignment();
-        gen_pop_sec();
-
-        switch (op)
-        {
-        case TOK_ADD_ASSIGN:
-            gen_add();
-            break;
-        case TOK_SUB_ASSIGN:
-            gen_sub();
-            break;
-        case TOK_MUL_ASSIGN:
-            gen_mul();
-            break;
-        case TOK_DIV_ASSIGN:
-            gen_div();
-            break;
-        case TOK_MOD_ASSIGN:
-            gen_mod();
-            break;
-        case TOK_AND_ASSIGN:
-            gen_and();
-            break;
-        case TOK_OR_ASSIGN:
-            gen_or();
-            break;
-        case TOK_XOR_ASSIGN:
-            gen_xor();
-            break;
-        }
-
-        gen_pop_sec();
-        gen_store_to_addr();
-        return VAL_RVALUE;
+        ast_node_t *right = parse_assignment_ast();
+        node = ast_binary(AST_ADD_ASSIGN, node, right);
     }
-
-    return kind;
+    else if (tok == TOK_SUB_ASSIGN)
+    {
+        next();
+        ast_node_t *right = parse_assignment_ast();
+        node = ast_binary(AST_SUB_ASSIGN, node, right);
+    }
+    else if (tok == TOK_MUL_ASSIGN)
+    {
+        next();
+        ast_node_t *right = parse_assignment_ast();
+        node = ast_binary(AST_MUL_ASSIGN, node, right);
+    }
+    else if (tok == TOK_DIV_ASSIGN)
+    {
+        next();
+        ast_node_t *right = parse_assignment_ast();
+        node = ast_binary(AST_DIV_ASSIGN, node, right);
+    }
+    else if (tok == TOK_MOD_ASSIGN)
+    {
+        next();
+        ast_node_t *right = parse_assignment_ast();
+        node = ast_binary(AST_MOD_ASSIGN, node, right);
+    }
+    else if (tok == TOK_AND_ASSIGN)
+    {
+        next();
+        ast_node_t *right = parse_assignment_ast();
+        node = ast_binary(AST_AND_ASSIGN, node, right);
+    }
+    else if (tok == TOK_OR_ASSIGN)
+    {
+        next();
+        ast_node_t *right = parse_assignment_ast();
+        node = ast_binary(AST_OR_ASSIGN, node, right);
+    }
+    else if (tok == TOK_XOR_ASSIGN)
+    {
+        next();
+        ast_node_t *right = parse_assignment_ast();
+        node = ast_binary(AST_XOR_ASSIGN, node, right);
+    }
+    
+    return node;
 }
 
-// [English] Parses comma-separated expressions
-// [Portuguese] Analisa expressões separadas por vírgula
+static ast_node_t *parse_expression_ast(void)
+{
+    return parse_assignment_ast();
+}
+
+// Expression parsing / Análise de expressões
+
+static int primary(void);
+static int postfix(void);
+static int unary(void);
+static int term(void);
+static int additive(void);
+static int shift(void);
+static int relational(void);
+static int equality(void);
+static int bitwise_and(void);
+static int bitwise_xor(void);
+static int bitwise_or(void);
+static int logical_and(void);
+static int logical_or(void);
+static int parse_args_rtl(long first_pos);
+
+// [English] Parses a primary expression: numbers, character constants, string literals,
+// and parenthesized expressions.
+// [Portuguese] Analisa uma expressão primária: números, constantes de caractere,
+// literais string e expressões entre parênteses.
 int expression(void)
 {
-    int kind = assignment();
-
-    while (tok == TOK_COMMA)
-    {
-        next();
-        kind = assignment();
-    }
-    return kind;
+    ast_node_t *ast = parse_expression_ast();
+    ast_node_t *opt = ast_optimize(ast);
+    
+    // Generate code from AST
+    ast_gen(opt);
+    
+    // Free memory properly
+    if (opt != ast)
+        ast_free(ast);
+    ast_free(opt);
+    
+    return VAL_RVALUE;
 }
 
 // Function call args (right-to-left evaluation) / Argumentos de chamada de função (avaliação da direita para a esquerda)
@@ -999,12 +560,10 @@ static int parse_args_rtl(long first_pos)
     int count = 0;
     FILE *saved_out = outfile;
 
-    // Phase 1: muted parse, record argument file positions
-    // Fase 1: análise silenciosa, registra posições dos argumentos no arquivo
     outfile = devnull;
 
     starts[0] = first_pos;
-    assignment();
+    parse_expression_ast();
     count = 1;
     while (tok == TOK_COMMA)
     {
@@ -1015,27 +574,27 @@ static int parse_args_rtl(long first_pos)
         starts[count] = ftell(fp);
         lex_set_ch(' ');
         next();
-        assignment();
+        parse_expression_ast();
         count++;
     }
     int saved_ch = lex_get_ch();
     long end_pos = ftell(fp);
 
-    // Phase 2: replay in right-to-left order with real codegen
-    // Fase 2: reproduz em ordem da direita para a esquerda com geração de código real
     outfile = saved_out;
     for (int i = count - 1; i >= 0; i--)
     {
         fseek(fp, starts[i], SEEK_SET);
         lex_sync();
         next();
-        int kind = assignment();
-        convert_rvalue(&kind);
+        ast_node_t *ast = parse_expression_ast();
+        ast_node_t *opt = ast_optimize(ast);
+        ast_gen(opt);
+        if (opt != ast)
+            ast_free(ast);
+        ast_free(opt);
         gen_push_prim();
     }
 
-    // Advance past remaining argument tokens to reach the outer RPAREN
-    // Avança além dos tokens de argumento restantes para alcançar o RPAREN externo
     {
         int depth = 0;
         for (;;)
@@ -1237,8 +796,9 @@ static void parse_statement(void)
         next();
         if (tok != TOK_SEMICOLON)
         {
-            int kind = expression();
-            convert_rvalue(&kind);
+            ast_node_t *ast = parse_expression_ast();
+            ast_gen_rvalue(ast);
+            ast_free(ast);
         }
         expect(TOK_SEMICOLON);
         gen_comment("return");

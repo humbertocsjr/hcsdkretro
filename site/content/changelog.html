@@ -12,6 +12,103 @@
 <TR><TD BGCOLOR="#000080"><FONT SIZE="+2" COLOR="#FFFFFF"><B>&nbsp;Changelog</B></FONT></TD></TR>
 </TABLE>
 
+<H3>v2.1 R8 &mdash; May 2026</H3>
+
+<TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<TR BGCOLOR="#E0E0FF"><TH WIDTH="20%">Area</TH><TH>Changes</TH></TR>
+
+<TR><TD VALIGN="TOP"><B>Bug Fixes</B></TD>
+<TD>
+<B>Removed dead code</B>: <TT>gen_double()</TT> removed from all backends (never called, had bug in 8086exe doing &times;4 instead of &times;2).<BR>
+<B><TT>gen_store_imm_param</TT> 8080/8085</B>: Fixed address corruption bug where <TT>mvi l</TT>/<TT>mvi h</TT> overwrote computed address after <TT>dad b</TT>; now uses register A correctly.<BR>
+<B>8086mz <TT>ast_gen_rvalue_sec</TT></B>: Added missing &quot;8086mz&quot; target to secondary register optimization check; 8086exe/8086mz now correctly avoids push/pop for RHS constants and local/param variables.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Condition Opt.</B></TD>
+<TD>
+Eliminated redundant comparison with 0 in <TT>if</TT>/<TT>while</TT>/<TT>for</TT>/<TT>?:</TT>/<TT>&amp;&amp;</TT>/<TT>||</TT> conditions.<BR>
+Now uses <TT>gen_jz</TT>/<TT>gen_jnz</TT> directly instead of <TT>push; load 0; pop; cmp_eq; jz</TT>.<BR>
+<B>Z80</B>: 6 &rarr; 3 instructions (50% reduction). <B>8086</B>: 6 &rarr; 2 instructions (67% reduction).
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Comparison Opt.</B></TD>
+<TD>
+All 6 comparison operators (<TT>==</TT>, <TT>!=</TT>, <TT>&lt;</TT>, <TT>&gt;</TT>, <TT>&lt;=</TT>, <TT>&gt;=</TT>) now use <TT>ast_gen_rvalue_sec</TT> to avoid push/pop when RHS is constant, local, or param variable.<BR>
+Same optimization already used for arithmetic operators. Saves 2 instructions per comparison on Z80/8086/8086exe/8086mz.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Strength Reduction</B></TD>
+<TD>
+<B>Division</B>: <TT>x / 2<SUP>n</SUP></TT> &rarr; <TT>x &gt;&gt; n</TT> (right shift) for power-of-2 divisors.<BR>
+<B>Modulo</B>: <TT>x % 2<SUP>n</SUP></TT> &rarr; <TT>x &amp; (2<SUP>n</SUP> - 1)</TT> (bitwise AND) for power-of-2 divisors.<BR>
+<B>Modulo 1</B>: <TT>x % 1</TT> &rarr; <TT>0</TT>.<BR>
+Replaces 16+ instruction division loop with 4 instruction AND on Z80.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Compound Assign Opt.</B></TD>
+<TD>
+<TT>var += const</TT> now uses <TT>gen_load_imm_sec</TT> + <TT>gen_exchange</TT> instead of <TT>push; load_imm; pop</TT> on targets with secondary register optimization (Z80, 8086, 8086exe, 8086mz).<BR>
+Saves 2 instructions per compound assignment with constant RHS.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Code Refactor</B></TD>
+<TD>
+Created <TT>target_has_sec_reg_opt()</TT> helper function to replace repetitive <TT>!strcmp(target_cpu, ...)</TT> checks across 10+ locations in <TT>ast.c</TT>.
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Example (Z80)</B></TD>
+<TD>
+<PRE>
+; Condition: if (x)
+; Before: 6 instructions
+push hl
+ld hl, 0
+pop de
+or a
+sbc hl, de
+ld hl, 0
+jr nz, .L1
+inc hl
+.L1:
+ld a, h
+or l
+jp z, .L2
+
+; After: 3 instructions
+ld a, h
+or l
+jp z, .L2
+
+; Modulo by 8: x % 8
+; Before: 16+ instr (division loop)
+; After: 4 instr (bitwise AND)
+ld de, 7
+ex de, hl
+ld a, e
+and l
+ld l, a
+ld a, d
+and h
+ld h, a
+</PRE>
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Performance</B></TD>
+<TD>
+<TABLE WIDTH="100%" BORDER="0" CELLPADDING="2">
+<TR><TD>Condition check (<TT>if</TT>/<TT>while</TT>/<TT>for</TT>)</TD><TD>6 &rarr; 3 instr (Z80) / 6 &rarr; 2 instr (8086) &mdash; 50-67% reduction</TD></TR>
+<TR><TD>Comparison with const/local</TD><TD>Eliminates push+pop &mdash; 2 instr saved per comparison</TD></TR>
+<TR><TD>8086exe binary ops with const RHS</TD><TD>Eliminates push+pop &mdash; 2 instr saved per operation</TD></TR>
+<TR><TD><TT>x / 2<SUP>n</SUP></TT></TD><TD>16+ instr (loop) &rarr; shift loop &mdash; ~75% fewer iterations</TD></TR>
+<TR><TD><TT>x % 2<SUP>n</SUP></TT></TD><TD>16+ instr (loop) &rarr; 4 instr (AND) &mdash; ~75% fewer instructions</TD></TR>
+<TR><TD>8080/8085 <TT>gen_store_imm_param</TT></TD><TD>Bug fix &mdash; was corrupted, now correct</TD></TR>
+</TABLE>
+</TD></TR>
+
+<TR><TD VALIGN="TOP"><B>Test Suite</B></TD>
+<TD><B>43/43 tests passing</B> across all platforms (Z80, 8080, 8085, 8086, 8086exe). Zero regressions. All 9 test programs compile successfully on all 5 architectures.</TD></TR>
+</TABLE>
+
 <H3>v2.1 R7 &mdash; May 2026</H3>
 
 <TABLE BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">

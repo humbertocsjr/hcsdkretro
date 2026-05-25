@@ -132,12 +132,15 @@ out/b_8086_%.com: b/%.b out/lib_8086.lib | out
 	@$(LINK_BIN) -text 0x100 -o $@ out/b_8086_$*.obj out/lib_8086.lib 2>/dev/null || (echo "FAIL LINK: $<"; exit 1)
 
 out/b_8086_%: out/b_8086_%.com
-	@if [ -f b/$*.expect ]; then \
-		$(EMU_86) $< 2>&1 | tr -d '\r\n' | diff - <(tr -d '\n' < b/$*.expect) > /dev/null 2>&1 && touch $@ || ( \
-			echo "FAIL OUTPUT: $*"; exit 1 \
-		); \
+	@expected=$$(cat b/$*.expect | tr -d '\n'); \
+	got=$$($(EMU_86) $< 2>&1 | tr -d '\r\n'); \
+	if [ "$$got" = "$$expected" ]; then \
+		touch $@; \
 	else \
-		$(EMU_86) $< 2>&1 > /dev/null && touch $@ || (echo "FAIL RUN: $<"; exit 1); \
+		echo "FAIL OUTPUT: $*"; \
+		echo "Expected: $$expected"; \
+		echo "Got:      $$got"; \
+		exit 1; \
 	fi
 
 # ── Helper: build stub library with putchar + printf for tests ──

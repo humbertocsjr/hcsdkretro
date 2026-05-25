@@ -21,3 +21,4 @@ hcsdk-*.pkg
 hcsdk-*.exe
 samples/calc/.ticks_history.txt
 --list
+tests/out/*

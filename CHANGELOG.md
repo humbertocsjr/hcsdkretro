@@ -1,5 +1,71 @@
 # Changelog
 
+## v2.1 R8 - May 2026
+
+### B Compiler (hcbcomp)
+
+#### Complete AST Compilation Pipeline
+- **Full AST-based parsing**: All expression parsing converted to AST construction (`parse_primary_ast` through `parse_assignment_ast`)
+- **Optimized assignments**: `a = 123` generates direct store instead of address computation (e.g., `ld a, 123; ld [ix-2], a`)
+- **Optimized compound assignments**: `a += 5` for locals/params uses direct load-operate-store path
+- **Array subscript optimization**: Correct indexing (×2 for 16-bit, ×4 for 32-bit 8086exe), uses `ast_gen_rvalue` for index
+- **Return statement optimization**: Uses `ast_gen_rvalue()` to properly dereference lvalues and return values
+- **Function call optimization**: Support for multiple arguments via `AST_COMMA` tree traversal
+- **Bitwise operators fixed**: Correct handling of `TOK_AMPERSAND`/`TOK_PIPE` vs `TOK_AND`/`TOK_OR`
+- **Sign extension fix**: Negative constants in `gen_store_imm_local`/`gen_store_imm_param` now correctly sign-extend
+- **Depth limit**: `ast_optimize()` has depth limit to prevent stack overflow on complex trees
+- **New `gen_store_imm_param()` function** in all backends for parameter optimization
+
+#### Code Generation Optimizations
+- **Removed dead code**: `gen_double()` function removed from all backends (was never called, had bug in 8086exe doing ×4 instead of ×2)
+- **Bug fix: `gen_store_imm_param` 8080/8085**: Fixed address corruption bug where `mvi l`/`mvi h` overwrote the computed address after `dad b`; now uses register A correctly
+- **Bug fix: 8086mz `ast_gen_rvalue_sec`**: Added missing "8086mz" target to secondary register optimization check; 8086exe/8086mz now correctly avoids push/pop for RHS constants and local/param variables in binary operations
+- **Condition optimization**: Eliminated redundant comparison with 0 in `if`/`while`/`for`/`?:`/`&&`/`||` conditions; now uses `gen_jz`/`gen_jnz` directly instead of `push; load 0; pop; cmp_eq; jz` (6→3 instructions on Z80, 6→2 on 8086)
+- **Comparison optimization**: All 6 comparison operators (`==`, `!=`, `<`, `>`, `<=`, `>=`) now use `ast_gen_rvalue_sec` to avoid push/pop when RHS is constant, local, or param variable (same optimization as arithmetic operators)
+- **Strength reduction for division**: `x / 2^n` → `x >> n` (right shift) for power-of-2 divisors
+- **Strength reduction for modulo**: `x % 2^n` → `x & (2^n - 1)` (bitwise AND) for power-of-2 divisors; `x % 1` → `0`
+- **Compound assignment optimization**: `var += const` now uses `gen_load_imm_sec` + `gen_exchange` instead of `push; load_imm; pop` on targets with secondary register optimization (z80, 8086, 8086exe, 8086mz)
+- **Refactored target checks**: Created `target_has_sec_reg_opt()` helper function to replace repetitive `!strcmp(target_cpu, ...)` checks across 10+ locations
+
+#### Example Optimizations
+```c
+// Condition check: if (x)
+// Before: 6 instructions
+push hl; ld hl,0; pop de; or a; sbc hl,de; ld hl,0; jr nz,.L1; inc hl; .L1: ld a,h; or l; jp z,.L2
+// After: 3 instructions
+ld a,h; or l; jp z,.L2
+
+// Comparison: i < 3 (with i as local variable)
+// Before: push hl; ld e,[ix-2]; ld d,[ix-1]; pop de; cmp...
+// After: ld e,[ix-2]; ld d,[ix-1]; ex de,hl; cmp...  (avoids push/pop)
+
+// Division by power of 2: x / 4
+// Before: call division loop (16+ instructions)
+// After: right shift by 2 (loop with 2 iterations)
+
+// Modulo by power of 2: x % 8
+// Before: call division loop, return remainder (16+ instructions)
+// After: and 7 (bitwise AND, 4 instructions on Z80)
+```
+
+### Validation & Testing
+- **43/43 tests passing** across all platforms (Z80, 8080, 8085, 8086, 8086exe)
+- **Zero regressions** - all existing tests continue passing
+- **All 9 test programs** (`01_basics.b` through `09_compound.b`) compile successfully on all 5 architectures
+
+### Performance Impact
+
+| Platform | Optimization | Before | After | Savings |
+|----------|-------------|--------|-------|---------|
+| All | Condition check (`if`/`while`/`for`) | 6 instr | 3 instr (Z80) / 2 instr (8086) | 50-67% |
+| Z80/8086/8086exe | Comparison with const/local | push+pop | direct load | 2 instr per comparison |
+| 8086exe/8086mz | Binary ops with const RHS | push+pop | direct load | 2 instr per operation |
+| All | `x / 2^n` | 16+ instr (loop) | shift loop | ~75% fewer iterations |
+| All | `x % 2^n` | 16+ instr (loop) | 4 instr (AND) | ~75% fewer instructions |
+| 8080/8085 | `gen_store_imm_param` | BUG (corrupted) | 7 instr (correct) | Bug fix |
+
+---
+
 ## v2.1 R7 - May 2026
 
 ### B Compiler (hcbcomp)

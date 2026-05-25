@@ -114,6 +114,7 @@ void gen_push_prim(void) { gen_emit("push h"); }
 void gen_pop_sec(void) { gen_emit("pop d"); }
 void gen_exchange(void) { gen_emit("xchg"); }
 void gen_load_imm(int val) { gen_emitf("lxi h, %i", val); }
+void gen_load_imm_sec(int val) { gen_emitf("lxi d, %i", val); }
 void gen_load_label(int label) { fprintf(outfile, "\tlxi h, .L%i\n", label); }
 void gen_load_var(const char *name) { gen_emitf("lhld %s", name); }
 void gen_load_addr(const char *name) { gen_emitf("lxi h, %s", name); }
@@ -123,11 +124,10 @@ void gen_load_addr(const char *name) { gen_emitf("lxi h, %s", name); }
 void gen_store_local(int offset)
 {
     int bo = -(offset * 2 + 4);
+    gen_emit("xchg");
     gen_emitf("lxi h, %i", bo);
     gen_emit("dad b");
-    gen_emit("xchg");
-    gen_emit("mov a, e");
-    gen_emit("mov m, a");
+    gen_emit("mov m, e");
     gen_emit("inx h");
     gen_emit("mov m, d");
 }
@@ -165,6 +165,19 @@ void gen_load_local(int offset)
     gen_emit("mov l, a");
 }
 
+// [English] Loads DE from a local variable at given offset from BC
+// [Portuguese] Carrega DE de uma variável local no deslocamento fornecido de BC
+void gen_load_local_sec(int offset)
+{
+    int bo = -(offset * 2 + 4);
+    gen_emitf("lxi h, %i", bo);
+    gen_emit("dad b");
+    gen_emit("mov a, m");
+    gen_emit("inx h");
+    gen_emit("mov d, m");
+    gen_emit("mov e, a");
+}
+
 // [English] Computes address of a local variable into HL using BC+offset
 // [Portuguese] Computa endereço de variável local em HL usando BC+offset
 void gen_local_addr(int offset)
@@ -197,6 +210,117 @@ void gen_load_param(int offset)
     gen_emit("inx h");
     gen_emit("mov h, m");
     gen_emit("mov l, a");
+}
+
+// [English] Loads DE from a parameter at given offset from BC
+// [Portuguese] Carrega DE de um parâmetro no deslocamento fornecido de BC
+void gen_load_param_sec(int offset)
+{
+    int bo = offset * 2 + 2;
+    gen_emitf("lxi h, %i", bo);
+    gen_emit("dad b");
+    gen_emit("mov a, m");
+    gen_emit("inx h");
+    gen_emit("mov d, m");
+    gen_emit("mov e, a");
+}
+
+// [English] Stores an immediate 16-bit value to a parameter at BC+offset
+// [Portuguese] Armazena valor imediato de 16 bits em parâmetro no BC+offset
+void gen_store_imm_param(int val, int offset)
+{
+    int bo = offset * 2 + 2;
+    gen_emitf("lxi h, %i", bo);
+    gen_emit("dad b");
+    gen_emitf("mvi a, %i", val & 0xFF);
+    gen_emit("mov m, a");
+    gen_emit("inx h");
+    gen_emitf("mvi a, %i", (val >> 8) & 0xFF);
+    gen_emit("mov m, a");
+}
+
+// [English] Increments a local variable at given offset from BC
+// [Portuguese] Incrementa uma variável local no deslocamento fornecido de BC
+void gen_inc_local(int offset)
+{
+    int bo = -(offset * 2 + 4);
+    gen_emitf("lxi h, %i", bo);
+    gen_emit("dad b");
+    gen_emit("mov a, m");
+    gen_emit("inx h");
+    gen_emit("mov h, m");
+    gen_emit("mov l, a");
+    gen_emit("lxi d, 1");
+    gen_emit("dad d");
+    gen_emit("xchg");
+    gen_emitf("lxi h, %i", bo);
+    gen_emit("dad b");
+    gen_emit("mov m, e");
+    gen_emit("inx h");
+    gen_emit("mov m, d");
+}
+
+// [English] Decrements a local variable at given offset from BC
+// [Portuguese] Decrementa uma variável local no deslocamento fornecido de BC
+void gen_dec_local(int offset)
+{
+    int bo = -(offset * 2 + 4);
+    gen_emitf("lxi h, %i", bo);
+    gen_emit("dad b");
+    gen_emit("mov a, m");
+    gen_emit("inx h");
+    gen_emit("mov h, m");
+    gen_emit("mov l, a");
+    gen_emit("lxi d, -1");
+    gen_emit("dad d");
+    gen_emit("xchg");
+    gen_emitf("lxi h, %i", bo);
+    gen_emit("dad b");
+    gen_emit("mov m, e");
+    gen_emit("inx h");
+    gen_emit("mov m, d");
+}
+
+// [English] Increments a parameter at given offset from BC
+// [Portuguese] Incrementa um parâmetro no deslocamento fornecido de BC
+void gen_inc_param(int offset)
+{
+    int bo = offset * 2 + 2;
+    gen_emitf("lxi h, %i", bo);
+    gen_emit("dad b");
+    gen_emit("mov a, m");
+    gen_emit("inx h");
+    gen_emit("mov h, m");
+    gen_emit("mov l, a");
+    gen_emit("lxi d, 1");
+    gen_emit("dad d");
+    gen_emit("xchg");
+    gen_emitf("lxi h, %i", bo);
+    gen_emit("dad b");
+    gen_emit("mov m, e");
+    gen_emit("inx h");
+    gen_emit("mov m, d");
+}
+
+// [English] Decrements a parameter at given offset from BC
+// [Portuguese] Decrementa um parâmetro no deslocamento fornecido de BC
+void gen_dec_param(int offset)
+{
+    int bo = offset * 2 + 2;
+    gen_emitf("lxi h, %i", bo);
+    gen_emit("dad b");
+    gen_emit("mov a, m");
+    gen_emit("inx h");
+    gen_emit("mov h, m");
+    gen_emit("mov l, a");
+    gen_emit("lxi d, -1");
+    gen_emit("dad d");
+    gen_emit("xchg");
+    gen_emitf("lxi h, %i", bo);
+    gen_emit("dad b");
+    gen_emit("mov m, e");
+    gen_emit("inx h");
+    gen_emit("mov m, d");
 }
 
 // [English] Computes address of a parameter into HL using BC+offset
@@ -251,7 +375,6 @@ void gen_pokeb(void)
 }
 
 void gen_add(void) { gen_emit("dad d"); }
-void gen_double(void) { gen_emit("dad h"); }
 
 // [English] 16-bit subtraction for 8085: HL = DE - HL
 // [Portuguese] Subtração de 16 bits para 8085: HL = DE - HL

@@ -2,6 +2,18 @@
 #include "ast.h"
 #include <stdio.h>
 
+// [English] Returns 1 if the target CPU supports loading into secondary register
+// directly (avoiding push/pop for RHS of binary operations).
+// [Portuguese] Retorna 1 se a CPU alvo suporta carregar no registrador secundário
+// diretamente (evitando push/pop para RHS de operações binárias).
+static int target_has_sec_reg_opt(void)
+{
+    return !strcmp(target_cpu, "z80") ||
+           !strcmp(target_cpu, "8086") ||
+           !strcmp(target_cpu, "8086exe") ||
+           !strcmp(target_cpu, "8086mz");
+}
+
 // [English] Helper function to create a new AST node
 // [Portuguese] Função auxiliar para criar um novo nó AST
 static ast_node_t *ast_new(ast_op_t op)
@@ -298,6 +310,7 @@ static const char *ast_op_name(ast_op_t op)
     case AST_OR_ASSIGN: return "OR_ASSIGN";
     case AST_XOR_ASSIGN: return "XOR_ASSIGN";
     case AST_CALL: return "CALL";
+    case AST_COMMA: return "COMMA";
     case AST_INDEX: return "INDEX";
     case AST_LAND: return "LAND";
     case AST_LOR: return "LOR";
@@ -413,77 +426,6 @@ int ast_eval(ast_node_t *node, int *result)
         }
         break;
 
-    case AST_NOT:
-        if (ast_eval(node->left, result))
-        {
-            *result = ~*result;
-            return 1;
-        }
-        break;
-
-    case AST_LNOT:
-        if (ast_eval(node->left, result))
-        {
-            *result = !*result;
-            return 1;
-        }
-        break;
-
-    case AST_ADD:
-        {
-            int l, r;
-            if (ast_eval(node->left, &l) && ast_eval(node->right, &r))
-            {
-                *result = l + r;
-                return 1;
-            }
-        }
-        break;
-
-    case AST_SUB:
-        {
-            int l, r;
-            if (ast_eval(node->left, &l) && ast_eval(node->right, &r))
-            {
-                *result = l - r;
-                return 1;
-            }
-        }
-        break;
-
-    case AST_MUL:
-        {
-            int l, r;
-            if (ast_eval(node->left, &l) && ast_eval(node->right, &r))
-            {
-                *result = l * r;
-                return 1;
-            }
-        }
-        break;
-
-    case AST_DIV:
-        {
-            int l, r;
-            if (ast_eval(node->left, &l) && ast_eval(node->right, &r) && r != 0)
-            {
-                *result = l / r;
-                return 1;
-            }
-        }
-        break;
-
-    case AST_MOD:
-        {
-            int l, r;
-            if (ast_eval(node->left, &l) && ast_eval(node->right, &r) && r != 0)
-            {
-                *result = l % r;
-                return 1;
-            }
-        }
-        break;
-
     case AST_AND:
         {
             int l, r;
@@ -546,14 +488,49 @@ int ast_eval(ast_node_t *node, int *result)
     return 0;
 }
 
+// [English] Checks if two AST nodes are structurally equal
+// [Portuguese] Verifica se dois nós AST são estruturalmente iguais
+static int ast_nodes_equal(ast_node_t *a, ast_node_t *b)
+{
+    if (!a && !b) return 1;
+    if (!a || !b) return 0;
+    if (a->op != b->op) return 0;
+    if (a->is_const && b->is_const)
+        return a->const_value == b->const_value;
+    if (a->op == AST_IDENT && b->op == AST_IDENT)
+        return a->sym == b->sym;
+    if (a->op == AST_INT_LITERAL && b->op == AST_INT_LITERAL)
+        return a->int_value == b->int_value;
+    if (a->op == AST_CHAR_LITERAL && b->op == AST_CHAR_LITERAL)
+        return a->int_value == b->int_value;
+    // For binary/unary ops, check children
+    if (a->left && b->left && !ast_nodes_equal(a->left, b->left))
+        return 0;
+    if (a->right && b->right && !ast_nodes_equal(a->right, b->right))
+        return 0;
+    if ((a->left && !b->left) || (!a->left && b->left))
+        return 0;
+    if ((a->right && !b->right) || (!a->right && b->right))
+        return 0;
+    return 1;
+}
+
 // [English] Optimizes an AST node (constant folding, algebraic simplification)
 // Returns the optimized node (may be different from input)
 // [Portuguese] Otimiza um nó AST (constant folding, simplificação algébrica)
 // Retorna o nó otimizado (pode ser diferente da entrada)
+static int opt_depth = 0;
 ast_node_t *ast_optimize(ast_node_t *node)
 {
     if (!node)
         return NULL;
+    
+    // Prevent infinite recursion
+    if (++opt_depth > 1000)
+    {
+        opt_depth--;
+        return node;
+    }
 
     // First, recursively optimize children
     // Primeiro, otimiza recursivamente os filhos
@@ -588,7 +565,6 @@ ast_node_t *ast_optimize(ast_node_t *node)
             node->left = NULL;
             ast_free(node->right);
             node->right = NULL;
-            ast_free(node);
             return temp;
         }
         // 0 + x → x
@@ -598,7 +574,6 @@ ast_node_t *ast_optimize(ast_node_t *node)
             node->right = NULL;
             ast_free(node->left);
             node->left = NULL;
-            ast_free(node);
             return temp;
         }
         break;
@@ -611,8 +586,13 @@ ast_node_t *ast_optimize(ast_node_t *node)
             node->left = NULL;
             ast_free(node->right);
             node->right = NULL;
-            ast_free(node);
             return temp;
+        }
+        // x - x → 0
+        if (node->left && node->right && ast_nodes_equal(node->left, node->right))
+        {
+            ast_free(node);
+            return ast_int(0);
         }
         break;
 
@@ -624,7 +604,6 @@ ast_node_t *ast_optimize(ast_node_t *node)
             node->left = NULL;
             ast_free(node->right);
             node->right = NULL;
-            ast_free(node);
             return temp;
         }
         // 1 * x → x
@@ -634,7 +613,6 @@ ast_node_t *ast_optimize(ast_node_t *node)
             node->right = NULL;
             ast_free(node->left);
             node->left = NULL;
-            ast_free(node);
             return temp;
         }
         // x * 0 → 0
@@ -643,6 +621,29 @@ ast_node_t *ast_optimize(ast_node_t *node)
         {
             ast_free(node);
             return ast_int(0);
+        }
+        // x * 2^n → x << n (strength reduction)
+        if (node->right && node->right->is_const && node->right->const_value > 0)
+        {
+            int v = node->right->const_value;
+            if ((v & (v - 1)) == 0)
+            {
+                int shift = 0;
+                while ((1 << shift) < v)
+                    shift++;
+                ast_node_t *shift_node = ast_binary(AST_SHL, node->left, ast_int(shift));
+                node->left = NULL;
+                node->right = NULL;
+                ast_free(node);
+                return ast_optimize(shift_node);
+            }
+        }
+        // Commutativity: move constant to RHS
+        if (node->left && node->left->is_const && node->right && !node->right->is_const)
+        {
+            ast_node_t *temp = node->left;
+            node->left = node->right;
+            node->right = temp;
         }
         break;
 
@@ -654,7 +655,149 @@ ast_node_t *ast_optimize(ast_node_t *node)
             node->left = NULL;
             ast_free(node->right);
             node->right = NULL;
+            return temp;
+        }
+        // x / 2^n → x >> n (strength reduction)
+        if (node->right && node->right->is_const && node->right->const_value > 0)
+        {
+            int v = node->right->const_value;
+            if ((v & (v - 1)) == 0)
+            {
+                int shift = 0;
+                while ((1 << shift) < v)
+                    shift++;
+                ast_node_t *shift_node = ast_binary(AST_SHR, node->left, ast_int(shift));
+                node->left = NULL;
+                node->right = NULL;
+                ast_free(node);
+                return ast_optimize(shift_node);
+            }
+        }
+        // Commutativity: move constant to RHS
+        if (node->left && node->left->is_const && node->right && !node->right->is_const)
+        {
+            ast_node_t *temp = node->left;
+            node->left = node->right;
+            node->right = temp;
+        }
+        break;
+
+    case AST_MOD:
+        // x % 1 → 0
+        if (node->right && node->right->is_const && node->right->const_value == 1)
+        {
             ast_free(node);
+            return ast_int(0);
+        }
+        // x % 2^n → x & (2^n - 1) (strength reduction)
+        if (node->right && node->right->is_const && node->right->const_value > 0)
+        {
+            int v = node->right->const_value;
+            if ((v & (v - 1)) == 0)
+            {
+                ast_node_t *and_node = ast_binary(AST_AND, node->left, ast_int(v - 1));
+                node->left = NULL;
+                node->right = NULL;
+                ast_free(node);
+                return ast_optimize(and_node);
+            }
+        }
+        break;
+
+    case AST_AND:
+        // x & x → x (idempotent)
+        if (node->left && node->right && ast_nodes_equal(node->left, node->right))
+        {
+            ast_node_t *temp = node->left;
+            node->left = NULL;
+            ast_free(node->right);
+            node->right = NULL;
+            return temp;
+        }
+        // x & 0 → 0
+        if ((node->right && node->right->is_const && node->right->const_value == 0) ||
+            (node->left && node->left->is_const && node->left->const_value == 0))
+        {
+            ast_free(node);
+            return ast_int(0);
+        }
+        // x & -1 → x (all ones)
+        if (node->right && node->right->is_const && node->right->const_value == -1)
+        {
+            ast_node_t *temp = node->left;
+            node->left = NULL;
+            ast_free(node->right);
+            node->right = NULL;
+            return temp;
+        }
+        if (node->left && node->left->is_const && node->left->const_value == -1)
+        {
+            ast_node_t *temp = node->right;
+            node->right = NULL;
+            ast_free(node->left);
+            node->left = NULL;
+            return temp;
+        }
+        break;
+
+    case AST_OR:
+        // x | x → x (idempotent)
+        if (node->left && node->right && ast_nodes_equal(node->left, node->right))
+        {
+            ast_node_t *temp = node->left;
+            node->left = NULL;
+            ast_free(node->right);
+            node->right = NULL;
+            return temp;
+        }
+        // x | 0 → x
+        if (node->right && node->right->is_const && node->right->const_value == 0)
+        {
+            ast_node_t *temp = node->left;
+            node->left = NULL;
+            ast_free(node->right);
+            node->right = NULL;
+            return temp;
+        }
+        if (node->left && node->left->is_const && node->left->const_value == 0)
+        {
+            ast_node_t *temp = node->right;
+            node->right = NULL;
+            ast_free(node->left);
+            node->left = NULL;
+            return temp;
+        }
+        // x | -1 → -1
+        if ((node->right && node->right->is_const && node->right->const_value == -1) ||
+            (node->left && node->left->is_const && node->left->const_value == -1))
+        {
+            ast_free(node);
+            return ast_int(-1);
+        }
+        break;
+
+    case AST_XOR:
+        // x ^ x → 0
+        if (node->left && node->right && ast_nodes_equal(node->left, node->right))
+        {
+            ast_free(node);
+            return ast_int(0);
+        }
+        // x ^ 0 → x
+        if (node->right && node->right->is_const && node->right->const_value == 0)
+        {
+            ast_node_t *temp = node->left;
+            node->left = NULL;
+            ast_free(node->right);
+            node->right = NULL;
+            return temp;
+        }
+        if (node->left && node->left->is_const && node->left->const_value == 0)
+        {
+            ast_node_t *temp = node->right;
+            node->right = NULL;
+            ast_free(node->left);
+            node->left = NULL;
             return temp;
         }
         break;
@@ -668,7 +811,45 @@ ast_node_t *ast_optimize(ast_node_t *node)
             node->left = NULL;
             ast_free(node->right);
             node->right = NULL;
+            return temp;
+        }
+        break;
+
+    case AST_LNOT:
+        // !(!x) → (x != 0)
+        if (node->left && node->left->op == AST_LNOT && node->left->left)
+        {
+            ast_node_t *inner = node->left->left;
+            node->left->left = NULL;
+            ast_node_t *old_left = node->left;
+            node->left = NULL;
+            ast_node_t *cmp = ast_binary(AST_NE, inner, ast_int(0));
+            ast_free(old_left);
             ast_free(node);
+            return cmp;
+        }
+        break;
+
+    case AST_NOT:
+        // ~(~x) → x
+        if (node->left && node->left->op == AST_NOT)
+        {
+            ast_node_t *temp = node->left->left;
+            node->left->left = NULL;
+            ast_free(node->left);
+            node->left = NULL;
+            return temp;
+        }
+        break;
+
+    case AST_NEG:
+        // -(-x) → x
+        if (node->left && node->left->op == AST_NEG)
+        {
+            ast_node_t *temp = node->left->left;
+            node->left->left = NULL;
+            ast_free(node->left);
+            node->left = NULL;
             return temp;
         }
         break;
@@ -684,6 +865,66 @@ ast_node_t *ast_optimize(ast_node_t *node)
 // [Portuguese] Declarações antecipadas para geração de código
 static void ast_gen_expr(ast_node_t *node);
 static void ast_gen_stmt(ast_node_t *node);
+
+// [English] Generates rvalue code for a node (dereferences lvalues)
+// [Portuguese] Gera código de rvalue para um nó (desreferencia lvalues)
+void ast_gen_rvalue(ast_node_t *node)
+{
+    if (!node)
+        return;
+    
+    if (node->lvalue && node->op != AST_INT_LITERAL && node->op != AST_CHAR_LITERAL)
+    {
+        ast_gen_expr(node);
+        gen_deref();
+    }
+    else
+    {
+        ast_gen_expr(node);
+    }
+}
+
+// [English] Generates rvalue code directly into secondary register (DE/BX)
+// Avoids push/pop sequence when RHS is a constant, local, or param
+// Note: After this call, HL has the RHS value and DE has the LHS value
+// (matching the original push/pop path convention)
+// [Portuguese] Gera código de rvalue diretamente no registrador secundário (DE/BX)
+// Evita sequência push/pop quando RHS é constante, local ou param
+// Nota: Após esta chamada, HL tem o valor RHS e DE tem o valor LHS
+static void ast_gen_rvalue_sec(ast_node_t *node)
+{
+    if (!node)
+        return;
+
+    // Constant: load directly into secondary register, then exchange
+    if (node->is_const && node->op != AST_IDENT)
+    {
+        gen_load_imm_sec(node->const_value);
+        gen_exchange();
+        return;
+    }
+
+    // Local variable: load directly into secondary register, then exchange
+    if (node->op == AST_IDENT && node->sym)
+    {
+        if (node->sym->kind == SYM_LOCAL)
+        {
+            gen_load_local_sec(node->sym->offset);
+            gen_exchange();
+            return;
+        }
+        else if (node->sym->kind == SYM_PARAM)
+        {
+            gen_load_param_sec(node->sym->offset);
+            gen_exchange();
+            return;
+        }
+    }
+
+    // Fallback: use generic push/pop path
+    ast_gen_rvalue(node);
+    gen_exchange();
+}
 
 // [English] Generates code for an expression AST node
 // [Portuguese] Gera código para um nó de expressão AST
@@ -732,21 +973,38 @@ static void ast_gen_expr(ast_node_t *node)
         break;
 
     case AST_NEG:
-        ast_gen_expr(node->left);
+        ast_gen_rvalue(node->left);
         gen_neg();
         break;
 
     case AST_NOT:
-        ast_gen_expr(node->left);
+        ast_gen_rvalue(node->left);
         gen_not();
         break;
 
     case AST_LNOT:
-        ast_gen_expr(node->left);
+        ast_gen_rvalue(node->left);
         gen_lnot();
         break;
 
     case AST_PRE_INC:
+        // Optimization: ++local or ++param
+        if (node->left && node->left->op == AST_IDENT && node->left->sym)
+        {
+            symbol_t *sym = node->left->sym;
+            if (sym->kind == SYM_LOCAL)
+            {
+                gen_inc_local(sym->offset);
+                gen_load_local(sym->offset);
+                break;
+            }
+            else if (sym->kind == SYM_PARAM)
+            {
+                gen_inc_param(sym->offset);
+                gen_load_param(sym->offset);
+                break;
+            }
+        }
         ast_gen_expr(node->left);
         gen_push_prim();
         gen_deref();
@@ -761,6 +1019,23 @@ static void ast_gen_expr(ast_node_t *node)
         break;
 
     case AST_PRE_DEC:
+        // Optimization: --local or --param
+        if (node->left && node->left->op == AST_IDENT && node->left->sym)
+        {
+            symbol_t *sym = node->left->sym;
+            if (sym->kind == SYM_LOCAL)
+            {
+                gen_dec_local(sym->offset);
+                gen_load_local(sym->offset);
+                break;
+            }
+            else if (sym->kind == SYM_PARAM)
+            {
+                gen_dec_param(sym->offset);
+                gen_load_param(sym->offset);
+                break;
+            }
+        }
         ast_gen_expr(node->left);
         gen_push_prim();
         gen_deref();
@@ -775,6 +1050,27 @@ static void ast_gen_expr(ast_node_t *node)
         break;
 
     case AST_POST_INC:
+        // Optimization: local++ or param++
+        if (node->left && node->left->op == AST_IDENT && node->left->sym)
+        {
+            symbol_t *sym = node->left->sym;
+            if (sym->kind == SYM_LOCAL)
+            {
+                gen_load_local(sym->offset);
+                gen_push_prim();
+                gen_inc_local(sym->offset);
+                gen_pop_sec();
+                break;
+            }
+            else if (sym->kind == SYM_PARAM)
+            {
+                gen_load_param(sym->offset);
+                gen_push_prim();
+                gen_inc_param(sym->offset);
+                gen_pop_sec();
+                break;
+            }
+        }
         ast_gen_expr(node->left);
         gen_push_prim();
         gen_deref();
@@ -790,6 +1086,27 @@ static void ast_gen_expr(ast_node_t *node)
         break;
 
     case AST_POST_DEC:
+        // Optimization: local-- or param--
+        if (node->left && node->left->op == AST_IDENT && node->left->sym)
+        {
+            symbol_t *sym = node->left->sym;
+            if (sym->kind == SYM_LOCAL)
+            {
+                gen_load_local(sym->offset);
+                gen_push_prim();
+                gen_dec_local(sym->offset);
+                gen_pop_sec();
+                break;
+            }
+            else if (sym->kind == SYM_PARAM)
+            {
+                gen_load_param(sym->offset);
+                gen_push_prim();
+                gen_dec_param(sym->offset);
+                gen_pop_sec();
+                break;
+            }
+        }
         ast_gen_expr(node->left);
         gen_push_prim();
         gen_deref();
@@ -815,142 +1132,292 @@ static void ast_gen_expr(ast_node_t *node)
         break;
 
     case AST_ADD:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_add();
         break;
 
     case AST_SUB:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_sub();
         break;
 
     case AST_MUL:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_mul();
         break;
 
     case AST_DIV:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_div();
         break;
 
     case AST_MOD:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_mod();
         break;
 
     case AST_AND:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_and();
         break;
 
     case AST_OR:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_or();
         break;
 
     case AST_XOR:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_xor();
         break;
 
     case AST_SHL:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_shl();
         break;
 
     case AST_SHR:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_shr();
         break;
 
     case AST_EQ:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_cmp_eq();
         break;
 
     case AST_NE:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_cmp_ne();
         break;
 
     case AST_LT:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_cmp_lt();
         break;
 
     case AST_GT:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_cmp_gt();
         break;
 
     case AST_LE:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_cmp_le();
         break;
 
     case AST_GE:
-        ast_gen_expr(node->left);
-        gen_push_prim();
-        ast_gen_expr(node->right);
-        gen_pop_sec();
+        ast_gen_rvalue(node->left);
+        if (node->right && (node->right->is_const ||
+            (node->right->op == AST_IDENT && node->right->sym &&
+             (node->right->sym->kind == SYM_LOCAL || node->right->sym->kind == SYM_PARAM))) &&
+            target_has_sec_reg_opt())
+            ast_gen_rvalue_sec(node->right);
+        else {
+            gen_push_prim();
+            ast_gen_rvalue(node->right);
+            gen_pop_sec();
+        }
         gen_cmp_ge();
         break;
 
     case AST_ASSIGN:
-        // Generate code for lvalue (address)
+        // Optimization: direct store to local/param variable
+        // Otimização: armazenamento direto em variável local/parâmetro
+        if (node->left && node->left->op == AST_IDENT && node->left->sym)
+        {
+            symbol_t *sym = node->left->sym;
+            if (sym->kind == SYM_LOCAL || sym->kind == SYM_PARAM)
+            {
+                // Check if rvalue is a constant
+                // Verifica se o lado direito é uma constante
+                if (node->right && node->right->is_const)
+                {
+                    // Optimized: load constant and store directly
+                    // Otimizado: carrega constante e armazena diretamente
+                    if (sym->kind == SYM_LOCAL)
+                        gen_store_imm_local(node->right->const_value, sym->offset);
+                    else
+                        gen_store_imm_param(node->right->const_value, sym->offset);
+                    break;
+                }
+                // Check if rvalue is a simple identifier (local/param)
+                // Verifica se o lado direito é um identificador simples
+                if (node->right && node->right->op == AST_IDENT && node->right->sym)
+                {
+                    symbol_t *src_sym = node->right->sym;
+                    if (src_sym->kind == SYM_LOCAL || src_sym->kind == SYM_PARAM)
+                    {
+                        // Optimized: load source value and store directly to dest
+                        // Otimizado: carrega valor da origem e armazena diretamente no destino
+                        if (src_sym->kind == SYM_LOCAL)
+                            gen_load_local(src_sym->offset);
+                        else
+                            gen_load_param(src_sym->offset);
+                        if (sym->kind == SYM_LOCAL)
+                            gen_store_local(sym->offset);
+                        else
+                            gen_store_param(sym->offset);
+                        break;
+                    }
+                }
+            }
+        }
+        // Fallback: generic assignment
+        // Fallback: atribuição genérica
         ast_gen_expr(node->left);
         gen_push_prim();
-
-        // Generate code for rvalue
-        ast_gen_expr(node->right);
-
-        // Store
+        ast_gen_rvalue(node->right);
         gen_pop_sec();
         gen_store_to_addr();
         break;
@@ -963,19 +1430,63 @@ static void ast_gen_expr(ast_node_t *node)
     case AST_AND_ASSIGN:
     case AST_OR_ASSIGN:
     case AST_XOR_ASSIGN:
-        // Load lvalue address
+        // Optimization: compound assignment to local/param with constant
+        // Otimização: atribuição composta em local/param com constante
+        if (node->left && node->left->op == AST_IDENT && node->left->sym &&
+            node->right && node->right->is_const)
+        {
+            symbol_t *sym = node->left->sym;
+            if (sym->kind == SYM_LOCAL || sym->kind == SYM_PARAM)
+            {
+                // Load current value
+                // Carrega valor atual
+                if (sym->kind == SYM_LOCAL)
+                    gen_load_local(sym->offset);
+                else
+                    gen_load_param(sym->offset);
+
+                // Apply operation with constant
+                // Aplica operação com constante
+                if (target_has_sec_reg_opt()) {
+                    gen_load_imm_sec(node->right->const_value);
+                    gen_exchange();
+                } else {
+                    gen_push_prim();
+                    gen_load_imm(node->right->const_value);
+                    gen_pop_sec();
+                }
+
+                switch (node->op)
+                {
+                case AST_ADD_ASSIGN: gen_add(); break;
+                case AST_SUB_ASSIGN: gen_sub(); break;
+                case AST_MUL_ASSIGN: gen_mul(); break;
+                case AST_DIV_ASSIGN: gen_div(); break;
+                case AST_MOD_ASSIGN: gen_mod(); break;
+                case AST_AND_ASSIGN: gen_and(); break;
+                case AST_OR_ASSIGN: gen_or(); break;
+                case AST_XOR_ASSIGN: gen_xor(); break;
+                default: break;
+                }
+
+                // Result is in HL after operation, store directly
+                // Resultado está em HL após operação, armazena diretamente
+                if (sym->kind == SYM_LOCAL)
+                    gen_store_local(sym->offset);
+                else
+                    gen_store_param(sym->offset);
+                break;
+            }
+        }
+        // Fallback: generic compound assignment
+        // Fallback: atribuição composta genérica
         ast_gen_expr(node->left);
         gen_push_prim();
-
-        // Load current value
         gen_deref();
         gen_push_prim();
-
-        // Load rvalue
-        ast_gen_expr(node->right);
+        ast_gen_rvalue(node->right);
         gen_pop_sec();
 
-        // Apply operation
         switch (node->op)
         {
         case AST_ADD_ASSIGN: gen_add(); break;
@@ -989,41 +1500,90 @@ static void ast_gen_expr(ast_node_t *node)
         default: break;
         }
 
-        // Store result
         gen_pop_sec();
         gen_store_to_addr();
         break;
 
     case AST_CALL:
-        // Generate code for arguments (right-to-left)
-        // Gerar código para argumentos (direita para esquerda)
         {
+            // Count arguments (may be linked via next or comma tree)
+            // Contar argumentos (podem estar ligados via next ou árvore de vírgula)
             int nargs = 0;
             ast_node_t *arg = node->right;
+            
+            // Handle comma-separated arguments as a left-heavy tree
+            // Trata argumentos separados por vírgula como árvore esquerda-pesada
+            ast_node_t **arg_list = NULL;
+            int arg_capacity = 0;
+            
             while (arg)
             {
-                nargs++;
-                arg = arg->next;
+                if (arg->op == AST_COMMA)
+                {
+                    // Left-heavy tree: left has more arguments, right is single arg
+                    // Árvore esquerda-pesada: esquerda tem mais argumentos, direita é argumento único
+                    if (arg_capacity == 0)
+                    {
+                        arg_capacity = 16;
+                        arg_list = (ast_node_t **)malloc(arg_capacity * sizeof(ast_node_t *));
+                    }
+                    // Traverse left subtree first, then add right
+                    // Percorre subárvore esquerda primeiro, depois adiciona direita
+                    ast_node_t *left = arg->left;
+                    while (left && left->op == AST_COMMA)
+                    {
+                        if (nargs >= arg_capacity)
+                        {
+                            arg_capacity *= 2;
+                            arg_list = (ast_node_t **)realloc(arg_list, arg_capacity * sizeof(ast_node_t *));
+                        }
+                        arg_list[nargs++] = left->right;
+                        left = left->left;
+                    }
+                    if (left)
+                    {
+                        if (nargs >= arg_capacity)
+                        {
+                            arg_capacity *= 2;
+                            arg_list = (ast_node_t **)realloc(arg_list, arg_capacity * sizeof(ast_node_t *));
+                        }
+                        arg_list[nargs++] = left;
+                    }
+                    if (arg->right)
+                    {
+                        if (nargs >= arg_capacity)
+                        {
+                            arg_capacity *= 2;
+                            arg_list = (ast_node_t **)realloc(arg_list, arg_capacity * sizeof(ast_node_t *));
+                        }
+                        arg_list[nargs++] = arg->right;
+                    }
+                    break;
+                }
+                else
+                {
+                    // Single argument or linked list
+                    // Argumento único ou lista ligada
+                    if (nargs >= arg_capacity)
+                    {
+                        arg_capacity = arg_capacity == 0 ? 16 : arg_capacity * 2;
+                        arg_list = (ast_node_t **)realloc(arg_list, arg_capacity * sizeof(ast_node_t *));
+                    }
+                    arg_list[nargs++] = arg;
+                    arg = arg->next;
+                }
             }
-
+            
             // Generate arguments in reverse order
             // Gera argumentos em ordem inversa
-            arg = node->right;
-            ast_node_t **args = (ast_node_t **)malloc(nargs * sizeof(ast_node_t *));
-            for (int i = 0; i < nargs; i++)
-            {
-                args[i] = arg;
-                arg = arg->next;
-            }
-
             for (int i = nargs - 1; i >= 0; i--)
             {
-                ast_gen_expr(args[i]);
+                ast_gen_rvalue(arg_list[i]);
                 gen_push_prim();
             }
-            free(args);
+            if (arg_list)
+                free(arg_list);
 
-            // Generate function name
             if (node->left && node->left->sym)
                 gen_call(node->left->sym->name, nargs);
         }
@@ -1032,11 +1592,16 @@ static void ast_gen_expr(ast_node_t *node)
     case AST_INDEX:
         // Array subscript: generate address of array, then add offset
         // Subscrito de array: gera endereço do array, depois adiciona offset
-        ast_gen_expr(node->left);  // array address
+        // B arrays store words: 16-bit (2 bytes) for most targets, 32-bit (4 bytes) for 8086exe
+        // Arrays B armazenam words: 16-bit (2 bytes) para maioria dos targets, 32-bit (4 bytes) para 8086exe
+        ast_gen_expr(node->left);  // array address (lvalue)
         gen_push_prim();
-        ast_gen_expr(node->right);  // index
+        ast_gen_rvalue(node->right);  // index (rvalue - dereference if lvalue)
         gen_push_prim();
-        gen_load_imm(2);  // multiply by 2 for 16-bit elements
+        if (!strcmp(target_cpu, "8086mz"))
+            gen_load_imm(4);  // 32-bit elements
+        else
+            gen_load_imm(2);  // 16-bit elements
         gen_pop_sec();
         gen_mul();
         gen_pop_sec();
@@ -1048,16 +1613,12 @@ static void ast_gen_expr(ast_node_t *node)
             int false_label = gen_label();
             int end_label = gen_label();
 
-            // Left side
-            ast_gen_expr(node->left);
-            gen_push_prim();
-            gen_load_imm(0);
-            gen_pop_sec();
-            gen_cmp_eq();
+            // Left side: if left is zero, jump to false
+            ast_gen_rvalue(node->left);
             gen_jz(false_label);
 
             // Right side
-            ast_gen_expr(node->right);
+            ast_gen_rvalue(node->right);
             gen_jmp(end_label);
 
             // False branch
@@ -1074,16 +1635,12 @@ static void ast_gen_expr(ast_node_t *node)
             int true_label = gen_label();
             int end_label = gen_label();
 
-            // Left side
-            ast_gen_expr(node->left);
-            gen_push_prim();
-            gen_load_imm(0);
-            gen_pop_sec();
-            gen_cmp_ne();
-            gen_jz(true_label);
+            // Left side: if left is non-zero, jump to true
+            ast_gen_rvalue(node->left);
+            gen_jnz(true_label);
 
             // Right side
-            ast_gen_expr(node->right);
+            ast_gen_rvalue(node->right);
             gen_jmp(end_label);
 
             // True branch
@@ -1100,21 +1657,17 @@ static void ast_gen_expr(ast_node_t *node)
             int false_label = gen_label();
             int end_label = gen_label();
 
-            // Condition
-            ast_gen_expr(node->cond);
-            gen_push_prim();
-            gen_load_imm(0);
-            gen_pop_sec();
-            gen_cmp_eq();
+            // Condition: jump to false if condition is zero
+            ast_gen_rvalue(node->cond);
             gen_jz(false_label);
 
-            // False branch
-            ast_gen_expr(node->else_);
+            // True branch
+            ast_gen_expr(node->then);
             gen_jmp(end_label);
 
-            // True branch
+            // False branch
             gen_label_int(false_label);
-            ast_gen_expr(node->then);
+            ast_gen_expr(node->else_);
 
             // End
             gen_label_int(end_label);
@@ -1144,12 +1697,8 @@ static void ast_gen_stmt(ast_node_t *node)
             int else_label = gen_label();
             int end_label = gen_label();
 
-            // Condition
-            ast_gen_expr(node->cond);
-            gen_push_prim();
-            gen_load_imm(0);
-            gen_pop_sec();
-            gen_cmp_eq();
+            // Condition: jump to else if condition is zero
+            ast_gen_rvalue(node->cond);
             gen_jz(else_label);
 
             // Then branch
@@ -1174,12 +1723,8 @@ static void ast_gen_stmt(ast_node_t *node)
             // Start
             gen_label_int(start_label);
 
-            // Condition
-            ast_gen_expr(node->cond);
-            gen_push_prim();
-            gen_load_imm(0);
-            gen_pop_sec();
-            gen_cmp_eq();
+            // Condition: jump to end if condition is zero
+            ast_gen_rvalue(node->cond);
             gen_jz(end_label);
 
             // Body
@@ -1203,15 +1748,11 @@ static void ast_gen_stmt(ast_node_t *node)
             if (node->init)
                 ast_gen_stmt(node->init);
 
-            // Condition check
+            // Condition check: jump to end if condition is zero
             gen_label_int(cond_label);
             if (node->cond)
             {
-                ast_gen_expr(node->cond);
-                gen_push_prim();
-                gen_load_imm(0);
-                gen_pop_sec();
-                gen_cmp_eq();
+                ast_gen_rvalue(node->cond);
                 gen_jz(end_label);
             }
 
@@ -1233,7 +1774,7 @@ static void ast_gen_stmt(ast_node_t *node)
 
     case AST_RETURN:
         if (node->left)
-            ast_gen_expr(node->left);
+            ast_gen_rvalue(node->left);
         gen_return();
         break;
 
@@ -1264,21 +1805,17 @@ void ast_gen(ast_node_t *node)
     if (!node)
         return;
 
-    // Optimize the AST first
-    // Otimiza a AST primeiro
-    ast_node_t *optimized = ast_optimize(node);
-
     // Generate code
     // Gera código
-    if (optimized->op == AST_BLOCK || optimized->op == AST_IF ||
-        optimized->op == AST_WHILE || optimized->op == AST_FOR ||
-        optimized->op == AST_RETURN || optimized->op == AST_BREAK ||
-        optimized->op == AST_EXPR_STMT)
+    if (node->op == AST_BLOCK || node->op == AST_IF ||
+        node->op == AST_WHILE || node->op == AST_FOR ||
+        node->op == AST_RETURN || node->op == AST_BREAK ||
+        node->op == AST_EXPR_STMT)
     {
-        ast_gen_stmt(optimized);
+        ast_gen_stmt(node);
     }
     else
     {
-        ast_gen_expr(optimized);
+        ast_gen_expr(node);
     }
 }
