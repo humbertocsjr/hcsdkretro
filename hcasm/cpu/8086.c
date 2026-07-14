@@ -1043,6 +1043,58 @@ static void emit_output(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *ar
     error_expr(argv[0], "invalid arguments.");
 }
 
+// Emits the ESC instruction (Escape to coprocessor / 8087 FPU).
+// Emite a instrucao ESC (Escape para coprocessador / 8087 FPU).
+static void emit_esc(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
+{
+    bool include_value = false;
+    uint8_t op;
+    if (argc != 2)
+        error_expr(mnemonic, "invalid argument count.");
+    emit_seg_prefix(argc, argv);
+    // First argument must be a 3-bit immediate value (0-7)
+    // Primeiro argumento deve ser um valor imediato de 3 bits (0-7)
+    if (!is_value(argv[0]))
+        error_expr(argv[0], "immediate value expected.");
+    if (argv[0]->value > 7)
+        error_expr(argv[0], "coprocessor opcode must be 0-7.");
+    op = 0xD8 | (argv[0]->value & 0x07);
+    // Second argument: register or memory operand
+    // Segundo argumento: operando de registrador ou memoria
+    if (is_reg_16bit(argv[1]))
+    {
+        validate(mnemonic, false, false, false, false);
+        out(REC_DATA, 0, 0, &op, 1);
+        op = 0b11000000 | argv[1]->reg->value;
+        out(REC_DATA, 0, 0, &op, 1);
+    }
+    else if (is_address(argv[1]))
+    {
+        validate(mnemonic, false, false, false, false);
+        out(REC_DATA, 0, 0, &op, 1);
+        op = 0b00000110;
+        out(REC_DATA, 0, 0, &op, 1);
+        out(generate(argv[1]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+    }
+    else if (is_reg_address(argv[1]))
+    {
+        validate(mnemonic, false, false, false, false);
+        out(REC_DATA, 0, 0, &op, 1);
+        op = get_mrm(argv[1]);
+        argv[1] = optimize(filter_registers(argv[1]));
+        if (!(argv[1]->right->token == TOK_VALUE && argv[1]->right->value == 0 && (op & 0x7) != 0b110))
+        {
+            op |= 0b10000000;
+            include_value = true;
+        }
+        out(REC_DATA, 0, 0, &op, 1);
+        if (include_value)
+            out(generate(argv[1]->right, 2, false) ? REC_EXPR_POP_INT16_RELOCATABLE_EMIT : REC_EXPR_POP_INT16_EMIT, 0, 0, 0, 0);
+    }
+    else
+        error_expr(argv[1], "register or memory operand expected.");
+}
+
 // Emits the INT instruction (software interrupt).
 // Emite a instrucao INT (interrupcao por software).
 static void emit_int(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv[])
@@ -1595,6 +1647,7 @@ opcode_t _opcode[] =
         {"das", 0b00101111, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
         {"dec", 0b01001000, 0b11111110, 0b00001000, 0b00000000, 0b00000000, 0b00000000, emit_embbed_reg16bit_or_single_mrm},
         {"div", 0b11110110, 0b00110000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_single_mrm},
+        {"esc", 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_esc},
         {"hlt", 0b11110100, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_simple},
         {"idiv", 0b11110110, 0b00111000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_single_mrm},
         {"imul", 0b11110110, 0b00101000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, emit_single_mrm},
@@ -1656,8 +1709,10 @@ opcode_t _opcode[] =
         {"jno", 0b01110001, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},
         {"jb", 0b01110010, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},
         {"jnae", 0b01110010, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},
+        {"jc", 0b01110010, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},
         {"jnb", 0b01110011, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},
         {"jae", 0b01110011, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},
+        {"jnc", 0b01110011, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},
         {"je", 0b01110100, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},
         {"jz", 0b01110100, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},
         {"jne", 0b01110101, 0b11101001, 0b11101010, 0b00000000, 0b00000000, 0b00000000, emit_jump_cc},

@@ -510,12 +510,13 @@ void parse_line()
                 strcpy(_current_label, curr()->text);
             }
             scan();
-            // [English] Optional colon after label
-            // [Portuguese] Dois-pontos opcional após o rótulo
-            if (curr_is(TOK_COLON))
+            // [English] Colon required after label
+            // [Portuguese] Dois-pontos obrigatório após o rótulo
+            if (!curr_is(TOK_COLON))
             {
-                scan();
+                error_expr(curr(), "':' expected after label.");
             }
+            scan();
             // [English] EQU -- define a constant
             // [Portuguese] EQU -- define uma constante
             if (curr_is_keyword("equ"))
