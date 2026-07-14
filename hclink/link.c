@@ -5,6 +5,8 @@ object_file_t *_objs_last = NULL;
 bool _multicpu = false;
 rectype_t _cpu = 0;
 bool _verbose = false;
+file_info_t *_debug_files = NULL;
+line_info_t *_debug_lines = NULL;
 
 // [English] Display help
 // [Portuguese] Exibe ajuda
@@ -17,6 +19,7 @@ void help()
     printf("Arguments:\n");
     printf("-o [FILE]       : Output file (default: a.bin)\n");
     printf("-sym [FILE]     : Symbol file\n");
+    printf("-dbg [FILE]     : Debug info file (line mappings)\n");
     printf("-multicpu       : Ignore multiple object cpu types\n");
     printf("-v              : Verbose\n");
     format_help_arguments();
@@ -31,6 +34,7 @@ int main(int argc, char **argv)
 {
     char *out_name = NULL;
     char *sym_name = NULL;
+    char *dbg_name = NULL;
 
     // [English] Create default sections
     // [Portuguese] Cria seções padrão
@@ -58,6 +62,14 @@ int main(int argc, char **argv)
                 error("error: symbol file name already defined\n");
             if (i < argc)
                 sym_name = argv[i];
+        }
+        else if (!strcmp(argv[i], "-dbg"))
+        {
+            i++;
+            if (dbg_name)
+                error("error: debug file name already defined\n");
+            if (i < argc)
+                dbg_name = argv[i];
         }
         else if (!strcmp(argv[i], "-o"))
         {
@@ -104,6 +116,11 @@ int main(int argc, char **argv)
     // [Portuguese] Imprime símbolos se solicitado
     if (sym_name)
         consts_print(sym_name);
+
+    // [English] Print debug info if requested
+    // [Portuguese] Imprime info de debug se solicitado
+    if (dbg_name)
+        debug_print(dbg_name);
 
     return 0;
 }

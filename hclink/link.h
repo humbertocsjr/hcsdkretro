@@ -67,6 +67,23 @@ typedef struct const_t
     char name[1];
 } const_t;
 
+// [English] Debug info structures for -dbg option
+// [Portuguese] Estruturas de info de debug para opção -dbg
+typedef struct file_info_t
+{
+    struct file_info_t *next;
+    char name[1];
+} file_info_t;
+
+typedef struct line_info_t
+{
+    struct line_info_t *next;
+    uint32_t address;
+    uint16_t file_idx;
+    uint16_t line;
+    uint16_t column;
+} line_info_t;
+
 // --== link.c ==--
 
 extern object_file_t *_objs;
@@ -74,6 +91,9 @@ extern object_file_t *_objs_last;
 extern bool _multicpu;
 extern rectype_t _cpu;
 extern bool _verbose;
+extern file_info_t *_debug_files;
+extern line_info_t *_debug_lines;
+extern const_t *_consts;
 
 // --== format/?????.c ==--
 
@@ -232,6 +252,18 @@ bool consts_is_offset(object_file_t *obj, char *name);
 // [English] Emit consts keep changing error
 // [Portuguese] Emite erro de constantes continuamente alteradas
 void error_consts_has_changed();
+
+// --== debug.c ==--
+
+// [English] Add file to debug info
+// [Portuguese] Adiciona arquivo a info de debug
+int debug_add_file(char *filename);
+// [English] Add line mapping to debug info
+// [Portuguese] Adiciona mapeamento de linha a info de debug
+void debug_add_line(uint32_t address, uint16_t file_idx, uint16_t line, uint16_t column);
+// [English] Print debug info file
+// [Portuguese] Imprime arquivo de info de debug
+void debug_print(char *dbg_name);
 
 // --== stack.c ==--
 

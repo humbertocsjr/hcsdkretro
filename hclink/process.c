@@ -3,6 +3,7 @@
 static char *_filename = NULL;
 static int _line = 0;
 static int _column = 0;
+static uint16_t _file_idx = 0;
 static section_t *_curr_section = NULL;
 
 int (*format_adjust_value)(int value, int position, rectype_t section) = NULL;
@@ -41,6 +42,7 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
     obj_reset(obj);
     stack_reset();
     _filename = obj->name;
+    _file_idx = debug_add_file(_filename);
     _line = 0;
     _column = 0;
     // [English] Main record processing loop
@@ -279,6 +281,14 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
                 if (section == REC_SECTION_BSS)
                     process_error("invalid bss content.");
                 out(rec.data, rec.header.data_size);
+            }
+            // [English] Collect debug info: map line to address
+            // [Portuguese] Coleta info de debug: mapeia linha para endereço
+            if (step == STEP_PROCESS_FILES && _line > 0)
+            {
+                debug_add_line(_curr_section->position, _file_idx, _line, _column);
+                _line = 0;  // Reset to avoid duplicate mappings
+                _column = 0;
             }
             _curr_section->position += rec.header.data_size;
             _curr_section->size += rec.header.data_size;

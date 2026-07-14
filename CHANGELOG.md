@@ -1,5 +1,64 @@
 # Changelog
 
+## v2.1 R10 - July 2026
+
+### Linker (hclink)
+
+#### Debug Information File Support (`-dbg` option)
+- **`-dbg [FILE]` argument** - Generate debug information file for debugger integration
+- **Line-to-address mapping** - Maps source file lines to compiled instruction addresses
+- **Multi-file support** - Handles multiple source files with unique file IDs
+- **Format structure** - Three sections:
+  - `[FILES]` - Source file list with numeric IDs
+  - `[LINES]` - Line-to-address mappings (format: `ADDRESS FILEID:LINE:COL`)
+  - `[SYMBOLS]` - Symbol definitions with type (LABEL/CONST) and scope (GLOBAL/LOCAL)
+- **Debugger integration** - GDB-compatible text format, extensible for custom debug scripts
+- **Automatic deduplication** - Removes duplicate line entries from multi-pass processing
+
+#### Features
+- ✓ **Position tracking** - Preserves column information from assembler
+- ✓ **Symbol metadata** - Includes symbol type and scope information
+- ✓ **Clean output** - No duplicates, sorted by address for readability
+- ✓ **Parallel with -sym** - Can use both `-sym` and `-dbg` in same link command
+- ✓ **All architectures** - Works with 8080, 8085, 8086, Z80 CPU targets
+
+#### Example Usage
+```bash
+# Assemble
+hcasm-8086 -o main.o main.asm
+hcasm-8086 -o lib.o lib.asm
+
+# Link with debug info
+hclink-bin -o program.bin -dbg program.dbg main.o lib.o
+
+# View debug info
+cat program.dbg
+```
+
+#### Debug File Format Example
+```
+; Debug info file - HC SDK Retro v2.1 R10
+; Format: simple text mappings for debugger integration
+
+[FILES]
+1: main.asm
+2: lib.asm
+
+[LINES]
+; format: ADDRESS FILEIDX:LINE:COLUMN
+0x0000 1:10:5
+0x0003 1:11:5
+0x0006 2:15:5
+
+[SYMBOLS]
+; format: ADDRESS NAME [TYPE SCOPE]
+0x0000 _start [LABEL GLOBAL]
+0x0006 lib_init [LABEL GLOBAL]
+0x1000 counter [CONST LOCAL]
+```
+
+---
+
 ## v2.1 R9 - July 2026
 
 ### Assembler (hcasm)
