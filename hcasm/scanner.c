@@ -290,11 +290,19 @@ expr_t *scan()
 
     // [English] --== Identifier / symbol / label reference ==--
     // [Portuguese] --== Identificador / símbolo / referência de rótulo ==--
-    // [English] May also be a register name, hex value with H suffix, or sub-label (.name)
-    // [Portuguese] Pode também ser nome de registrador, valor hex com sufixo H, ou sub-rótulo (.nome)
-    else if (source_between('0', '9') || source_between('a', 'z') || source_between('A', 'Z') || source_is('_') || source_is('.'))
+    // [English] May also be a register name, hex value with H suffix, sub-label (.name), or directive (%ifdef, etc)
+    // [Portuguese] Pode também ser nome de registrador, valor hex com sufixo H, sub-rótulo (.nome), ou diretiva (%ifdef, etc)
+    else if (source_between('0', '9') || source_between('a', 'z') || source_between('A', 'Z') || source_is('_') || source_is('.') || source_is('%'))
     {
         e.token = TOK_SYMBOL;
+        // [English] First character may be %, for directives like %ifdef
+        // [Portuguese] Primeiro caractere pode ser %, para diretivas como %ifdef
+        if (source_is('%'))
+        {
+            CATNEXT();
+        }
+        // [English] Rest of identifier (letters, digits, underscores, dots)
+        // [Portuguese] Resto do identificador (letras, dígitos, sublinhados, pontos)
         while (source_between('0', '9') || source_between('a', 'z') || source_between('A', 'Z') || source_is('_') || source_is('.'))
         {
             CATNEXT();

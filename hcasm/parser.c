@@ -1,8 +1,55 @@
 #include "asm.h"
 
 char *_current_label = NULL;
+cond_ctx_t *_cond_stack = NULL;  // [English] Stack of conditional contexts
+                                  // [Portuguese] Pilha de contextos condicionais
 
 expr_t *parse_expr();
+
+// [English] Push a new conditional context onto the stack
+// [Portuguese] Coloca um novo contexto condicional na pilha
+static void cond_push(bool condition)
+{
+    cond_ctx_t *ctx = malloc(sizeof(cond_ctx_t));
+    ctx->active = condition;
+    ctx->any_branch_active = condition;  // [English] Mark if this first branch is active
+                                         // [Portuguese] Marca se este primeiro ramo está ativo
+    ctx->else_seen = false;
+    ctx->next = _cond_stack;
+    _cond_stack = ctx;
+}
+
+// [English] Pop a conditional context from the stack and return it
+// [Portuguese] Remove um contexto condicional da pilha e o retorna
+static cond_ctx_t *cond_pop()
+{
+    if (!_cond_stack)
+        error("unexpected %%endif without matching %%ifdef/%%ifndef");
+    cond_ctx_t *ctx = _cond_stack;
+    _cond_stack = ctx->next;
+    return ctx;
+}
+
+// [English] Get the current conditional context without removing it
+// [Portuguese] Obtém o contexto condicional atual sem removê-lo
+static cond_ctx_t *cond_current()
+{
+    return _cond_stack;
+}
+
+// [English] Check if current line should be processed (true if all parent conditions are active)
+// [Portuguese] Verifica se a linha atual deve ser processada (verdadeiro se todos os pais estão ativos)
+static bool cond_is_active()
+{
+    cond_ctx_t *ctx = _cond_stack;
+    while (ctx)
+    {
+        if (!ctx->active)
+            return false;
+        ctx = ctx->next;
+    }
+    return true;
+}
 
 // [English] Check if the current token matches a prefix name (from _prefix[] table)
 // [Portuguese] Verifica se o token atual corresponde a um nome de prefixo (da tabela _prefix[])
@@ -220,6 +267,157 @@ void parse_line()
     expr_t *mnemonic = NULL;
     int argc = 0;
     expr_t *argv[ARGV_MAX];
+    
+    // [English] Process conditional directives (%ifdef, %ifndef, %else, %endif)
+    // [Portuguese] Processa diretivas condicionais (%ifdef, %ifndef, %else, %endif)
+    // [English] These directives MUST be processed regardless of current condition state
+    // [Portuguese] Estas diretivas DEVEM ser processadas independentemente do estado condicional atual
+    if (curr_is(TOK_SYMBOL))
+    {
+        if (curr_is_keyword("%ifdef"))
+        {
+            expr_t *directive = clone_expr(curr());
+            scan();
+            if (!curr_is(TOK_SYMBOL))
+                error_expr(directive, "%%ifdef requires a symbol name");
+            char name[256];
+            strncpy(name, curr()->text, 255);
+            name[255] = 0;
+            bool defined = consts_exists(name);
+            scan();
+            cond_push(defined);
+            free_expr(directive);
+            return;
+        }
+        else if (curr_is_keyword("%ifndef"))
+        {
+            expr_t *directive = clone_expr(curr());
+            scan();
+            if (!curr_is(TOK_SYMBOL))
+                error_expr(directive, "%%ifndef requires a symbol name");
+            char name[256];
+            strncpy(name, curr()->text, 255);
+            name[255] = 0;
+            bool defined = consts_exists(name);
+            scan();
+            cond_push(!defined);
+            free_expr(directive);
+            return;
+        }
+        else if (curr_is_keyword("%elifdef"))
+        {
+            expr_t *directive = clone_expr(curr());
+            cond_ctx_t *ctx = cond_current();
+            if (!ctx)
+                error_expr(directive, "%%elifdef without matching %%ifdef/%%ifndef");
+            
+            if (ctx->else_seen)
+                error_expr(directive, "%%elifdef after %%else");
+            
+            scan();
+            if (!curr_is(TOK_SYMBOL))
+                error_expr(directive, "%%elifdef requires a symbol name");
+            char name[256];
+            strncpy(name, curr()->text, 255);
+            name[255] = 0;
+            bool defined = consts_exists(name);
+            
+            // [English] If a branch was already active, this one is not
+            // [Portuguese] Se um ramo já estava ativo, este não é
+            if (ctx->any_branch_active)
+            {
+                ctx->active = false;
+            }
+            else
+            {
+                // [English] No active branch yet; activate if this symbol is defined
+                // [Portuguese] Nenhum ramo ativo ainda; ativa se este símbolo está definido
+                ctx->active = defined;
+                if (defined)
+                    ctx->any_branch_active = true;
+            }
+            scan();
+            free_expr(directive);
+            return;
+        }
+        else if (curr_is_keyword("%elifndef"))
+        {
+            expr_t *directive = clone_expr(curr());
+            cond_ctx_t *ctx = cond_current();
+            if (!ctx)
+                error_expr(directive, "%%elifndef without matching %%ifdef/%%ifndef");
+            
+            if (ctx->else_seen)
+                error_expr(directive, "%%elifndef after %%else");
+            
+            scan();
+            if (!curr_is(TOK_SYMBOL))
+                error_expr(directive, "%%elifndef requires a symbol name");
+            char name[256];
+            strncpy(name, curr()->text, 255);
+            name[255] = 0;
+            bool defined = consts_exists(name);
+            
+            // [English] If a branch was already active, this one is not
+            // [Portuguese] Se um ramo já estava ativo, este não é
+            if (ctx->any_branch_active)
+            {
+                ctx->active = false;
+            }
+            else
+            {
+                // [English] No active branch yet; activate if this symbol is NOT defined
+                // [Portuguese] Nenhum ramo ativo ainda; ativa se este símbolo NÃO está definido
+                ctx->active = !defined;
+                if (!defined)
+                    ctx->any_branch_active = true;
+            }
+            scan();
+            free_expr(directive);
+            return;
+        }
+        else if (curr_is_keyword("%else"))
+        {
+            expr_t *directive = clone_expr(curr());
+            cond_ctx_t *ctx = cond_current();
+            if (!ctx)
+                error_expr(directive, "%%else without matching %%ifdef/%%ifndef");
+            if (ctx->else_seen)
+                error_expr(directive, "multiple %%else in same block");
+            
+            // [English] %else is active only if no previous branch was active
+            // [Portuguese] %else está ativo apenas se nenhum ramo anterior estava ativo
+            ctx->active = !ctx->any_branch_active;
+            ctx->any_branch_active = true;  // [English] Mark that a branch is now active
+                                            // [Portuguese] Marca que um ramo agora está ativo
+            ctx->else_seen = true;
+            scan();
+            free_expr(directive);
+            return;
+        }
+        else if (curr_is_keyword("%endif"))
+        {
+            expr_t *directive = clone_expr(curr());
+            cond_ctx_t *ctx = cond_pop();
+            if (!ctx)
+                error_expr(directive, "%%endif without matching %%ifdef/%%ifndef");
+            free(ctx);
+            scan();
+            free_expr(directive);
+            return;
+        }
+    }
+    
+    // [English] If current condition is not active, skip the rest of the line
+    // [Portuguese] Se a condição atual não está ativa, pula o resto da linha
+    if (!cond_is_active())
+    {
+        // [English] Skip tokens until we reach NEWLINE or EOF
+        // [Portuguese] Pula tokens até atingir NEWLINE ou EOF
+        while (!curr_is(TOK_NEWLINE) && !curr_is(TOK_EOF))
+            scan();
+        return;
+    }
     
     // [English] Check for data directives FIRST, before the prefix loop.
     // [Portuguese] Verifica diretivas de dados PRIMEIRO, antes do loop de prefixos.
@@ -551,6 +749,8 @@ void parse_line()
 // [Portuguese] Ponto de entrada de análise de topo: abre arquivo fonte, emite cabeçalhos, analisa cada linha.
 void parse(char *filename)
 {
+    _cond_stack = NULL;  // [English] Initialize conditional stack
+                         // [Portuguese] Inicializa pilha condicional
     source_open(filename);
     scan();
     scan();  // [English] Two scans to fill current + look-ahead
@@ -567,6 +767,12 @@ void parse(char *filename)
         while (curr_is(TOK_NEWLINE))
             scan();
     }
+    
+    // [English] Check that all %ifdef/%ifndef blocks are closed with %endif
+    // [Portuguese] Verifica que todos os blocos %ifdef/%ifndef estão fechados com %endif
+    if (_cond_stack)
+        error("unclosed %%ifdef/%%ifndef/%%else block (missing %%endif)");
+    
     out(REC_END_OF_FILE, 0, 0, filename, strlen(filename));
     source_close();
 }

@@ -147,6 +147,16 @@ typedef struct const_t
     char name[1];
 } const_t;
 
+// [English] Conditional context stack for %ifdef / %ifndef / %else / %endif directives
+// [Portuguese] Pilha de contexto condicional para diretivas %ifdef / %ifndef / %else / %endif
+typedef struct cond_ctx_t
+{
+    bool active;            // [English] Is the current block active? [Portuguese] O bloco atual está ativo?
+    bool any_branch_active; // [English] Was any branch already active? [Portuguese] Algum ramo já foi ativo?
+    bool else_seen;         // [English] Has %else been encountered? [Portuguese] %else foi encontrado?
+    struct cond_ctx_t *next;
+} cond_ctx_t;
+
 // [English] --== error.c ==--
 // [Portuguese] --== error.c ==--
 
