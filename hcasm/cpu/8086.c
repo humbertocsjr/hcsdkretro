@@ -1334,7 +1334,7 @@ static void emit_jump_cc(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *a
         out(REC_DATA, 0, 0, &op, 1);
         op = opcode->op2;
         out(REC_DATA, 0, 0, &op, 1);
-        if (generate(argv[0], 2, false))
+        if (generate(argv[0], -3, false))
         {
             out(REC_EXPR_PUSH_OFFSET, 2, 0, 0, 0);
             out(REC_EXPR_SUB, 0, 0, 0, 0);
@@ -1431,7 +1431,7 @@ static void emit_loop(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
         out(REC_DATA, 0, 0, &op, 1);
         op = opcode->op2;
         out(REC_DATA, 0, 0, &op, 1);
-        if (generate(argv[0], 2, false))
+        if (generate(argv[0], -5, false))
         {
             out(REC_EXPR_PUSH_OFFSET, 2, 0, 0, 0);
             out(REC_EXPR_SUB, 0, 0, 0, 0);
@@ -1573,7 +1573,7 @@ static void emit_call(expr_t *mnemonic, opcode_t *opcode, int argc, expr_t *argv
     {
         op = opcode->op1;
         out(REC_DATA, 0, 0, &op, 1);
-        if (generate(argv[0], 2, false))
+        if (generate(argv[0], -1, false))
         {
             out(REC_EXPR_PUSH_OFFSET, 2, 0, 0, 0);
             out(REC_EXPR_SUB, 0, 0, 0, 0);
