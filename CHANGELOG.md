@@ -1,5 +1,46 @@
 # Changelog
 
+## v2.1 R9 - July 2026
+
+### Assembler (hcasm)
+
+#### Conditional Compilation Directives
+- **`%ifdef NAME`** - Include block if NAME is defined
+- **`%ifndef NAME`** - Include block if NAME is NOT defined
+- **`%elifdef NAME`** - Else-if NAME is defined (chain support)
+- **`%elifndef NAME`** - Else-if NAME is NOT defined (chain support)
+- **`%else`** - Alternate block when all conditions above fail
+- **`%endif`** - End conditional block
+
+#### Command-Line Constant Definition (`-D` option)
+- **`-D NAME=VALUE` syntax** - Define constants from command line before assembling
+- **Numeric format support** - All 7 formats accepted: decimal (`42`), binary (`0b1010`), octal prefix (`0o755`), octal legacy (`0755`), hex prefix (`0x1F`), hex suffix (`1Fh`)
+- **Integration with conditional directives** - Constants defined via `-D` are checked by `%ifdef`/`%ifndef`/`%elifdef`/`%elifndef`
+- **Multiple defines** - Support for multiple `-D` options in single command line
+- **Validation** - Symbol name format validation (no leading digit, alphanumeric/underscore/dot only)
+
+#### Features
+- ✓ **All 4 CPU architectures supported** (8080, 8085, 8086, Z80)
+- ✓ **Nested conditionals** - ifdef within ifdef/elif/else blocks
+- ✓ **Full elif chain support** - Multiple elifdef/elifndef conditions
+- ✓ **Error detection** - Unclosed blocks, multiple %else, %elifdef after %else
+- ✓ **Zero regressions** - All existing assembly code works unchanged
+
+#### Bug Fixes
+- **Fixed infinite loop** in conditional processing: Parser now correctly skips inactive lines by advancing tokens to NEWLINE/EOF
+- **Refactored conditional context tracking** with improved branch mutual exclusivity
+
+#### Testing
+- ✓ **43/43 tests passing** across all 4 CPU architectures
+- ✓ **Complex scenarios tested**: nesting, elif chains, integration with -D
+- ✓ **Error cases properly handled**: unclosed blocks, syntax violations
+
+### Workspace Cleanup
+- Removed duplicate binary and debug symbol files with " 2" suffix
+- Repository cleaned for release
+
+---
+
 ## v2.1 R8 - May 2026
 
 ### B Compiler (hcbcomp)
