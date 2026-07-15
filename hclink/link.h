@@ -94,6 +94,14 @@ extern bool _verbose;
 extern file_info_t *_debug_files;
 extern line_info_t *_debug_lines;
 extern const_t *_consts;
+extern char *_elfdbg_name;
+
+// --== elf.c ==--
+
+// [English] Write ELF32+DWARF4 debug file
+// [Portuguese] Escreve arquivo de debug ELF32+DWARF4
+void elf_write(const char *filename, uint32_t text_addr, const uint8_t *binary,
+               uint32_t binary_size);
 
 // --== format/?????.c ==--
 

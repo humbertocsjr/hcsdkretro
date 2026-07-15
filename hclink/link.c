@@ -7,6 +7,7 @@ rectype_t _cpu = 0;
 bool _verbose = false;
 file_info_t *_debug_files = NULL;
 line_info_t *_debug_lines = NULL;
+char *_elfdbg_name = NULL;
 
 // [English] Display help
 // [Portuguese] Exibe ajuda
@@ -20,6 +21,7 @@ void help()
     printf("-o [FILE]       : Output file (default: a.bin)\n");
     printf("-sym [FILE]     : Symbol file\n");
     printf("-dbg [FILE]     : Debug info file (line mappings)\n");
+    printf("-elfdbg [FILE]  : ELF32+DWARF4 debug file (GDB/LLDB compatible)\n");
     printf("-multicpu       : Ignore multiple object cpu types\n");
     printf("-v              : Verbose\n");
     format_help_arguments();
@@ -71,6 +73,14 @@ int main(int argc, char **argv)
             if (i < argc)
                 dbg_name = argv[i];
         }
+        else if (!strcmp(argv[i], "-elfdbg"))
+        {
+            i++;
+            if (_elfdbg_name)
+                error("error: ELF debug file name already defined\n");
+            if (i < argc)
+                _elfdbg_name = argv[i];
+        }
         else if (!strcmp(argv[i], "-o"))
         {
             i++;
@@ -121,6 +131,47 @@ int main(int argc, char **argv)
     // [Portuguese] Imprime info de debug se solicitado
     if (dbg_name)
         debug_print(dbg_name);
+
+    // [English] Generate ELF32+DWARF4 if requested
+    // [Portuguese] Gera ELF32+DWARF4 se solicitado
+    if (_elfdbg_name) {
+        // [English] Read the generated binary output file to embed in ELF
+        // [Portuguese] Lê o arquivo binário de saída gerado para embutir no ELF
+        section_t *text_sec = section_find("text");
+        uint32_t text_addr = text_sec ? (uint32_t)text_sec->start_pos : 0x100;
+
+        // [English] Read binary from output file
+        // [Portuguese] Lê binário do arquivo de saída
+        uint8_t *binary_data = NULL;
+        uint32_t binary_size = 0;
+        FILE *bin_file = fopen(out_name, "rb");
+        if (bin_file) {
+            fseek(bin_file, 0, SEEK_END);
+            long fsize = ftell(bin_file);
+            fseek(bin_file, 0, SEEK_SET);
+            if (fsize > 0) {
+                binary_data = (uint8_t*)malloc(fsize);
+                if (binary_data) {
+                    binary_size = (uint32_t)fread(binary_data, 1, fsize, bin_file);
+                }
+            }
+            fclose(bin_file);
+        }
+
+        // [English] Fall back to empty stub if file couldn't be read
+        // [Portuguese] Usa stub vazio se arquivo não pôde ser lido
+        if (!binary_data || binary_size == 0) {
+            binary_size = 16;
+            binary_data = (uint8_t*)calloc(binary_size, 1);
+        }
+
+        if (_verbose) fprintf(stderr, "[DEBUG] main: Calling elf_write for %s (text_addr=0x%x, binary_size=%u)\n",
+            _elfdbg_name, text_addr, binary_size);
+
+        elf_write(_elfdbg_name, text_addr, binary_data, binary_size);
+
+        free(binary_data);
+    }
 
     return 0;
 }

@@ -4,7 +4,7 @@ __div8:
     global __divs8
 __divs8:
     mov b, a
-    xor e
+    xra e
     push psw
     mov a, b
     ani 0x80

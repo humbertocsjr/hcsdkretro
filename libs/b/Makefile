@@ -145,11 +145,11 @@ define b_compile_template
 $(1)/$(2).__s: $(2).b Makefile
 	@mkdir -p $(1)
 	@echo [B]   $(1)/$(2).__s
-	@$(BCOM)/hcbcomp-$(patsubst 8086exe,8086exe,$(patsubst 8085,8080,$(1))) -o $$@ $$< 2>/dev/null
+	@$(BCOM)/hcbcomp-$(patsubst 8086exe,8086,$(1)) -o $$@ $$< 2>/dev/null
 
 $(1)/$(2).obj: $(1)/$(2).__s Makefile
 	@echo [ASM] $(1)/$(2).obj
-	@$(ASM)/hcasm-$(patsubst 8086exe,8086,$(patsubst 8085,8080,$(1))) -o $$@ $$< 2>/dev/null
+	@$(ASM)/hcasm-$(patsubst 8086exe,8086,$(1)) -o $$@ $$< 2>/dev/null
 endef
 
 # Generate compile rules for each B module for each CPU
