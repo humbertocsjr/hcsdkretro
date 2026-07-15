@@ -101,6 +101,9 @@ void out(rectype_t type, int16_t value, uint16_t aux, void *data, uint8_t data_s
         case REC_CONST_CUSTOM:
             fprintf(_dump, "CONSTANT: %s = %i\n", (char *)data, value);
             break;
+        case REC_CONST_CUSTOM_UNSIGNED:
+            fprintf(_dump, "CONSTANT UNSIGNED: %s = %u\n", (char *)data, (uint16_t)(int16_t)value);
+            break;
         case REC_CONST_AS_GLOBAL_LABEL:
             fprintf(_dump, "EXPORT LABEL TO GLOBAL LABEL LIST: %s\n", (char *)data);
             break;

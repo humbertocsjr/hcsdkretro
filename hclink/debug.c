@@ -150,7 +150,7 @@ void debug_print(char *dbg_name)
         if (c->obj && c->obj->use_in_link)
         {
             fprintf(dbg, "0x%04X %s [%s %s]\n", 
-                    c->value, 
+                    (uint16_t)c->value, 
                     c->name,
                     c->is_offset ? "LABEL" : "CONST",
                     c->is_global ? "GLOBAL" : "LOCAL");

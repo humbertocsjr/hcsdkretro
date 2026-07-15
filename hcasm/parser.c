@@ -724,7 +724,9 @@ void parse_line()
                 if (e->token != TOK_VALUE)
                     error_expr(e, "invalid constant expression");
                 consts_set(name->text, e->value);
-                out(REC_CONST_CUSTOM, e->value, 0, name->text, strlen(name->text));
+                // [English] Use unsigned variant for values >= INT16_MAX to avoid sign extension in linker
+                // [Portuguese] Usa variante sem sinal para valores >= INT16_MAX para evitar extensão de sinal no linker
+                out(e->value >= INT16_MAX ? REC_CONST_CUSTOM_UNSIGNED : REC_CONST_CUSTOM, e->value, 0, name->text, strlen(name->text));
                 free_expr(name);
             }
             // [English] Regular label: emit label record, then parse what follows on the same line

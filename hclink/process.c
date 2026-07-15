@@ -251,6 +251,11 @@ void process_obj(step_t step, rectype_t section, object_file_t *obj)
         case REC_CONST_CUSTOM:
             consts_set(obj, (char *)rec.data, rec.header.value);
             break;
+        // [English] Unsigned variant: read as uint16 to prevent sign extension for 0x8000..0xFFFF
+        // [Portuguese] Variante sem sinal: lê como uint16 para evitar extensão de sinal para 0x8000..0xFFFF
+        case REC_CONST_CUSTOM_UNSIGNED:
+            consts_set(obj, (char *)rec.data, (uint16_t)rec.header.value);
+            break;
         case REC_CONST_AS_GLOBAL_LABEL:
             consts_set_global(obj, (char *)rec.data);
             break;

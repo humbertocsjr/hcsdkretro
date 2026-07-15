@@ -284,7 +284,7 @@ void consts_print(char *sym_name)
     {
         if (c->is_global && c->obj->use_in_link)
         {
-            fprintf(sym, "$%04X %s [GLOBAL %s %s]\n", c->value, c->name, c->is_offset ? "LABEL" : "CONST", c->obj->name);
+            fprintf(sym, "$%04X %s [GLOBAL %s %s]\n", (uint16_t)c->value, c->name, c->is_offset ? "LABEL" : "CONST", c->obj->name);
         }
         c = c->next;
     }
@@ -295,7 +295,7 @@ void consts_print(char *sym_name)
     {
         if (!c->is_global && c->obj->use_in_link)
         {
-            fprintf(sym, "$%04X %s [LOCAL %s %s]\n", c->value, c->name, c->is_offset ? "LABEL" : "CONST", c->obj->name);
+            fprintf(sym, "$%04X %s [LOCAL %s %s]\n", (uint16_t)c->value, c->name, c->is_offset ? "LABEL" : "CONST", c->obj->name);
         }
         c = c->next;
     }

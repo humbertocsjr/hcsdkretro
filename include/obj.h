@@ -59,9 +59,12 @@ typedef enum rectype_t
     // [English] DATA = NAME
     // [Portuguese] DATA = NOME
     REC_CONST_LABEL = 0x30,
-    // [English] DATA = NAME, VALUE = INITIAL VALUE
-    // [Portuguese] DATA = NOME, VALUE = VALOR INICIAL
+    // [English] DATA = NAME, VALUE = INITIAL VALUE (signed int16)
+    // [Portuguese] DATA = NOME, VALUE = VALOR INICIAL (int16 com sinal)
     REC_CONST_CUSTOM,
+    // [English] DATA = NAME, VALUE = UNSIGNED INITIAL VALUE (uint16 - avoids sign extension for 0x8000..0xFFFF)
+    // [Portuguese] DATA = NOME, VALUE = VALOR INICIAL SEM SINAL (uint16 - evita extensão de sinal para 0x8000..0xFFFF)
+    REC_CONST_CUSTOM_UNSIGNED,
     // [English] DATA = NAME
     // [Portuguese] DATA = NOME
     REC_CONST_AS_GLOBAL_LABEL,
