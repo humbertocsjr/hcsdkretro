@@ -708,17 +708,13 @@ void parse_line()
                 strcpy(_current_label, curr()->text);
             }
             scan();
-            // [English] Colon required after label
-            // [Portuguese] Dois-pontos obrigatório após o rótulo
-            if (!curr_is(TOK_COLON))
-            {
-                error_expr(curr(), "':' expected after label.");
-            }
-            scan();
-            // [English] EQU -- define a constant
-            // [Portuguese] EQU -- define uma constante
+            
+            // [English] Check for EQU without colon requirement
+            // [Portuguese] Verifica EQU sem requerimento de dois-pontos
             if (curr_is_keyword("equ"))
             {
+                // [English] EQU constant definition: NAME equ EXPRESSION
+                // [Portuguese] Definição de constante EQU: NOME equ EXPRESSÃO
                 scan();
                 expr_t *e = parse_expr();
                 if (e->token != TOK_VALUE)
@@ -728,15 +724,25 @@ void parse_line()
                 // [Portuguese] Usa variante sem sinal para valores >= INT16_MAX para evitar extensão de sinal no linker
                 out(e->value >= INT16_MAX ? REC_CONST_CUSTOM_UNSIGNED : REC_CONST_CUSTOM, e->value, 0, name->text, strlen(name->text));
                 free_expr(name);
+                free_expr(e);
             }
-            // [English] Regular label: emit label record, then parse what follows on the same line
-            // [Portuguese] Rótulo normal: emite registro de rótulo, então analisa o que segue na mesma linha
-            else
+            // [English] Label with colon: LABEL: [instructions...]
+            // [Portuguese] Rótulo com dois-pontos: RÓTULO: [instruções...]
+            else if (curr_is(TOK_COLON))
             {
+                scan();
+                // [English] Regular label: emit label record, then parse what follows on the same line
+                // [Portuguese] Rótulo normal: emite registro de rótulo, então analisa o que segue na mesma linha
                 out(REC_CONST_LABEL, 0, 0, name->text, strlen(name->text));
                 parse_line();
                 free_expr(name);
                 return;
+            }
+            // [English] Error: neither EQU nor colon found after identifier
+            // [Portuguese] Erro: nem EQU nem dois-pontos encontrados após identificador
+            else
+            {
+                error_expr(curr(), "':' or 'equ' expected after '%s'.", name->text);
             }
         }
     }
