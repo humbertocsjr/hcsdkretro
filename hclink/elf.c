@@ -77,6 +77,7 @@
 #define DW_FORM_data4           0x06
 #define DW_FORM_string          0x08
 #define DW_FORM_strp            0x0e
+#define DW_FORM_sec_offset      0x17
 #define DW_FORM_ref1            0x11
 #define DW_FORM_ref4            0x13
 
@@ -96,6 +97,7 @@
 #define DW_LNE_define_file      0x04
 
 #define DW_LANG_C               0x02
+#define DW_LANG_Mips_Assembler  0x0020
 
 /* Variable size categories for type declaration */
 typedef struct {
@@ -388,7 +390,7 @@ static void elf_write_debug_abbrev(FILE *f, uint32_t *size) {
     write_uleb128(f, DW_AT_high_pc);
     write_uleb128(f, DW_FORM_addr);
     write_uleb128(f, DW_AT_stmt_list);
-    write_uleb128(f, DW_FORM_data4);
+    write_uleb128(f, DW_FORM_sec_offset);
     
     write_uleb128(f, 0);             /* end of attributes */
     write_uleb128(f, 0);             /* end of attribute spec */
@@ -688,7 +690,8 @@ static void elf_write_debug_line(FILE *f, uint32_t text_addr, uint32_t *size) {
     
     line_info_t *line = _debug_lines;
     while (line != NULL) {
-        uint32_t addr = line->address + text_addr;
+        /* line->address is already an absolute address from the assembler */
+        uint32_t addr = line->address;
         uint16_t line_num = line->line;
         uint16_t col = line->column;
         uint16_t file_idx = line->file_idx;
@@ -939,19 +942,8 @@ void elf_write(const char *filename, uint32_t text_addr, const uint8_t *binary,
     const char *dbg_filename = _debug_files ? _debug_files->name : "unknown.asm";
     
     #define DEBUG_STR_COMPDIR    (DEBUG_STR_FILENAME + strlen(dbg_filename) + 1)
-    const char *dbg_compdir = "";  /* empty for now, or extract from path */
-    
-    /* Extract directory from filename if possible */
-    const char *last_slash = strrchr(dbg_filename, '/');
-    if (last_slash) {
-        static char compdir[512];
-        size_t len = last_slash - dbg_filename;
-        if (len >= sizeof(compdir)) len = sizeof(compdir) - 1;
-        memcpy(compdir, dbg_filename, len);
-        compdir[len] = '\0';
-        dbg_compdir = compdir;
-        dbg_filename = last_slash + 1;  /* Just the filename part */
-    }
+    /* Use the source directory if provided, otherwise empty */
+    const char *dbg_compdir = _srcdir ? _srcdir : "";
     
     #define DEBUG_STR_UINT8     (DEBUG_STR_COMPDIR + strlen(dbg_compdir) + 1)
     #define DEBUG_STR_UINT16    (DEBUG_STR_UINT8 + 6)   /* "uint8\0" = 6 bytes */
@@ -977,7 +969,7 @@ void elf_write(const char *filename, uint32_t text_addr, const uint8_t *binary,
         write_u32(f, off_producer);
         
         /* DW_AT_language (data2) */  
-        write_u16(f, DW_LANG_C);
+        write_u16(f, DW_LANG_Mips_Assembler);
         
         /* DW_AT_name (strp) */
         write_u32(f, DEBUG_STR_FILENAME);
@@ -995,39 +987,34 @@ void elf_write(const char *filename, uint32_t text_addr, const uint8_t *binary,
         write_u32(f, 0);
         
         /* Base type DIEs */
-        uint32_t base_types_start = (uint32_t)(ftell(f) - start - 11);
         
-        /* uint8 */
+        /* uint8 - capture offset BEFORE writing */
+        uint32_t off_uint8_type = (uint32_t)(ftell(f) - start - 11);
         write_uleb128(f, 4);
         write_u32(f, DEBUG_STR_UINT8);
         write_u8(f, 1);   /* byte_size = 1 */
         write_u8(f, DW_ATE_unsigned_char);
         
-        uint32_t off_uint8_type = (uint32_t)(ftell(f) - start - 11);
-        
         /* uint16 */
+        uint32_t off_uint16_type = (uint32_t)(ftell(f) - start - 11);
         write_uleb128(f, 5);
         write_u32(f, DEBUG_STR_UINT16);
         write_u8(f, 2);
         write_u8(f, DW_ATE_unsigned);
         
-        uint32_t off_uint16_type = (uint32_t)(ftell(f) - start - 11);
-        
         /* uint32 */
+        uint32_t off_uint32_type = (uint32_t)(ftell(f) - start - 11);
         write_uleb128(f, 6);
         write_u32(f, DEBUG_STR_UINT32);
         write_u8(f, 4);
         write_u8(f, DW_ATE_unsigned);
         
-        uint32_t off_uint32_type = (uint32_t)(ftell(f) - start - 11);
-        
         /* byte */
+        uint32_t off_byte_type = (uint32_t)(ftell(f) - start - 11);
         write_uleb128(f, 4);
         write_u32(f, DEBUG_STR_BYTE);
         write_u8(f, 1);
         write_u8(f, DW_ATE_unsigned_char);
-        
-        uint32_t off_byte_type = (uint32_t)(ftell(f) - start - 11);
         
         /* Write variable DIEs */
         for (int i = 0; i < var_count; i++) {
@@ -1066,17 +1053,14 @@ void elf_write(const char *filename, uint32_t text_addr, const uint8_t *binary,
             /* DW_AT_name (strp) */
             static char lbl_name[64];
             snprintf(lbl_name, sizeof(lbl_name), "line_%u_%u", line->line, line->column);
-            /* Find this string in debug_str or add it... For simplicity, use a hash */
-            /* We'll store label names after var names in debug_str */
             uint32_t lbl_str_off = DEBUG_STR_END;
             for (int j = 0; j < var_count; j++) {
                 lbl_str_off += strlen(var_list[j].name) + 1;
             }
-            write_u32(f, lbl_str_off);  /* Simplified: just point to start of label area */
-            /* FIXME: This is simplified. In a full implementation, label names
-               would be pre-collected into .debug_str with proper offsets. */
+            write_u32(f, lbl_str_off);
             
-            write_u32(f, line->address + text_start);  /* DW_AT_low_pc */
+            /* line->address is already absolute from assembler */
+            write_u32(f, line->address);  /* DW_AT_low_pc */
             
             line = line->next;
         }

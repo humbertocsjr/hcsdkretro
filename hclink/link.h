@@ -95,6 +95,7 @@ extern file_info_t *_debug_files;
 extern line_info_t *_debug_lines;
 extern const_t *_consts;
 extern char *_elfdbg_name;
+extern char *_srcdir;
 
 // --== elf.c ==--
 

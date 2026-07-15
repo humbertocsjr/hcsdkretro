@@ -8,6 +8,7 @@ bool _verbose = false;
 file_info_t *_debug_files = NULL;
 line_info_t *_debug_lines = NULL;
 char *_elfdbg_name = NULL;
+char *_srcdir = NULL;
 
 // [English] Display help
 // [Portuguese] Exibe ajuda
@@ -22,6 +23,7 @@ void help()
     printf("-sym [FILE]     : Symbol file\n");
     printf("-dbg [FILE]     : Debug info file (line mappings)\n");
     printf("-elfdbg [FILE]  : ELF32+DWARF4 debug file (GDB/LLDB compatible)\n");
+    printf("-srcdir [DIR]   : Source directory for DWARF debug info\n");
     printf("-multicpu       : Ignore multiple object cpu types\n");
     printf("-v              : Verbose\n");
     format_help_arguments();
@@ -80,6 +82,14 @@ int main(int argc, char **argv)
                 error("error: ELF debug file name already defined\n");
             if (i < argc)
                 _elfdbg_name = argv[i];
+        }
+        else if (!strcmp(argv[i], "-srcdir"))
+        {
+            i++;
+            if (_srcdir)
+                error("error: source directory already defined\n");
+            if (i < argc)
+                _srcdir = argv[i];
         }
         else if (!strcmp(argv[i], "-o"))
         {

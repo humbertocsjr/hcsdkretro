@@ -119,6 +119,9 @@ void debug_print(char *dbg_name)
         current = next;
     }
     
+    /* Update global pointer to sorted list for elf_write */
+    _debug_lines = sorted_lines;
+    
     // [English] Write sorted line mappings (skip duplicates)
     // [Portuguese] Escreve mapeamentos de linha classificados (pula duplicatas)
     line_info_t *line = sorted_lines;
